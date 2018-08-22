@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="en" ng-app="root">
+  <head>
+    <meta charset="UTF-8">
+    <title>Enmeshed</title>
+    <style>
+* {
+  font-family: monospace;
+  box-sizing: border-box;
+}
+body {
+  background-image: -webkit-radial-gradient(top, circle cover, #094781 0%, #07345E 80%) !important;
+  padding: 20px;
+  margin: 20px;
+}
+.display {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #222;
+  border: 10px solid #222;
+  border-top:20px solid #222;
+  border-radius: 12px 12px 4px 4px;
+  box-shadow:0 0 0 1px #777;
+  width: 1000px;
+  height: 660px;
+}
+.display:before {
+  content:'';
+  position: absolute;
+  top: -11px;
+  left: 497px;
+  border: 6px solid #333;
+  border-radius: 10px;
+}
+.display:after {
+  content:'';
+  position: absolute;
+  top: -9px;
+  left: 499px;
+  border: 4px solid #2C2C2C;
+  border-radius: 10px;
+}
+.screen {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background-color: #181818;
+  width: 960px;
+  height: 600px;
+  padding: 8px;
+  font-size: 8px;
+  color: white;
+}
+.hidden {
+  display: none;
+}
+.noise {
+  position: relative;
+  z-index: 1;
+}
+.noise:before {
+  content:"";
+  position: absolute;
+  z-index: -1;
+  top:0;
+  bottom:0;
+  left:0;
+  right:0;
+  opacity: 0.25;
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAABmJLR0QAcgByAHKTL6T+AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4ggWETYgfcwrUQAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAACKSURBVDjL5ZQxDkMhCEBRv0r8yx89ohftUXqBxqFa4XcF5g5NZHtAIHkhuNbaA0TMOW/JOeciuZTylJxSUnUPP47/H3gAwCUTIYRlerJxfBqnuLtDZkZzd2/JMcYp2Tmn+nvv5+4OiWiYu1LOxhiKETFJJiLe3WGt9aU2eP8xjtS/Y+ZD8lprd4dfHkosyYWYnMgAAAAASUVORK5CYII=);
+}
+.offline {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 960px;
+  height: 600px;
+  padding: 4px;
+  z-index: 10;
+}
+.offline-text {
+  position: absolute;
+  display: inline-block;
+  border: 8px solid red;
+  border-radius: 10px;
+  font-size: 60px;
+  font-weight: 700;
+  padding: 20px 20px 20px 40px;
+  color: white;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  letter-spacing: 32px;
+}
+.brand {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 614px;
+  color: #333;
+  font-size: 14px;
+  font-family: sans-serif;
+  letter-spacing: 1px;
+}
+.base {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 694px;
+  box-shadow: 1px 1px 10px 0px #333;
+  border-bottom: 3px solid #555;
+  border-radius: 0 0 20px 20px;
+  background: #999;
+  background-image: -webkit-linear-gradient(left, #555 0%, #777 50%, #555 100%);
+  width: 1160px;
+  height: 26px;
+}
+.base:before {
+  content:"";
+  display: block;
+  border-radius: 0 0 10px 10px;
+  height: 14px;
+  width: 180px;
+  left:50%;
+  position: absolute;
+  background:#999;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.title {
+  letter-spacing: 3px;
+  background-image: -webkit-linear-gradient(left, #094781 0%, #181818 40%);
+  border-radius: 5px;
+  padding: 4px;
+}
+.graph {
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 8px 8px 0px 8px;
+}
+.health {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+.node {
+  fill: #5691DC;
+}
+.node:hover {
+  stroke: #5691DC;
+  stroke-width: 7px;
+}
+.node-packet {
+  fill: #8BBF50;
+}
+.node-packet:hover {
+  stroke: #8BBF50 !important;
+}
+.node-offline {
+  fill: #D34E53 !important;
+}
+.node-offline:hover {
+  stroke: #D34E53 !important;
+}
+.edge-empty {
+  stroke: rgba(255, 255, 255, 0.20);
+}
+.edge-forward {
+  stroke: transparent;
+}
+.edge-reverse {
+  stroke: transparent;
+}
+.edge:hover {
+  stroke: black;
+  stroke-width: 3px;
+}
+.edge-packet-empty {
+  stroke: transparent !important;
+}
+.edge-packet-forward {
+  stroke: #8BBF50;
+  stroke-dasharray: 5;
+  animation: edge-progress 3s linear infinite;
+}
+.edge-packet-reverse {
+  stroke: #3B6D3D;
+  stroke-dasharray: 5;
+  animation: edge-progress 3s linear infinite reverse;
+}
+@keyframes edge-progress {
+  to {
+    stroke-dashoffset: 100;
+  }
+}
+</style>
+<script>
+//   _            _  __      _  _
+//  |_ |\ | |\/| |_ (_  |_| |_ | \
+//  |_ | \| |  | |_ __) | | |_ |_/
+//
+// Domains: gilgamesh.network
+// Packet.path = [];
+//   Loop detection
+// Packet.hops -> graph.hops
+// Attack type: offline, misroute, slowdown (MTU?), reconfigure,
+//  rewrite(header/flags)
+// Node auto-healing after attacks (especially offline)
+//  TTL inversely proprotionate to number of deployed attacks
+// Packet.speed: size / ticks
+// Packet.ttl (in ticks)
+// graph.average_distance
+// graph.average_size
+// interface number (eth0) for node connections with state
+//  interface reliability, tx_load, rx_load (queue strategy)
+// Packet dropping, post routing filter
+// Fake Protocol and header contents (MESH/Gilgamesh)
+//  Checksum, Version, Flags (Urgent)
+// Text compression for game text
+// Dynamic prefix based className instead of classList
+// Graphs for network stability
+// Game list as configuration options
+// Initial boot state (instead of node-packet)
+
+Math.rand = function(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
+Object.size = function(object) {
+  return Object.keys(object || {}).length;
+};
+
+function Edge(graph, edgeId, start, end) {
+  const self = this;
+
+  self.object = 'edge';
+  self.id = edgeId;
+  self.nodes = [
+    start, end
+  ];
+  self.start = {
+    x: start.pos.x,
+    y: start.pos.y
+  };
+  self.end = {
+    x: end.pos.x,
+    y: end.pos.y
+  };
+  self.length = graph.distance(start.pos, end.pos);
+
+  self.elements = {
+    empty: graph.svg.line(self.start.x, self.start.y, self.end.x, self.end.y, 'edge-empty'),
+    forward: graph.svg.line(self.start.x, self.start.y, self.end.x, self.end.y, 'edge-forward'),
+    reverse: graph.svg.line(self.start.x, self.start.y, self.end.x, self.end.y, 'edge-reverse')
+  };
+  self.elements.empty.onclick = function() {
+    console.log('%s <-> %s', start.address, end.address);
+  };
+
+  graph.edges.push(self);
+  graph.connections[edgeId] = self;
+
+  start.connections[end.id] = {
+    source: start,
+    node: end,
+    edge: self
+  };
+  end.connections[start.id] = {
+    source: end,
+    node: start,
+    edge: self
+  };
+
+  start.interfaces[edgeId] = {
+    name: 'mesh' + Object.size(start.interfaces),
+    rx: 0,
+    tx: 0,
+    dropped: 0
+  };
+
+  end.interfaces[edgeId] = {
+    name: 'mesh' + Object.size(end.interfaces),
+    rx: 0,
+    tx: 0,
+    dropped: 0
+  };
+
+  const packets = new Set();
+
+  self.packet = {};
+
+  self.packet.scan = function() {
+    if (packets.size) {
+      let forward = false;
+      let reverse = false;
+      packets.forEach(function(item) {
+        if (item.hop && item.hop.node === start) {
+          forward = true;
+        } else {
+          reverse = true;
+        }
+      });
+      self.elements.empty.classList.add('edge-packet-empty');
+      if (forward) {
+        self.elements.forward.classList.add('edge-packet-forward');
+      } else {
+        self.elements.forward.classList.remove('edge-packet-forward');
+      }
+      if (reverse) {
+        self.elements.reverse.classList.add('edge-packet-reverse');
+      } else {
+        self.elements.reverse.classList.remove('edge-packet-reverse');
+      }
+    } else {
+      self.elements.empty.classList.remove('edge-packet-empty');
+      self.elements.forward.classList.remove('edge-packet-forward');
+      self.elements.reverse.classList.remove('edge-packet-reverse');
+    }
+  };
+
+  self.packet.add = function(packet) {
+    packets.add(packet);
+    self.packet.scan();
+  };
+
+  self.packet.delete = function(packet) {
+    packets.delete(packet);
+    self.packet.scan();
+  };
+
+  return self;
+}
+
+function Node(graph) {
+  const self = this;
+
+  self.object = 'node';
+  self.graph = graph;
+
+  self.status = {
+    online: true,
+    rx: 0,
+    tx: 0
+  };
+
+  while (self.id === undefined || graph.positions[self.id] !== undefined) {
+    self.x = Math.rand(0, graph.width - 1);
+    self.y = Math.rand(0, graph.height - 1);
+
+    self.id = graph.id(self.x, self.y);
+  }
+  graph.positions[self.id] = self;
+
+  self.pos = {
+    x: (self.x * graph.scale) + (graph.scale / 2) + Math.rand(-2, 2),
+    y: (self.y * graph.scale) + (graph.scale / 2) + Math.rand(-2, 2)
+  };
+
+  while (self.address === undefined || graph.addresses[self.address] !== undefined) {
+    self.address = Math.rand(1, 254) + '.' + Math.rand(0, 254) + '.' + Math.rand(0, 254) + '.' + Math.rand(1, 254);
+  }
+  graph.addresses[self.address] = self;
+
+  self.connections = {};
+  self.interfaces = {};
+
+  self.search = function(range) {
+    const neighbors = [];
+    for (let y = self.y - range; y <= (self.y + range); y++) {
+      for (let x = self.x - range; x <= (self.x + range); x++) {
+        const neighbor = graph.coords(x, y);
+        if (neighbor && neighbor.id !== self.id) {
+          neighbors.push(neighbor);
+        }
+      }
+    }
+    return neighbors;
+  };
+
+  self.connect = function() {
+    for (let range = graph.range; Object.size(self.connections) < graph.minimum; range++) {
+      self.search(range).forEach(function(neighbor) {
+        const edgeId = [ self.id, neighbor.id ].sort().join('-');
+        if (!graph.connections[edgeId]) {
+          new Edge(graph, edgeId, self, neighbor);
+        }
+      });
+    }
+  };
+
+  self.createElement = function() {
+    self.element = graph.svg.circle(self.pos.x, self.pos.y, graph.scale / 4);
+    self.element.onclick = function() {
+      self.status.online = !self.status.online;
+      self.element.classList.toggle('node-offline');
+      console.log('%s RX: %s TX: %s', self.address, self.status.rx, self.status.tx);
+    };
+    self.element.onmouseover = function() {
+      const color = (self.status.online) ? '#5691DC' : '#D34E53';
+      let info = self.address + '<span style="color:' + color + '"> &#9679;</span>\n  interfaces:\n    ';
+      let count = 0;
+      for (const interfaceId in self.interfaces) {
+        const interface = self.interfaces[interfaceId];
+        if (count && !(count > 1 && count % 6 === 1)) {
+          info += '  |  ';
+        }
+        info += interface.name + ' - RX: ' + interface.rx + ' TX: ' + interface.tx;
+        if (count && count % 6 === 0) {
+          info += '\n    ';
+        }
+        count++;
+      }
+      graph.elements.console.innerHTML = info;
+    };
+    self.element.onmouseout = function() {
+      graph.elements.console.innerHTML = '';
+    };
+  };
+
+  const packets = new Set();
+
+  self.packet = {};
+  self.packet.add = function(packet) {
+    packets.add(packet);
+    self.status.rx++;
+    if (packets.size) {
+      self.element.classList.add('node-packet');
+    }
+  };
+
+  self.packet.delete = function(packet) {
+    packets.delete(packet);
+    self.status.tx++;
+    if (!packets.size) {
+      self.element.classList.remove('node-packet');
+    }
+  };
+
+  return self;
+}
+
+function Packet(graph, source, destination) {
+  const self = this;
+
+  self.graph = graph;
+  self.source = source;
+  self.destination = destination;
+  while (self.destination === undefined || self.destination === self.source) {
+    self.destination = graph.nodes[Math.rand(0, graph.nodes.length - 1)];
+  }
+
+  self.size = Math.pow(2, Math.rand(7, 12));
+
+  self.path = [];
+
+  self.current = source;
+  source.packet.add(self);
+
+  self.route = function() {
+    if (self.current.object === 'edge' && self.hop) {
+      if (self.hop.count) {
+        self.hop.count--;
+      } else {
+        self.hop.node.interfaces[self.hop.edge.id].rx++;
+        self.hop.edge.packet.delete(self);
+        self.current = self.hop.node;
+        self.hop.node.packet.add(self);
+        self.hop = null;
+      }
+      return;
+    }
+
+    if (self.path.length >= graph.maxHops) {
+      self.dropped = true;
+      self.current.packet.delete(self);
+      return;
+    }
+
+    if (self.current === self.destination) {
+      self.destination = self.source;
+      self.source = self.current;
+      graph.statistics.report.hops(self.path.length);
+      self.path = [];
+      return;
+    }
+
+    self.hop = null;
+    for (const id in self.current.connections) {
+      const connection = self.current.connections[id];
+      if (!connection.node.status.online) {
+        continue;
+      } else if (connection.node === self.destination) {
+        self.hop = connection;
+        break;
+      } else if (self.hop === null || (graph.distance(connection.node, self.destination) <
+        graph.distance(self.hop.node, self.destination) && !self.path.slice(self.path.length -
+          graph.minimum).includes(connection.node.address))) {
+        self.hop = connection;
+      }
+    }
+
+    if (self.hop) {
+      self.current.packet.delete(self);
+      if (self.path.includes(self.hop.node.address)) {
+        self.dropped = true;
+        console.log('unroutable drop');
+        return;
+      }
+      self.current.interfaces[self.hop.edge.id].tx++;
+      self.hop.count = Math.ceil(graph.distance(self.current, self.hop.node));
+      self.current = self.hop.edge;
+      self.hop.edge.packet.add(self);
+      self.path.push(self.hop.node.address);
+    } else {
+      self.dropped = true;
+      self.current.packet.delete(self);
+    }
+  };
+
+  return self;
+}
+
+function Graph({
+  width, height, size, factor, scale, range, minimum, interval, complexity
+}) {
+  const self = this;
+
+  /////////
+
+  self.width = width || size;
+  self.height = height || size;
+
+  self.factor = factor || 0.25;
+  self.scale = scale || 10;
+  self.range = range || 3;
+  self.minimum = minimum || 3;
+
+  self.interval = interval || 500;
+
+  self.complexity = complexity || 2;
+
+  //////////
+
+  self.addresses = {};
+
+  self.positions = {};
+  self.nodes = [];
+
+  self.connections = {};
+  self.edges = [];
+
+  //////////
+
+  self.statistics = {
+    hops: [],
+    dropped: 0,
+    average: {
+      hops: 0,
+      size: 0,
+      ticks: 0
+    },
+    report: {
+      hops: function(hops) {
+        if (self.statistics.hops.length > 999) {
+          self.statistics.hops.shift();
+        }
+        self.statistics.hops.push(hops);
+        self.statistics.average.hops = self.statistics.hops.reduce(function(a, b) {
+          return a + b;
+        }) / self.statistics.hops.length;
+      }
+    }
+  };
+
+  //////////
+
+  self.id = function(x, y) {
+    return x.toString().padStart(self.scope, '0') + '.' + y.toString().padStart(self.scope, '0');
+  };
+
+  self.coords = function(x, y) {
+    const id = self.id(x, y);
+    return self.positions[id];
+  };
+
+  self.distance = function(a, b) {
+    return Math.sqrt(Math.pow(b.x - a.x, 2) + Math.pow(b.y - a.y, 2));
+  };
+
+  self.clearElement = function(element) {
+    while (element.firstChild) {
+      element.removeChild(element.firstChild);
+    }
+  };
+
+  //////////
+
+  function createSvgNode(name, attributes) {
+    const element = document.createElementNS('http://www.w3.org/2000/svg', name);
+    for (const key in attributes) {
+      element.setAttributeNS(null, key.replace(/[A-Z]/g, function(match) {
+        return '-' + match.toLowerCase();
+      }), attributes[key]);
+    }
+    return element;
+  }
+
+  function initSvg(element) {
+    const svg = document.getElementById(element || 'graph');
+
+    svg.style.width = (self.width * self.scale) + 'px';
+    svg.style.height = (self.height * self.scale) + 'px';
+
+    self.clearElement(svg);
+
+    svg.add = function(name, attributes) {
+      const node = createSvgNode(name, attributes);
+      svg.appendChild(node);
+      return node;
+    };
+
+    svg.circle = function(x, y, radius, className) {
+      const attributes = {
+        cx: x,
+        cy: y,
+        r: radius,
+        class: className || 'node'
+      };
+      return svg.add('circle', attributes);
+    };
+
+    svg.line = function(x1, y1, x2, y2, className) {
+      const attributes = {
+        x1: x1,
+        y1: y1,
+        x2: x2,
+        y2: y2,
+        class: className || 'edge'
+      };
+      return svg.add('line', attributes);
+    };
+    return svg;
+  }
+
+  self.svg = initSvg();
+
+  //////////
+
+  self.elements = {
+    console: document.getElementById('console'),
+    health: document.getElementById('health')
+  };
+  self.clearElement(self.elements.console);
+
+  //////////
+
+  self.count = Math.floor(self.width * self.height * self.factor);
+  self.scope = Math.ceil(self.count % 10);
+  self.maxHops = Math.ceil(self.count / Math.pow(self.minimum, 3));
+
+  for (let i = 0; i < self.count; i++) {
+    self.nodes.push(new Node(self));
+  }
+
+  self.nodes.forEach(function(node) {
+    node.connect();
+  });
+
+  for (let i = 0; i < self.count; i++) {
+    self.nodes[i].createElement();
+  }
+
+  /////////
+
+  self.packets = [];
+  for (let c = 0; c < self.complexity; c++) {
+    for (let i = 0; i < self.count; i++) {
+      self.packets.push(new Packet(self, self.nodes[i]));
+    }
+  }
+
+  self.router = setInterval(function() {
+    for (let i = 0; i < self.packets.length; i++) {
+      self.packets[i].route();
+    }
+    self.packets = self.packets.filter(function(packet) {
+      if (packet.dropped) {
+        self.statistics.dropped++;
+        return false;
+      }
+      return packet;
+    });
+
+    const health = Math.round(self.packets.length / (self.count * self.complexity) * 100);
+    self.elements.health.innerHTML = health + '%';
+  }, self.interval);
+
+  /////////
+
+  return self;
+}
+
+window.Graph = Graph;
+
+function eventWindowLoaded() {
+  window.graph = new Graph({
+    width: 90,
+    height: 50
+  });
+}
+window.addEventListener('load', eventWindowLoaded, false);
+</script>
+  </head>
+  <body>
+<div class="display">
+  <div class="screen">
+    <div class="title">GILGAMESH NETWORK SYSTEMS v1.0</div>
+    <div class="health">
+      Network Health: <span id="health">100%</span>
+    </div>
+    <svg id="graph" class="graph"></svg>
+    <pre id="console"></pre>
+  </div>
+  <div id="offline" class="offline noise hidden">
+    <div class="offline-text">OFFLINE</div>
+  </div>
+  <div class="brand">
+    MarkBook Pro
+  </div>
+</div>
+<div class="base"></div>
+  </body>
+</html>
