@@ -55,34 +55,38 @@ body {
 .hidden {
   display: none;
 }
-.noise {
-  position: relative;
-  z-index: 1;
-}
-.noise:before {
-  content:"";
-  position: absolute;
-  z-index: -1;
-  top:0;
-  bottom:0;
-  left:0;
-  right:0;
-  opacity: 0.25;
-  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAABmJLR0QAcgByAHKTL6T+AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4ggWETYgfcwrUQAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAACKSURBVDjL5ZQxDkMhCEBRv0r8yx89ohftUXqBxqFa4XcF5g5NZHtAIHkhuNbaA0TMOW/JOeciuZTylJxSUnUPP47/H3gAwCUTIYRlerJxfBqnuLtDZkZzd2/JMcYp2Tmn+nvv5+4OiWiYu1LOxhiKETFJJiLe3WGt9aU2eP8xjtS/Y+ZD8lprd4dfHkosyYWYnMgAAAAASUVORK5CYII=);
-}
 .offline {
   position: absolute;
-  top: 10px;
+  top: -2px;
   left: 10px;
   width: 960px;
-  height: 600px;
-  padding: 4px;
+  height: 606px;
+  padding: 8px;
   z-index: 10;
+  overflow: hidden;
+}
+.crash {
+  color: white;
+  letter-spacing: 3px;
+  line-spacing: 18px;
+  word-break: break-all;
+  white-space: pre-wrap;
+  opacity: 0.7;
+  z-index: 10;
+}
+.crash:before {
+  content: '';
+  position: absolute;
+  top: 250px;
+  left: 230px;
+  background-color: rgba(255,0,0,0.3);
+  width: 550px;
+  height: 125px;
 }
 .offline-text {
   position: absolute;
   display: inline-block;
-  border: 8px solid red;
+  border: 8px solid rgba(255,0,0,0.5);
   border-radius: 10px;
   font-size: 60px;
   font-weight: 700;
@@ -133,6 +137,7 @@ body {
   background-image: -webkit-linear-gradient(left, #094781 0%, #181818 40%);
   border-radius: 5px;
   padding: 4px;
+  z-index: 1;
 }
 .graph {
   position: relative;
@@ -144,6 +149,7 @@ body {
   position: absolute;
   top: 12px;
   right: 12px;
+  z-index: 1;
 }
 .node {
   fill: #5691DC;
@@ -650,9 +656,27 @@ function Graph({
 
   self.elements = {
     console: document.getElementById('console'),
-    health: document.getElementById('health')
+    health: document.getElementById('health'),
+    crash: document.getElementById('crash')
   };
   self.clearElement(self.elements.console);
+
+  //////////
+
+  const crashSymbols = '01012345678901XABCDEF   GGGG'.split('').map(function(x) {
+    if (x === ' ') {
+      x = ' '.repeat(5, 25);
+    } else if (x === 'G') {
+      x = '&#xFFFD'.repeat(2, 5);
+    }
+    return x;
+  });
+
+  let crashText = '';
+  for (let o = 0; o < 3000; o++) {
+    crashText += crashSymbols[Math.rand(0, crashSymbols.length - 1)];
+  }
+  self.elements.crash.innerHTML += crashText;
 
   //////////
 
@@ -723,7 +747,8 @@ window.addEventListener('load', eventWindowLoaded, false);
     <svg id="graph" class="graph"></svg>
     <pre id="console"></pre>
   </div>
-  <div id="offline" class="offline noise hidden">
+  <div id="offline" class="offline hidden">
+    <pre id="crash" class="crash"></pre>
     <div class="offline-text">OFFLINE</div>
   </div>
   <div class="brand">
