@@ -43,7 +43,7 @@ try {
 
 const newScript = fs.readFileSync(BUILD_DIR + '/index.js').toString();
 if (newScript !== script) {
-  console.log('Updating index.html with linted JavaScript...');
+  console.log('  Updating index.html with linted JavaScript.');
   fs.writeFileSync(INDEX_HTML, html.replace('__SCRIPT__', newScript));
 }
 console.log();
@@ -67,7 +67,7 @@ html = html.replace(/<style>([^]+)<\/style>/, function (match, p1) {
 });
 
 console.log('Minifying CSS...');
-const minStyle = style.replace(/:\s+/g, ':');
+const minStyle = style.replace(/:\s+/g, ':').replace(/,\s+/g, ',').split(/\n+/).map(x => x.trim()).join('\n');
 fs.writeFileSync(BUILD_DIR + '/index.min.css', minStyle);
 console.log('  index.css (%s) -> index.min.css (%s)\n', bytes(style.length), bytes(minStyle.length));
 

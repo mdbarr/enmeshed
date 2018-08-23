@@ -9,12 +9,14 @@
   "private": false,
   "devDependencies": {
     "eslint": "^5.4.0",
+    "http-server": "^0.11.1",
     "mkdirp": "^0.5.1",
     "uglify-es": "^3.3.9"
   },
   "scripts": {
     "build": "./build.js",
     "lint": "eslint build.js",
+    "serve": "http-server ./",
     "test": "xdg-open ./dist/index.html"
   }
 }

@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en" ng-app="root">
+<html lang="en">
   <head>
     <meta charset="UTF-8">
     <title>Enmeshed</title>
-    <style>
+<style>
 * {
   font-family: monospace;
   box-sizing: border-box;
@@ -55,6 +55,33 @@ body {
 .hidden {
   display: none;
 }
+.crash {
+  position: absolute;
+  top: -4px;
+  left: 10px;
+  width: 960px;
+  height: 600px;
+  padding: 8px;
+  z-index: 5;
+  overflow: hidden;
+  color: white;
+  letter-spacing: 3px;
+  line-spacing: 18px;
+  word-break: break-all;
+  white-space: pre-wrap;
+  opacity: 0.5;
+  z-index: 10;
+  animation: crashing 0.5s ease-in-out;
+  animation-iteration-count: 1;
+}
+@keyframes crashing {
+  from {
+      height: 0;
+  }
+  to {
+      height: 95%;
+  }
+}
 .offline {
   position: absolute;
   top: -2px;
@@ -63,31 +90,12 @@ body {
   height: 606px;
   padding: 8px;
   z-index: 10;
-  overflow: hidden;
 }
-.crash {
-  color: white;
-  letter-spacing: 3px;
-  line-spacing: 18px;
-  word-break: break-all;
-  white-space: pre-wrap;
-  opacity: 0.7;
-  z-index: 10;
-}
-.crash:before {
-  content: '';
-  position: absolute;
-  top: 250px;
-  left: 230px;
-  background-color: rgba(255,0,0,0.3);
-  width: 550px;
-  height: 125px;
-}
-.offline-text {
+.offline-banner {
   position: absolute;
   display: inline-block;
   border: 8px solid rgba(255,0,0,0.5);
-  border-radius: 10px;
+  border-radius: 16px;
   font-size: 60px;
   font-weight: 700;
   padding: 20px 20px 20px 40px;
@@ -96,6 +104,16 @@ body {
   top: 50%;
   transform: translate(-50%, -50%);
   letter-spacing: 32px;
+}
+.offline-banner:before {
+  content: '';
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background-color: rgba(255,0,0,0.3);
+  width: 550px;
+  height: 125px;
+  z-index: -1;
 }
 .brand {
   position: absolute;
@@ -182,6 +200,9 @@ body {
 .edge:hover {
   stroke: black;
   stroke-width: 3px;
+}
+.edge-offline-empty {
+  stroke: rgba(211, 78, 83, 0.20);
 }
 .edge-packet-empty {
   stroke: transparent !important;
@@ -613,8 +634,8 @@ function Graph({
     return element;
   }
 
-  function initSvg(element) {
-    const svg = document.getElementById(element || 'graph');
+  function initSvg() {
+    const svg = document.getElementById('graph');
 
     svg.style.width = (self.width * self.scale) + 'px';
     svg.style.height = (self.height * self.scale) + 'px';
@@ -657,26 +678,10 @@ function Graph({
   self.elements = {
     console: document.getElementById('console'),
     health: document.getElementById('health'),
-    crash: document.getElementById('crash')
+    crash: document.getElementById('crash'),
+    offline: document.getElementById('offline')
   };
   self.clearElement(self.elements.console);
-
-  //////////
-
-  const crashSymbols = '01012345678901XABCDEF   GGGG'.split('').map(function(x) {
-    if (x === ' ') {
-      x = ' '.repeat(5, 25);
-    } else if (x === 'G') {
-      x = '&#xFFFD'.repeat(2, 5);
-    }
-    return x;
-  });
-
-  let crashText = '';
-  for (let o = 0; o < 3000; o++) {
-    crashText += crashSymbols[Math.rand(0, crashSymbols.length - 1)];
-  }
-  self.elements.crash.innerHTML += crashText;
 
   //////////
 
@@ -721,6 +726,70 @@ function Graph({
     self.elements.health.innerHTML = health + '%';
   }, self.interval);
 
+  //////////
+
+  self.crashed = false;
+
+  function crashNode(node) {
+    node.element.classList.remove('node-packet');
+    node.element.classList.add('node-offline');
+    for (const connection in node.connections) {
+      const edge = node.connections[connection].edge;
+      edge.elements.empty.classList.remove('edge-packet-empty');
+      edge.elements.empty.classList.add('edge-offline-empty');
+      edge.elements.forward.classList.remove('edge-packet-forward');
+      edge.elements.reverse.classList.remove('edge-packet-reverse');
+    }
+  }
+
+  self.crash = function() {
+    const crashSymbols = '01012345678901XABCDEF   GGGG'.split('').map(function(x) {
+      if (x === ' ') {
+        x = ' '.repeat(5, 25);
+      } else if (x === 'G') {
+        x = '&#xFFFD'.repeat(2, 5);
+      }
+      return x;
+    });
+
+    let crashText = '';
+    for (let o = 0; o < 3000; o++) {
+      crashText += crashSymbols[Math.rand(0, crashSymbols.length - 1)];
+    }
+
+    let progress = 0;
+
+    const step1 = Math.floor(self.nodes.length / 3);
+    const step2 = step1 * 2;
+    const step3 = self.nodes.length;
+
+    self.crashing = setInterval(function() {
+      if (progress === 0) {
+        clearInterval(self.router);
+
+        for (let i = 0; i < step1; i++) {
+          crashNode(self.nodes[i]);
+        }
+      } else if (progress === 1) {
+        for (let i = step1; i < step2; i++) {
+          crashNode(self.nodes[i]);
+        }
+      } else if (progress === 2) {
+        for (let i = step2; i < step3; i++) {
+          crashNode(self.nodes[i]);
+        }
+      } else if (progress === 3) {
+        self.elements.crash.innerHTML += crashText;
+        self.elements.crash.classList.remove('hidden');
+      } else if (progress === 4) {
+        self.crashing = clearInterval(self.crashing);
+        self.elements.offline.classList.remove('hidden');
+        self.crashed = true;
+      }
+      progress++;
+    }, self.interval);
+  };
+
   /////////
 
   return self;
@@ -730,31 +799,29 @@ window.Graph = Graph;
 
 function eventWindowLoaded() {
   window.graph = new Graph({
-    width: 90,
-    height: 50
+    width: 20,
+    height: 20,
+    scale: 25
+
   });
 }
 window.addEventListener('load', eventWindowLoaded, false);
 </script>
   </head>
   <body>
-<div class="display">
-  <div class="screen">
-    <div class="title">GILGAMESH NETWORK SYSTEMS v1.0</div>
-    <div class="health">
-      Network Health: <span id="health">100%</span>
+    <div class="display">
+      <div class="screen">
+        <div class="title">GILGAMESH NETWORK SYSTEMS v1.0</div>
+        <div class="health">Network Health: <span id="health">100%</span></div>
+        <svg id="graph" class="graph"></svg>
+        <pre id="console"></pre>
+      </div>
+      <pre id="crash" class="crash hidden"></pre>
+      <div id="offline" class="offline hidden">
+        <div class="offline-banner">OFFLINE</div>
+      </div>
+      <div class="brand">MarkBook Pro</div>
     </div>
-    <svg id="graph" class="graph"></svg>
-    <pre id="console"></pre>
-  </div>
-  <div id="offline" class="offline hidden">
-    <pre id="crash" class="crash"></pre>
-    <div class="offline-text">OFFLINE</div>
-  </div>
-  <div class="brand">
-    MarkBook Pro
-  </div>
-</div>
-<div class="base"></div>
+    <div class="base"></div>
   </body>
 </html>
