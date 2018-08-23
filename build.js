@@ -52,7 +52,7 @@ console.log('Uglifying JavaScript...');
 try {
   child_process.execSync('./node_modules/.bin/uglifyjs --compress --mangle --rename --output ./build/index.min.js ./build/index.js');
 } catch (error) {
-  console.log('Uglify failed');
+  console.log('UglifyJS failed');
   process.exit(1);
 }
 const minScript = fs.readFileSync(BUILD_DIR + '/index.min.js').toString();
@@ -67,8 +67,14 @@ html = html.replace(/<style>([^]+)<\/style>/, function (match, p1) {
 });
 
 console.log('Minifying CSS...');
-const minStyle = style.replace(/:\s+/g, ':').replace(/,\s+/g, ',').split(/\n+/).map(x => x.trim()).join('\n');
-fs.writeFileSync(BUILD_DIR + '/index.min.css', minStyle);
+fs.writeFileSync(BUILD_DIR + '/index.css', style);
+try {
+  child_process.execSync('./node_modules/.bin/postcss ./build/index.css > ./build/index.min.css');
+} catch (error) {
+  console.log('PostCSS/CSSNano failed');
+  process.exit(1);
+}
+const minStyle = fs.readFileSync(BUILD_DIR + '/index.min.css').toString();
 console.log('  index.css (%s) -> index.min.css (%s)\n', bytes(style.length), bytes(minStyle.length));
 
 //////////

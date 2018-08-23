@@ -8,9 +8,12 @@
   "license": "MIT",
   "private": false,
   "devDependencies": {
+    "cssnano": "^4.0.5",
+    "cssnano-preset-advanced": "^4.0.0",
     "eslint": "^5.4.0",
     "http-server": "^0.11.1",
     "mkdirp": "^0.5.1",
+    "postcss-cli": "^6.0.0",
     "uglify-es": "^3.3.9"
   },
   "scripts": {
