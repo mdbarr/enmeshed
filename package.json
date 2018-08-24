@@ -19,7 +19,7 @@
   "scripts": {
     "build": "./build.js",
     "lint": "eslint build.js",
-    "serve": "http-server ./",
+    "serve": "http-server",
     "test": "xdg-open ./dist/index.html"
   }
 }

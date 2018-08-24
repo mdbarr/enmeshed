@@ -7,5 +7,6 @@ yarn install
 
 yarn build
 
-yarn test
+yarn serve -o
+
 ```
