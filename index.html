@@ -57,12 +57,11 @@ body {
 }
 .crash {
   position: absolute;
-  top: -4px;
+  top: 14px;
   left: 10px;
   width: 960px;
-  height: 598px;
+  height: 580px;
   padding: 8px;
-  z-index: 5;
   overflow: hidden;
   color: white;
   letter-spacing: 3px;
@@ -70,9 +69,7 @@ body {
   word-break: break-all;
   white-space: pre-wrap;
   opacity: 0.5;
-  z-index: 10;
-  animation: crashing 0.5s ease-in-out;
-  animation-iteration-count: 1;
+  animation: crashing 0.5s linear;
 }
 @keyframes crashing {
   from {
@@ -89,7 +86,7 @@ body {
   width: 960px;
   height: 606px;
   padding: 8px;
-  z-index: 10;
+  animation: offline-fade 0.3s;
 }
 .offline-banner {
   position: absolute;
@@ -114,6 +111,14 @@ body {
   width: 550px;
   height: 125px;
   z-index: -1;
+      }
+@keyframes offline-fade {
+  from {
+      opacity: 0;
+  }
+  to {
+      opacity: 1;
+  }
 }
 .brand {
   position: absolute;
@@ -154,8 +159,7 @@ body {
   letter-spacing: 3px;
   background-image: -webkit-linear-gradient(left, #094781 0%, #181818 40%);
   border-radius: 5px;
-  padding: 4px;
-  z-index: 1;
+  padding: 4px 0 4px 8px;
 }
 .mesh {
   position: relative;
@@ -167,7 +171,6 @@ body {
   position: absolute;
   top: 12px;
   right: 12px;
-  z-index: 1;
 }
 .node {
   fill: #5691DC;
@@ -374,11 +377,8 @@ function Node(mesh) {
   self.object = 'node';
   self.mesh = mesh;
 
-  self.status = {
-    online: true,
-    rx: 0,
-    tx: 0
-  };
+  self.online = true;
+  self.mtu = 512;
 
   while (self.id === undefined || mesh.positions[self.id] !== undefined) {
     self.x = Math.rand(0, mesh.width - 1);
@@ -428,12 +428,11 @@ function Node(mesh) {
   self.createElement = function() {
     self.element = mesh.svg.circle(self.pos.x, self.pos.y, mesh.scale / 4);
     self.element.onclick = function() {
-      self.status.online = !self.status.online;
+      self.online = !self.online;
       self.element.classList.toggle('node-offline');
-      console.log('%s RX: %s TX: %s', self.address, self.status.rx, self.status.tx);
     };
     self.element.onmouseover = function() {
-      const color = (self.status.online) ? '#5691DC' : '#D34E53';
+      const color = (self.online) ? '#5691DC' : '#D34E53';
       let info = self.address + '<span style="color:' + color + '"> &#9679;</span>\n  interfaces:\n    ';
       let count = 0;
       for (const interfaceId in self.interfaces) {
@@ -459,7 +458,6 @@ function Node(mesh) {
   self.packet = {};
   self.packet.add = function(packet) {
     packets.add(packet);
-    self.status.rx++;
     if (packets.size) {
       self.element.classList.add('node-packet');
     }
@@ -467,7 +465,6 @@ function Node(mesh) {
 
   self.packet.delete = function(packet) {
     packets.delete(packet);
-    self.status.tx++;
     if (!packets.size) {
       self.element.classList.remove('node-packet');
     }
@@ -548,8 +545,7 @@ function Packet(mesh, source, destination) {
       for (const id in current.connections) {
         const connection = current.connections[id];
         const neighbor = connection.node;
-        if (!neighbor.status.online ||
-            closedSet.has(neighbor)) {
+        if (!neighbor.online || closedSet.has(neighbor)) {
           continue;
         }
 
@@ -817,7 +813,7 @@ function Mesh({
   }
 
   self.crash = function() {
-    const crashSymbols = '01012345678901XABCDEFSSSSGGHHIJKLMM'.split('');
+    const crashSymbols = '01012345678901X[]\\/?{}ABCDEFSSSSGGHHIJKLMM'.split('');
     const crashTable = {
       S: [ 1, 14, ' ' ],
       G: [ 1, 3, '&#xFFFD;' ],
@@ -843,7 +839,7 @@ function Mesh({
     }
 
     let crashText = '';
-    for (length = 0; length < 2200;) {
+    for (length = 0; length < 2150;) {
       crashText += crashLookup(crashSymbols[Math.rand(0, crashSymbols.length - 1)]);
     }
 
@@ -871,7 +867,7 @@ function Mesh({
       } else if (state === 3) {
         self.elements.crash.innerHTML += crashText;
         self.elements.crash.classList.remove('hidden');
-      } else if (state === 5) { // small pause
+      } else if (state === 4) {
         self.crashing = clearInterval(self.crashing);
         self.elements.offline.classList.remove('hidden');
         self.elements.health.innerHTML = '&#x23FB;';
