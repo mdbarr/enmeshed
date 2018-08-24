@@ -157,7 +157,7 @@ body {
   padding: 4px;
   z-index: 1;
 }
-.graph {
+.mesh {
   position: relative;
   left: 50%;
   transform: translateX(-50%);
@@ -231,15 +231,15 @@ body {
 // Domains: gilgamesh.network
 // Packet.path = [];
 //   Loop detection
-// Packet.hops -> graph.hops
+// Packet.hops -> mesh.hops
 // Attack type: offline, misroute, slowdown (MTU?), reconfigure,
 //  rewrite(header/flags)
 // Node auto-healing after attacks (especially offline)
 //  TTL inversely proprotionate to number of deployed attacks
 // Packet.speed: size / ticks
 // Packet.ttl (in ticks)
-// graph.average_distance
-// graph.average_size
+// mesh.average_distance
+// mesh.average_size
 // interface number (eth0) for node connections with state
 //  interface reliability, tx_load, rx_load (queue strategy)
 // Packet dropping, post routing filter
@@ -247,7 +247,7 @@ body {
 //  Checksum, Version, Flags (Urgent)
 // Text compression for game text
 // Dynamic prefix based className instead of classList
-// Graphs for network stability
+// Meshs for network stability
 // Game list as configuration options
 // Initial boot state (instead of node-packet)
 
@@ -259,7 +259,15 @@ Object.size = function(object) {
   return Object.keys(object || {}).length;
 };
 
-function Edge(graph, edgeId, start, end) {
+Map.prototype.getValue = function(key) {
+  const value = this.get(key);
+  if (value === undefined) {
+    return Infinity;
+  }
+  return value;
+};
+
+function Edge(mesh, edgeId, start, end) {
   const self = this;
 
   self.object = 'edge';
@@ -275,19 +283,19 @@ function Edge(graph, edgeId, start, end) {
     x: end.pos.x,
     y: end.pos.y
   };
-  self.length = graph.distance(start.pos, end.pos);
+  self.length = mesh.distance(start.pos, end.pos);
 
   self.elements = {
-    empty: graph.svg.line(self.start.x, self.start.y, self.end.x, self.end.y, 'edge-empty'),
-    forward: graph.svg.line(self.start.x, self.start.y, self.end.x, self.end.y, 'edge-forward'),
-    reverse: graph.svg.line(self.start.x, self.start.y, self.end.x, self.end.y, 'edge-reverse')
+    empty: mesh.svg.line(self.start.x, self.start.y, self.end.x, self.end.y, 'edge-empty'),
+    forward: mesh.svg.line(self.start.x, self.start.y, self.end.x, self.end.y, 'edge-forward'),
+    reverse: mesh.svg.line(self.start.x, self.start.y, self.end.x, self.end.y, 'edge-reverse')
   };
   self.elements.empty.onclick = function() {
     console.log('%s <-> %s', start.address, end.address);
   };
 
-  graph.edges.push(self);
-  graph.connections[edgeId] = self;
+  mesh.edges.push(self);
+  mesh.connections[edgeId] = self;
 
   start.connections[end.id] = {
     source: start,
@@ -360,11 +368,11 @@ function Edge(graph, edgeId, start, end) {
   return self;
 }
 
-function Node(graph) {
+function Node(mesh) {
   const self = this;
 
   self.object = 'node';
-  self.graph = graph;
+  self.mesh = mesh;
 
   self.status = {
     online: true,
@@ -372,23 +380,23 @@ function Node(graph) {
     tx: 0
   };
 
-  while (self.id === undefined || graph.positions[self.id] !== undefined) {
-    self.x = Math.rand(0, graph.width - 1);
-    self.y = Math.rand(0, graph.height - 1);
+  while (self.id === undefined || mesh.positions[self.id] !== undefined) {
+    self.x = Math.rand(0, mesh.width - 1);
+    self.y = Math.rand(0, mesh.height - 1);
 
-    self.id = graph.id(self.x, self.y);
+    self.id = mesh.id(self.x, self.y);
   }
-  graph.positions[self.id] = self;
+  mesh.positions[self.id] = self;
 
   self.pos = {
-    x: (self.x * graph.scale) + (graph.scale / 2) + Math.rand(-2, 2),
-    y: (self.y * graph.scale) + (graph.scale / 2) + Math.rand(-2, 2)
+    x: (self.x * mesh.scale) + (mesh.scale / 2) + Math.rand(-2, 2),
+    y: (self.y * mesh.scale) + (mesh.scale / 2) + Math.rand(-2, 2)
   };
 
-  while (self.address === undefined || graph.addresses[self.address] !== undefined) {
+  while (self.address === undefined || mesh.addresses[self.address] !== undefined) {
     self.address = Math.rand(1, 254) + '.' + Math.rand(0, 254) + '.' + Math.rand(0, 254) + '.' + Math.rand(1, 254);
   }
-  graph.addresses[self.address] = self;
+  mesh.addresses[self.address] = self;
 
   self.connections = {};
   self.interfaces = {};
@@ -397,7 +405,7 @@ function Node(graph) {
     const neighbors = [];
     for (let y = self.y - range; y <= (self.y + range); y++) {
       for (let x = self.x - range; x <= (self.x + range); x++) {
-        const neighbor = graph.coords(x, y);
+        const neighbor = mesh.coords(x, y);
         if (neighbor && neighbor.id !== self.id) {
           neighbors.push(neighbor);
         }
@@ -407,18 +415,18 @@ function Node(graph) {
   };
 
   self.connect = function() {
-    for (let range = graph.range; Object.size(self.connections) < graph.minimum; range++) {
+    for (let range = mesh.range; Object.size(self.connections) < mesh.minimum; range++) {
       self.search(range).forEach(function(neighbor) {
         const edgeId = [ self.id, neighbor.id ].sort().join('-');
-        if (!graph.connections[edgeId]) {
-          new Edge(graph, edgeId, self, neighbor);
+        if (!mesh.connections[edgeId]) {
+          new Edge(mesh, edgeId, self, neighbor);
         }
       });
     }
   };
 
   self.createElement = function() {
-    self.element = graph.svg.circle(self.pos.x, self.pos.y, graph.scale / 4);
+    self.element = mesh.svg.circle(self.pos.x, self.pos.y, mesh.scale / 4);
     self.element.onclick = function() {
       self.status.online = !self.status.online;
       self.element.classList.toggle('node-offline');
@@ -439,10 +447,10 @@ function Node(graph) {
         }
         count++;
       }
-      graph.elements.console.innerHTML = info;
+      mesh.elements.console.innerHTML = info;
     };
     self.element.onmouseout = function() {
-      graph.elements.console.innerHTML = '';
+      mesh.elements.console.innerHTML = '';
     };
   };
 
@@ -468,15 +476,18 @@ function Node(graph) {
   return self;
 }
 
-function Packet(graph, source, destination) {
+function Packet(mesh, source, destination) {
   const self = this;
 
-  self.graph = graph;
+  self.mesh = mesh;
   self.source = source;
   self.destination = destination;
   while (self.destination === undefined || self.destination === self.source) {
-    self.destination = graph.nodes[Math.rand(0, graph.nodes.length - 1)];
+    self.destination = mesh.nodes[Math.rand(0, mesh.nodes.length - 1)];
   }
+
+  self.maxHops = Infinity;
+  self.maxTicks = Infinity;
 
   self.size = Math.pow(2, Math.rand(7, 12));
 
@@ -484,6 +495,78 @@ function Packet(graph, source, destination) {
 
   self.current = source;
   source.packet.add(self);
+
+  self.pathfinder = function(start, goal) {
+    const closedSet = new Set();
+    const openSet = new Set([ start ]);
+
+    const cameFrom = new Map();
+
+    const gScore = new Map();
+    gScore.set(start, 0);
+
+    const fScore = new Map();
+    fScore.set(start, mesh.distance(start.pos, goal.pos));
+
+    while (openSet.size) {
+      let current;
+      openSet.forEach(function(value, key) {
+        if (!current) {
+          current = key;
+        } else if (value < fScore.getValue(current)) {
+          current = key;
+        }
+      });
+
+      if (current === goal) {
+        const path = [ current ];
+        let i = 0;
+        while (i < 100 && cameFrom.has(current)) {
+          current = cameFrom.get(current);
+          path.push(current);
+          i++;
+        }
+
+        path.reverse();
+
+        if (self.maxHops === Infinity) {
+          self.maxHops = Math.ceil(path.length * mesh.maxHops);
+        }
+
+        for (const id in path[0].connections) {
+          const connection = path[0].connections[id];
+          if (connection.node === path[1]) {
+            return connection;
+          }
+        }
+        return false;
+      }
+
+      openSet.delete(current);
+      closedSet.add(current);
+
+      for (const id in current.connections) {
+        const connection = current.connections[id];
+        const neighbor = connection.node;
+        if (!neighbor.status.online ||
+            closedSet.has(neighbor)) {
+          continue;
+        }
+
+        const tgScore = gScore.getValue(current) + mesh.distance(current.pos, neighbor.pos);
+        if (!openSet.has(neighbor)) {
+          openSet.add(neighbor);
+        } else if (tgScore >= gScore.getValue(neighbor)) {
+          continue;
+        }
+
+        cameFrom.set(neighbor, current);
+        gScore.set(neighbor, tgScore);
+        fScore.set(neighbor, tgScore + mesh.distance(neighbor.pos, goal.pos));
+      }
+    }
+    return false;
+  };
 
   self.route = function() {
     if (self.current.object === 'edge' && self.hop) {
@@ -499,7 +582,8 @@ function Packet(graph, source, destination) {
       return;
     }
 
-    if (self.path.length >= graph.maxHops) {
+    if (self.path.length > self.maxHops) {
+      console.log('dropped - max hops exceeded', self.path.length, self.maxHops);
       self.dropped = true;
       self.current.packet.delete(self);
       return;
@@ -508,41 +592,24 @@ function Packet(graph, source, destination) {
     if (self.current === self.destination) {
       self.destination = self.source;
       self.source = self.current;
-      graph.statistics.report.hops(self.path.length);
+      mesh.statistics.report.hops(self.path.length);
       self.path = [];
       return;
     }
 
-    self.hop = null;
-    for (const id in self.current.connections) {
-      const connection = self.current.connections[id];
-      if (!connection.node.status.online) {
-        continue;
-      } else if (connection.node === self.destination) {
-        self.hop = connection;
-        break;
-      } else if (self.hop === null || (graph.distance(connection.node, self.destination) <
-        graph.distance(self.hop.node, self.destination) && !self.path.slice(self.path.length -
-          graph.minimum).includes(connection.node.address))) {
-        self.hop = connection;
-      }
-    }
+    self.hop = self.pathfinder(self.current, self.destination);
 
     if (self.hop) {
       self.current.packet.delete(self);
-      if (self.path.includes(self.hop.node.address)) {
-        self.dropped = true;
-        console.log('unroutable drop');
-        return;
-      }
       self.current.interfaces[self.hop.edge.id].tx++;
-      self.hop.count = Math.ceil(graph.distance(self.current, self.hop.node));
+      self.hop.count = Math.ceil(mesh.distance(self.current, self.hop.node));
       self.current = self.hop.edge;
       self.hop.edge.packet.add(self);
       self.path.push(self.hop.node.address);
     } else {
       self.dropped = true;
       self.current.packet.delete(self);
+      console.log('dropped - no route to host');
     }
   };
 
@@ -550,14 +617,14 @@ function Packet(graph, source, destination) {
 }
 
 function Mesh({
-  width, height, size, factor, scale, range, minimum, interval, complexity
+  width, height, size, factor, scale, range, minimum, interval, complexity, maxHops
 }) {
   const self = this;
 
   /////////
 
-  self.width = width || size;
-  self.height = height || size;
+  self.width = width || size || 20;
+  self.height = height || size || 20;
 
   self.factor = factor || 0.25;
   self.scale = scale || 10;
@@ -567,6 +634,8 @@ function Mesh({
   self.interval = interval || 500;
 
   self.complexity = complexity || 2;
+
+  self.maxHops = maxHops || 1.1;
 
   //////////
 
@@ -635,7 +704,7 @@ function Mesh({
   }
 
   function initSvg() {
-    const svg = document.getElementById('graph');
+    const svg = document.getElementById('mesh');
 
     svg.style.width = (self.width * self.scale) + 'px';
     svg.style.height = (self.height * self.scale) + 'px';
@@ -687,7 +756,6 @@ function Mesh({
 
   self.count = Math.floor(self.width * self.height * self.factor);
   self.scope = Math.ceil(self.count % 10);
-  self.maxHops = Math.ceil(self.count / Math.pow(self.minimum, 3));
 
   for (let i = 0; i < self.count; i++) {
     self.nodes.push(new Node(self));
@@ -711,6 +779,7 @@ function Mesh({
   }
 
   self.router = setInterval(function() {
+    //maxHonst start = Date.now();
     for (let i = 0; i < self.packets.length; i++) {
       self.packets[i].route();
     }
@@ -719,11 +788,16 @@ function Mesh({
         self.statistics.dropped++;
         return false;
       }
+      //console.log('Routing time', Date.now() - start);
       return packet;
     });
 
     const health = Math.round(self.packets.length / (self.count * self.complexity) * 100);
     self.elements.health.innerHTML = health + '%';
+
+    if (health < 50) {
+      self.crash();
+    }
   }, self.interval);
 
   //////////
@@ -828,7 +902,7 @@ window.addEventListener('load', function() {
       <div class="screen">
         <div class="title">GILGAMESH NETWORK VISUALIZER</div>
         <div class="health">Network Health: <span id="health">100%</span></div>
-        <svg id="graph" class="graph"></svg>
+        <svg id="mesh" class="mesh"></svg>
         <pre id="console"></pre>
       </div>
       <pre id="crash" class="crash hidden"></pre>
