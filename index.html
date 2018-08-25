@@ -3,230 +3,250 @@
   <head>
     <meta charset="UTF-8">
     <title>Enmeshed</title>
-<style>
-* {
-  font-family: monospace;
-  box-sizing: border-box;
-}
-body {
-  background-image: -webkit-radial-gradient(top, circle cover, #094781 0%, #07345E 80%) !important;
-  padding: 20px;
-  margin: 20px;
-}
-.display {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: #222;
-  border: 10px solid #222;
-  border-top:20px solid #222;
-  border-radius: 12px 12px 4px 4px;
-  box-shadow:0 0 0 1px #777;
-  width: 1000px;
-  height: 660px;
-}
-.display:before {
-  content:'';
-  position: absolute;
-  top: -11px;
-  left: 497px;
-  border: 6px solid #333;
-  border-radius: 10px;
-}
-.display:after {
-  content:'';
-  position: absolute;
-  top: -9px;
-  left: 499px;
-  border: 4px solid #2C2C2C;
-  border-radius: 10px;
-}
-.screen {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  background-color: #181818;
-  width: 960px;
-  height: 600px;
-  padding: 8px;
-  font-size: 8px;
-  color: white;
-}
-.hidden {
-  display: none;
-}
-.crash {
-  position: absolute;
-  top: 14px;
-  left: 10px;
-  width: 960px;
-  height: 580px;
-  padding: 8px;
-  overflow: hidden;
-  color: white;
-  letter-spacing: 3px;
-  line-height: 22px;
-  word-break: break-all;
-  white-space: pre-wrap;
-  opacity: 0.5;
-  animation: crashing 0.5s linear;
-}
-@keyframes crashing {
-  from {
-      height: 0;
-  }
-  to {
-      height: 95%;
-  }
-}
-.offline {
-  position: absolute;
-  top: -2px;
-  left: 10px;
-  width: 960px;
-  height: 606px;
-  padding: 8px;
-  animation: offline-fade 0.3s;
-}
-.offline-banner {
-  position: absolute;
-  display: inline-block;
-  border: 8px solid rgba(255,0,0,0.5);
-  border-radius: 16px;
-  font-size: 60px;
-  font-weight: 700;
-  padding: 20px 20px 20px 40px;
-  color: white;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  letter-spacing: 32px;
-}
-.offline-banner:before {
-  content: '';
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  background-color: rgba(255,0,0,0.3);
-  width: 550px;
-  height: 125px;
-  z-index: -1;
+    <style>
+    * {
+    font-family: monospace;
+    box-sizing: border-box;
+    }
+    body {
+      background-image: -webkit-radial-gradient(top, circle cover, #094781 0%, #07345E 80%) !important;
+      padding: 20px;
+      margin: 20px;
+    }
+    .display {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #222;
+      border: 10px solid #222;
+      border-top:20px solid #222;
+      border-radius: 12px 12px 4px 4px;
+      box-shadow:0 0 0 1px #777;
+      width: 1000px;
+      height: 660px;
+    }
+    .display:before {
+      content:'';
+      position: absolute;
+      top: -11px;
+      left: 497px;
+      border: 6px solid #333;
+      border-radius: 10px;
+    }
+    .display:after {
+      content:'';
+      position: absolute;
+      top: -9px;
+      left: 499px;
+      border: 4px solid #2C2C2C;
+      border-radius: 10px;
+    }
+    .screen {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background-color: #181818;
+      width: 960px;
+      height: 600px;
+      padding: 8px;
+      font-size: 8px;
+      color: white;
+    }
+    .hidden {
+      display: none !important;
+    }
+    .crash {
+      position: absolute;
+      top: 14px;
+      left: 10px;
+      width: 960px;
+      height: 580px;
+      padding: 8px;
+      overflow: hidden;
+      color: white;
+      letter-spacing: 3px;
+      line-height: 22px;
+      word-break: break-all;
+      white-space: pre-wrap;
+      opacity: 0.5;
+      animation: crashing 0.5s linear;
+    }
+    @keyframes crashing {
+      from {
+        height: 0;
       }
-@keyframes offline-fade {
-  from {
-      opacity: 0;
-  }
-  to {
-      opacity: 1;
-  }
-}
-.brand {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  top: 614px;
-  color: #333;
-  font-size: 14px;
-  font-family: sans-serif;
-  letter-spacing: 1px;
-}
-.base {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  top: 694px;
-  box-shadow: 1px 1px 10px 0px #333;
-  border-bottom: 3px solid #555;
-  border-radius: 0 0 20px 20px;
-  background: #999;
-  background-image: -webkit-linear-gradient(left, #555 0%, #777 50%, #555 100%);
-  width: 1160px;
-  height: 26px;
-}
-.base:before {
-  content:"";
-  display: block;
-  border-radius: 0 0 10px 10px;
-  height: 14px;
-  width: 180px;
-  left:50%;
-  position: absolute;
-  background:#999;
-  left: 50%;
-  transform: translateX(-50%);
-}
-.title {
-  letter-spacing: 3px;
-  background-image: -webkit-linear-gradient(left, #094781 0%, #181818 40%);
-  border-radius: 5px;
-  padding: 4px 0 4px 8px;
-}
-.mesh {
-  position: relative;
-  left: 50%;
-  transform: translateX(-50%);
-  margin: 8px 8px 0px 8px;
-}
-.health {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-}
-.node {
-  fill: #5691DC;
-}
-.node:hover {
-  stroke: #5691DC;
-  stroke-width: 7px;
-}
-.node-packet {
-  fill: #8BBF50;
-}
-.node-packet:hover {
-  stroke: #8BBF50 !important;
-}
-.node-offline {
-  fill: #D34E53 !important;
-}
-.node-offline:hover {
-  stroke: #D34E53 !important;
-}
-.edge-empty {
-  stroke: rgba(255, 255, 255, 0.20);
-}
-.edge-forward {
-  stroke: transparent;
-}
-.edge-reverse {
-  stroke: transparent;
-}
-.edge:hover {
-  stroke: black;
-  stroke-width: 3px;
-}
-.edge-offline-empty {
-  stroke: rgba(211, 78, 83, 0.20);
-}
-.edge-packet-empty {
-  stroke: transparent !important;
-}
-.edge-packet-forward {
-  stroke: #8BBF50;
-  stroke-dasharray: 5;
-  animation: edge-progress 3s linear infinite;
-}
-.edge-packet-reverse {
-  stroke: #3B6D3D;
-  stroke-dasharray: 5;
-  animation: edge-progress 3s linear infinite reverse;
-}
-@keyframes edge-progress {
-  to {
-    stroke-dashoffset: 100;
-  }
-}
-</style>
-<script>
+      to {
+        height: 95%;
+      }
+    }
+    .offline {
+      position: absolute;
+      top: -2px;
+      left: 10px;
+      width: 960px;
+      height: 606px;
+      padding: 8px;
+      animation: offline-fade 0.3s;
+    }
+    .offline-banner {
+      position: absolute;
+      display: inline-block;
+      border: 8px solid rgba(255,0,0,0.5);
+      border-radius: 16px;
+      font-size: 60px;
+      font-weight: 700;
+      padding: 20px 20px 20px 40px;
+      color: white;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      letter-spacing: 32px;
+    }
+    .offline-banner:before {
+      content: '';
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background-color: rgba(255,0,0,0.3);
+      width: 550px;
+      height: 125px;
+      z-index: -1;
+    }
+    @keyframes offline-fade {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+    .brand {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      top: 614px;
+      color: #333;
+      font-size: 14px;
+      font-family: sans-serif;
+      letter-spacing: 1px;
+    }
+    .base {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      top: 694px;
+      box-shadow: 1px 1px 10px 0px #333;
+      border-bottom: 3px solid #555;
+      border-radius: 0 0 20px 20px;
+      background: #999;
+      background-image: -webkit-linear-gradient(left, #555 0%, #777 50%, #555 100%);
+      width: 1160px;
+      height: 26px;
+    }
+    .base:before {
+      content:"";
+      display: block;
+      border-radius: 0 0 10px 10px;
+      height: 14px;
+      width: 180px;
+      left:50%;
+      position: absolute;
+      background:#999;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .title {
+      letter-spacing: 3px;
+      background-image: -webkit-linear-gradient(left, #094781 0%, #181818 40%);
+      border-radius: 5px;
+      padding: 4px 0 4px 8px;
+    }
+    .mesh {
+      position: relative;
+      left: 50%;
+      transform: translateX(-50%);
+      margin: 8px 8px 0px 8px;
+    }
+    .mesh-id {
+      position: absolute;
+      top: 12px;
+      left: 385px;
+      width: 200px;
+      text-align: center;
+    }
+    .mesh-underline {
+      padding-bottom: 2px;
+      border-bottom: 1px dashed #5691DC;
+    }
+    .spinner {
+      display: inline-block;
+      animation: spinner .8s ease infinite;
+    }
+    @keyframes spinner {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    .health {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+    }
+    .node {
+      fill: #5691DC;
+    }
+    .node:hover {
+      stroke: #5691DC;
+      stroke-width: 7px;
+    }
+    .node-packet {
+      fill: #8BBF50;
+    }
+    .node-packet:hover {
+      stroke: #8BBF50 !important;
+    }
+    .node-offline {
+      fill: #D34E53 !important;
+    }
+    .node-offline:hover {
+      stroke: #D34E53 !important;
+    }
+    .edge-empty {
+      stroke: rgba(255, 255, 255, 0.20);
+    }
+    .edge-forward {
+      stroke: transparent;
+    }
+    .edge-reverse {
+      stroke: transparent;
+    }
+    .edge:hover {
+      stroke: black;
+      stroke-width: 3px;
+    }
+    .edge-offline-empty {
+      stroke: rgba(211, 78, 83, 0.20);
+    }
+    .edge-packet-empty {
+      stroke: transparent !important;
+    }
+    .edge-packet-forward {
+      stroke: #8BBF50;
+      stroke-dasharray: 5;
+      animation: edge-progress 3s linear infinite;
+    }
+    .edge-packet-reverse {
+      stroke: #3B6D3D;
+      stroke-dasharray: 5;
+      animation: edge-progress 3s linear infinite reverse;
+    }
+    @keyframes edge-progress {
+      to {
+        stroke-dashoffset: 100;
+      }
+    }
+    </style>
+    <script>
 //   _            _  __      _  _
 //  |_ |\ | |\/| |_ (_  |_| |_ | \
 //  |_ | \| |  | |_ __) | | |_ |_/
@@ -312,14 +332,14 @@ function Edge(mesh, edgeId, start, end) {
   };
 
   start.interfaces[edgeId] = {
-    name: 'mesh' + Object.size(start.interfaces),
+    name: 'me' + Object.size(start.interfaces),
     rx: 0,
     tx: 0,
     dropped: 0
   };
 
   end.interfaces[edgeId] = {
-    name: 'mesh' + Object.size(end.interfaces),
+    name: 'me' + Object.size(end.interfaces),
     rx: 0,
     tx: 0,
     dropped: 0
@@ -375,7 +395,6 @@ function Node(mesh) {
   const self = this;
 
   self.object = 'node';
-  self.mesh = mesh;
 
   self.online = true;
   self.mtu = 512;
@@ -433,14 +452,16 @@ function Node(mesh) {
     };
     self.element.onmouseover = function() {
       const color = (self.online) ? '#5691DC' : '#D34E53';
-      let info = self.address + '<span style="color:' + color + '"> &#9679;</span>\n  interfaces:\n    ';
+      const symbol = (self.online) ? '25C9' : '25CE';
+      let info = self.address + '<span style="color:' + color + '"> &#x' + symbol + ';</span>\n  interfaces:\n    ';
       let count = 0;
       for (const interfaceId in self.interfaces) {
         const interface = self.interfaces[interfaceId];
         if (count && !(count > 1 && count % 6 === 1)) {
           info += '  |  ';
         }
-        info += interface.name + ' - RX: ' + interface.rx + ' TX: ' + interface.tx;
+        info += interface.name + ': &#x2944; ' + interface.rx + ' &#x2942; ' + interface.tx +
+          ' &#x21E3; ' + interface.dropped;
         if (count && count % 6 === 0) {
           info += '\n    ';
         }
@@ -476,7 +497,6 @@ function Node(mesh) {
 function Packet(mesh, source, destination) {
   const self = this;
 
-  self.mesh = mesh;
   self.source = source;
   self.destination = destination;
   while (self.destination === undefined || self.destination === self.source) {
@@ -613,7 +633,7 @@ function Packet(mesh, source, destination) {
 }
 
 function Mesh({
-  width, height, size, factor, scale, range, minimum, interval, complexity, maxHops
+  meshId, width, height, size, factor, scale, range, minimum, interval, complexity, maxHops, threshold
 }) {
   const self = this;
 
@@ -632,6 +652,8 @@ function Mesh({
   self.complexity = complexity || 2;
 
   self.maxHops = maxHops || 1.1;
+
+  self.threshold = threshold || 50;
 
   //////////
 
@@ -742,11 +764,15 @@ function Mesh({
 
   self.elements = {
     console: document.getElementById('console'),
-    health: document.getElementById('health'),
     crash: document.getElementById('crash'),
-    offline: document.getElementById('offline')
+    health: document.getElementById('health'),
+    meshId: document.getElementById('mesh-id'),
+    offline: document.getElementById('offline'),
+    spinner: document.getElementById('spinner')
   };
   self.clearElement(self.elements.console);
+
+  self.elements.meshId.innerHTML = meshId;
 
   //////////
 
@@ -775,7 +801,7 @@ function Mesh({
   }
 
   self.router = setInterval(function() {
-    //maxHonst start = Date.now();
+    //const start = Date.now();
     for (let i = 0; i < self.packets.length; i++) {
       self.packets[i].route();
     }
@@ -791,7 +817,7 @@ function Mesh({
     const health = Math.round(self.packets.length / (self.count * self.complexity) * 100);
     self.elements.health.innerHTML = health + '%';
 
-    if (health < 50) {
+    if (health < self.threshold) {
       self.crash();
     }
   }, self.interval);
@@ -870,6 +896,7 @@ function Mesh({
       } else if (state === 4) {
         self.crashing = clearInterval(self.crashing);
         self.elements.offline.classList.remove('hidden');
+        self.elements.spinner.classList.add('hidden');
         self.elements.health.innerHTML = '&#x23FB;';
         self.crashed = true;
       }
@@ -882,14 +909,24 @@ function Mesh({
   return self;
 }
 
-//////////
+function Enmeshed() {
+  const index = 0;
 
-window.addEventListener('load', function() {
-  window.mesh = new Mesh({
+  const games = [ {
+    meshId: 'fe23::91ff::5c34',
     width: 20,
     height: 20,
     scale: 25
-  });
+  } ];
+
+  const mesh = new Mesh(games[index]);
+  window.mesh = mesh;
+}
+
+//////////
+
+window.addEventListener('load', function() {
+  window.enmeshed = new Enmeshed();
 }, false);
 </script>
   </head>
@@ -897,6 +934,7 @@ window.addEventListener('load', function() {
     <div class="display">
       <div class="screen">
         <div class="title">GILGAMESH NETWORK VISUALIZER</div>
+        <div class="mesh-id"><div id="spinner" class="spinner">&#x169b;</div> mesh://<span id="mesh-id" class="mesh-underline"></span></div>
         <div class="health">Network Health: <span id="health">100%</span></div>
         <svg id="mesh" class="mesh"></svg>
         <pre id="console"></pre>
