@@ -56,7 +56,7 @@
       display: none !important;
     }
     .fade-out {
-      animation: fade-out 1s forwards;
+      animation: fade-out 0.5s forwards;
     }
     @keyframes fade-out {
       to {
@@ -272,8 +272,15 @@
     .node-offline:hover {
       stroke: #D34E53 !important;
     }
+    .edge-interact {
+      stroke: transparent;
+      stroke-width: 3px;
+    }
+    .edge-interact:hover {
+      stroke: rgba(153,153,153,0.3);
+    }
     .edge-empty {
-      stroke: rgba(255, 255, 255, 0.20);
+      stroke: rgba(255, 255, 255, 0.2);
     }
     .edge-forward {
       stroke: transparent;
@@ -281,12 +288,8 @@
     .edge-reverse {
       stroke: transparent;
     }
-    .edge:hover {
-      stroke: black;
-      stroke-width: 3px;
-    }
     .edge-offline-empty {
-      stroke: rgba(211, 78, 83, 0.20);
+      stroke: rgba(211, 78, 83, 0.2);
     }
     .edge-packet-empty {
       stroke: transparent !important;
@@ -370,14 +373,16 @@ function Edge(mesh, edgeId, start, end) {
     x: end.pos.x,
     y: end.pos.y
   };
-  self.length = mesh.distance(start.pos, end.pos);
+  self.ticks = Math.ceil(mesh.distance(start, end));
 
   self.elements = {
     empty: mesh.svg.line(self.start.x, self.start.y, self.end.x, self.end.y, 'edge-empty'),
     forward: mesh.svg.line(self.start.x, self.start.y, self.end.x, self.end.y, 'edge-forward'),
-    reverse: mesh.svg.line(self.start.x, self.start.y, self.end.x, self.end.y, 'edge-reverse')
+    reverse: mesh.svg.line(self.start.x, self.start.y, self.end.x, self.end.y, 'edge-reverse'),
+    interact: mesh.svg.line(self.start.x, self.start.y, self.end.x, self.end.y, 'edge-interact')
   };
-  self.elements.empty.onclick = function() {
+
+  self.elements.interact.onclick = function() {
     console.log('%s <-> %s', start.address, end.address);
   };
 
@@ -562,6 +567,7 @@ function Packet(mesh, source, destination) {
   const self = this;
 
   self.origin = self.source = source;
+
   self.destination = destination;
   while (self.destination === undefined || self.destination === self.source) {
     self.destination = mesh.nodes[Math.rand(0, mesh.nodes.length - 1)];
@@ -572,11 +578,19 @@ function Packet(mesh, source, destination) {
 
   self.size = Math.pow(2, Math.rand(7, 12));
 
+  self.calculateChecksum = function() {
+    return (self.size + Object.size(self.source.connections) +
+              Object.size(self.destination.connections)).toString(16).padStart(4, '0');
+  };
+  self.checksum = self.calculateChecksum();
+  console.log(self.checksum);
+
   self.path = [];
 
   self.current = source;
   source.packet.add(self);
 
+  // A* Search
   self.pathfinder = function(start, goal) {
     const closedSet = new Set();
     const openSet = new Set([ start ]);
@@ -601,17 +615,19 @@ function Packet(mesh, source, destination) {
 
       if (current === goal) {
         const path = [ current ];
-        let i = 0;
-        while (i < 100 && cameFrom.has(current)) {
+        let ticks = 0;
+        while (cameFrom.has(current)) {
+          const prev = current;
           current = cameFrom.get(current);
           path.push(current);
-          i++;
+          ticks += current.connections[prev.id].edge.ticks;
         }
 
         path.reverse();
 
         if (self.maxHops === Infinity) {
           self.maxHops = Math.ceil(path.length * mesh.maxHops);
+          self.maxTicks = Math.ceil(ticks * mesh.maxTTL);
         }
 
         for (const id in path[0].connections) {
@@ -650,8 +666,8 @@ function Packet(mesh, source, destination) {
 
   self.route = function() {
     if (self.current.object === 'edge' && self.hop) {
-      if (self.hop.count) {
-        self.hop.count--;
+      if (self.hop.ticks) {
+        self.hop.ticks--;
       } else {
         self.hop.node.interfaces[self.hop.edge.id].rx++;
         self.hop.edge.packet.delete(self);
@@ -682,7 +698,8 @@ function Packet(mesh, source, destination) {
     if (self.hop) {
       self.current.packet.delete(self);
       self.current.interfaces[self.hop.edge.id].tx++;
-      self.hop.count = Math.ceil(mesh.distance(self.current, self.hop.node));
+      self.hop.ticks = self.hop.edge.ticks;
+
       self.current = self.hop.edge;
       self.hop.edge.packet.add(self);
       self.path.push(self.hop.node.address);
@@ -697,7 +714,7 @@ function Packet(mesh, source, destination) {
 }
 
 function Mesh({
-  meshId, width, height, size, factor, scale, range, minimum, interval, complexity, maxHops, threshold
+  meshId, width, height, size, factor, scale, range, minimum, interval, complexity, maxHops, maxTTL, threshold
 }) {
   const self = this;
 
@@ -715,7 +732,8 @@ function Mesh({
 
   self.complexity = complexity || 2;
 
-  self.maxHops = maxHops || 1.1;
+  self.maxHops = maxHops || 1.2;
+  self.maxTTL = maxTTL || 1.5;
 
   self.threshold = threshold || 50;
 
@@ -839,7 +857,7 @@ function Mesh({
   self.clearElement(self.elements.console);
   self.elements.meshId.innerHTML = meshId;
 
-  self.action = null;
+  self.action = 'crash';;
 
   function toolSelect() {
     for (const type in self.elements.tools) {
@@ -857,6 +875,8 @@ function Mesh({
     self.elements.tools[type] = element;
     element.onclick = toolSelect;
   });
+
+  self.elements.tools.crash.classList.add('selected');
 
   //////////
 
