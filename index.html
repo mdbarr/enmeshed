@@ -55,6 +55,15 @@
     .hidden {
       display: none !important;
     }
+    .fade-out {
+      animation: fade-out 1s forwards;
+    }
+    @keyframes fade-out {
+      to {
+        opacity: 0;
+        pointer-events: none;
+      }
+    }
     .crash {
       position: absolute;
       top: 14px;
@@ -167,6 +176,9 @@
       transform: translateX(-50%);
       margin: 8px 8px 0px 8px;
     }
+    .mesh circle, .mesh line {
+      cursor: pointer;
+    }
     .mesh-id {
       position: absolute;
       top: 12px;
@@ -191,6 +203,55 @@
       position: absolute;
       top: 12px;
       right: 12px;
+    }
+    .toolbar {
+      position: absolute;
+      top: 28px;
+      left: 0px;
+      width: 32px;
+      height: 400px;
+      font-size: 28px;
+      line-height: 64px;
+      text-align: center;
+    }
+    [data-tool] {
+      border-left: 2px solid transparent;
+      cursor: pointer;
+    }
+    [data-tool="crash"]:hover, [data-tool="crash"].selected {
+      border-left: 2px solid #D34E53;
+    }
+    [data-tool="cut"]:hover, [data-tool="cut"].selected {
+      border-left: 2px solid rgba(211, 78, 83, 0.5);
+    }
+    [data-tool="slowdown"]:hover, [data-tool="slowdown"].selected {
+      border-left: 2px solid #D9AF3C;
+    }
+    [data-tool="checksum"] {
+      font-size: 20px;
+    }
+    [data-tool="checksum"]:hover, [data-tool="checksum"].selected {
+      border-left: 2px solid #535C8E;
+    }
+    [data-tool="reroute"]:hover, [data-tool="reroute"].selected {
+      border-left: 2px solid #9e379f;
+    }
+    [data-tool="trace"] {
+      font-size: 32px;
+    }
+    [data-tool="trace"]:hover, [data-tool="trace"].selected {
+      border-left: 2px solid #AE6126;
+    }
+    [data-tool="inspect"] {
+      font-size: 32px;
+      font-weight: 700;
+      transform: scale(1, -1);
+    }
+    [data-tool="inspect"]:hover, [data-tool="inspect"].selected {
+      border-left: 2px solid #94C5CC;
+    }
+    [data-tool="multiply"]:hover, [data-tool="multiply"].selected {
+      border-left: 2px solid #005b96;
     }
     .node {
       fill: #5691DC;
@@ -247,9 +308,12 @@
     }
     </style>
     <script>
-//   _            _  __      _  _
-//  |_ |\ | |\/| |_ (_  |_| |_ | \
-//  |_ | \| |  | |_ __) | | |_ |_/
+//
+//  _____   _   _   __  __   _____   ____    _   _   _____   ____
+// | ____| | \ | | |  \/  | | ____| / ___|  | | | | | ____| |  _ \
+// |  _|   |  \| | | |\/| | |  _|   \___ \  | |_| | |  _|   | | | |
+// | |___  | |\  | | |  | | | |___   ___) | |  _  | | |___  | |_| |
+// |_____| |_| \_| |_|  |_| |_____| |____/  |_| |_| |_____| |____/
 //
 // Domains: gilgamesh.network
 // Packet.path = [];
@@ -497,7 +561,7 @@ function Node(mesh) {
 function Packet(mesh, source, destination) {
   const self = this;
 
-  self.source = source;
+  self.origin = self.source = source;
   self.destination = destination;
   while (self.destination === undefined || self.destination === self.source) {
     self.destination = mesh.nodes[Math.rand(0, mesh.nodes.length - 1)];
@@ -768,11 +832,31 @@ function Mesh({
     health: document.getElementById('health'),
     meshId: document.getElementById('mesh-id'),
     offline: document.getElementById('offline'),
-    spinner: document.getElementById('spinner')
+    spinner: document.getElementById('spinner'),
+    toolbar: document.getElementById('toolbar'),
+    tools: {}
   };
   self.clearElement(self.elements.console);
-
   self.elements.meshId.innerHTML = meshId;
+
+  self.action = null;
+
+  function toolSelect() {
+    for (const type in self.elements.tools) {
+      if (self.elements.tools[type] === this) {
+        self.action = type;
+        self.elements.tools[type].classList.add('selected');
+      } else {
+        self.elements.tools[type].classList.remove('selected');
+      }
+    }
+  }
+
+  document.querySelectorAll('[data-tool]').forEach(function(element) {
+    const type = element.dataset.tool;
+    self.elements.tools[type] = element;
+    element.onclick = toolSelect;
+  });
 
   //////////
 
@@ -893,11 +977,12 @@ function Mesh({
       } else if (state === 3) {
         self.elements.crash.innerHTML += crashText;
         self.elements.crash.classList.remove('hidden');
+        self.elements.toolbar.classList.add('fade-out');
       } else if (state === 4) {
         self.crashing = clearInterval(self.crashing);
         self.elements.offline.classList.remove('hidden');
         self.elements.spinner.classList.add('hidden');
-        self.elements.health.innerHTML = '&#x23FB;';
+        self.elements.health.innerHTML = '&#x23FB;'; // 00D8
         self.crashed = true;
       }
       state++;
@@ -936,6 +1021,16 @@ window.addEventListener('load', function() {
         <div class="title">GILGAMESH NETWORK VISUALIZER</div>
         <div class="mesh-id"><div id="spinner" class="spinner">&#x169b;</div> mesh://<span id="mesh-id" class="mesh-underline"></span></div>
         <div class="health">Network Health: <span id="health">100%</span></div>
+        <div class="toolbar" id="toolbar">
+          <div data-tool="crash">&#x2349;</div>
+          <div data-tool="cut">&#x27DB;</div>
+          <div data-tool="slowdown">&#x29D6;</div>
+          <div data-tool="checksum">&#x2211;</div>
+          <div data-tool="reroute">&#x21AC;</div>
+          <div data-tool="trace">&#x27D0;</div>
+          <div data-tool="inspect">&#x260C;</div>
+          <div data-tool="multiply">&#x29C9;</div>
+        </div>
         <svg id="mesh" class="mesh"></svg>
         <pre id="console"></pre>
       </div>
