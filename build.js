@@ -95,7 +95,7 @@ process.chdir(DIST_DIR);
 child_process.execSync('zip enmeshed.zip index.html');
 
 const zipStat = fs.statSync('enmeshed.zip');
-console.log('  enmeshed.zip (%s)\n', bytes(zipStat.size));
+console.log('  enmeshed.zip (%s => %s%)\n', bytes(zipStat.size), 100 - Math.floor((zipStat.size / htmlStat.size) * 100));
 
 if (zipStat.size <= TARGET_SIZE) {
   console.log('Build succeeded! %s to spare!', bytes(TARGET_SIZE - zipStat.size));
