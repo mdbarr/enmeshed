@@ -18,8 +18,8 @@
   },
   "scripts": {
     "build": "./build.js",
-    "lint": "eslint build.js",
-    "serve": "http-server",
+    "lint": "eslint build.js serve.js",
+    "serve": "./serve.js",
     "test": "xdg-open ./dist/index.html"
   }
 }

@@ -12,6 +12,7 @@
       background-image: -webkit-radial-gradient(top, circle cover, #094781 0%, #07345E 80%) !important;
       padding: 20px;
       margin: 20px;
+      min-width: 1200px;
     }
     .display {
       position: absolute;
@@ -63,6 +64,14 @@
       font-size: 8px;
       color: white;
       overflow: hidden;
+    }
+    #info {
+      position: absolute;
+      width: 150px;
+      top: 20px;
+      right: 8px;
+      text-align: right;
+      font-size: 10px;
     }
     .hidden {
       display: none !important;
@@ -181,6 +190,12 @@
       background-image: -webkit-linear-gradient(left, #094781 0%, #181818 40%);
       border-radius: 5px;
       padding: 4px 0 4px 8px;
+    }
+    .banner {
+      background-image: -webkit-linear-gradient(left, #094781 0%, #181818 40%);
+      border-radius: 5px;
+      padding: 4px 0 4px 8px;
+      font-weight: 700;
     }
     .mesh {
       position: relative;
@@ -330,26 +345,17 @@
 // | |___  | |\  | | |  | | | |___   ___) | |  _  | | |___  | |_| |
 // |_____| |_| \_| |_|  |_| |_____| |____/  |_| |_| |_____| |____/
 //
-// Domains: gilgamesh.network
-// Packet.path = [];
-//   Loop detection
-// Packet.hops -> mesh.hops
 // Attack type: offline, misroute, slowdown (MTU?), reconfigure,
 //  rewrite(header/flags)
 // Node auto-healing after attacks (especially offline)
 //  TTL inversely proprotionate to number of deployed attacks
 // Packet.speed: size / ticks
 // Packet.ttl (in ticks)
-// mesh.average_distance
-// mesh.average_size
-// interface number (eth0) for node connections with state
-//  interface reliability, tx_load, rx_load (queue strategy)
-// Packet dropping, post routing filter
+// Interface reliability, tx_load, rx_load (queue strategy)
 // Fake Protocol and header contents (MESH/Gilgamesh)
 //  Checksum, Version, Flags (Urgent)
 // Text compression for game text
 // Dynamic prefix based className instead of classList
-// Meshs for network stability
 // Game list as configuration options
 // Initial boot state (instead of node-packet)
 
@@ -381,12 +387,12 @@ function generateIP() {
 
 //////////
 
-const dmesg = `Gilgamesh OS version 4.15.0-33-generic (buildd@lcy01-amd64-024) (gcc version 7.3.0 (Meshian 7.3.0-16meshian3)) #36-Meshian SMP Wed Aug 15 16:00:05 UTC 2018 (Meshian 4.15.0-33.36-generic 4.15.18)
-Command line: BOOT_IMAGE=/vmgilgamesh-4.15.0-33-generic root=/dev/mapper/mesh--vg-root ro
+const dmesg = `<div class="banner">Gilgamesh OS version 4.15.0-33-generic (build 2436)</div>
+Command line: BOOT_IMAGE=/gilgamesh-4.15.0-33-generic root=/dev/sda1  ro
 KERNEL supported cpus:
-  Intel GenuineIntel
-  AMD AuthenticAMD
-  Centaur CentaurHauls
+  Meshtel GenuineMeshtel
+  MDB AuthenticMDB
+  Griffin GriffinHauls
 m47/fpu: Supporting XSAVE feature 0x001: 'm87 floating point registers'
 m47/fpu: Supporting XSAVE feature 0x002: 'SSE registers'
 m47/fpu: Supporting XSAVE feature 0x004: 'AVX registers'
@@ -432,7 +438,7 @@ CPU0: Thermal monitoring enabled (TM1)
 process: using mwait in idle threads
 smp: Bringing up secondary CPUs ...
 m47: Booting SMP configuration:
-.... node  #0, CPUs:      #1 #2 #3
+	.... node  #0, CPUs:      #1 #2 #3
 smp: Brought up 1 node, 4 CPUs
 NET: Registered protocol family 16
 PCI host bridge to bus 0000:00
@@ -653,31 +659,29 @@ function Node(mesh) {
 
   self.createElement = function() {
     self.element = mesh.svg.circle(self.pos.x, self.pos.y, mesh.scale / 4);
+
     self.element.onclick = function() {
       self.online = !self.online;
       self.element.classList.toggle('node-offline');
     };
+
     self.element.onmouseover = function() {
       const color = (self.online) ? '#5691DC' : '#D34E53';
       const symbol = (self.online) ? '25C9' : '25CE';
-      let info = self.address + '<span style="color:' + color + '"> &#x' + symbol + ';</span>\n  interfaces:\n    ';
-      let count = 0;
+      let info = 'Node ' + self.address + '<span style="color:' + color + '"> &#x' + symbol + ';</span>\n\n';
+      info += 'Interfaces:'.padEnd(25, ' ') + '\n';
       for (const interfaceId in self.interfaces) {
         const interface = self.interfaces[interfaceId];
-        if (count && !(count > 1 && count % 6 === 1)) {
-          info += '  |  ';
-        }
-        info += interface.name + ': &#x2944; ' + interface.rx + ' &#x2942; ' + interface.tx +
-          ' &#x21E3; ' + interface.dropped;
-        if (count && count % 6 === 0) {
-          info += '\n    ';
-        }
-        count++;
+        info += interface.name.padEnd(4, ' ') + ': &#x2944; ' + (interface.rx + '').padStart(3, ' ') + ' &#x2942; ' +
+          (interface.tx + '').padStart(3, ' ') + ' &#x21E3; ' + (interface.dropped + '').padStart(2, ' ') + '\n';
       }
-      mesh.elements.console.innerHTML = info;
+      info += '\nRX &#x2944;, TX &#x2942;, DROPPED &#x21E3;';
+
+      mesh.elements.info.innerHTML = info;
     };
+
     self.element.onmouseout = function() {
-      mesh.elements.console.innerHTML = '';
+      mesh.elements.info.innerHTML = '';
     };
   };
 
@@ -723,6 +727,7 @@ function Packet(mesh, source, destination) {
   self.checksum = self.calculateChecksum();
 
   self.path = [];
+  self.ticks = 0;
 
   self.current = source;
   source.packet.add(self);
@@ -752,15 +757,22 @@ function Packet(mesh, source, destination) {
 
       if (current === goal) {
         const path = [ current ];
+        const edges = [];
         let ticks = 0;
         while (cameFrom.has(current)) {
           const prev = current;
           current = cameFrom.get(current);
           path.push(current);
+          edges.push(current.connections[prev.id].edge);
           ticks += current.connections[prev.id].edge.ticks;
         }
 
         path.reverse();
+        mesh.idealPaths[start.id + goal.id] = {
+          path,
+          edges
+        };
+        self.idealPath = path;
 
         if (self.maxHops === Infinity) {
           self.maxHops = Math.ceil(path.length * mesh.maxHops);
@@ -804,12 +816,21 @@ function Packet(mesh, source, destination) {
   self.route = function() {
     if (self.current.object === 'edge' && self.hop) {
       if (self.hop.ticks) {
+        if (self.ticks > self.maxTicks) {
+          console.log('dropped - TTL exceeded', self.ticks, self.maxTicks);
+          self.dropped = true;
+          self.current.packet.delete(self);
+          self.hop.source.interfaces[self.hop.edge.id].dropped++;
+          return;
+        }
         self.hop.ticks--;
+        self.ticks++;
       } else {
         self.hop.node.interfaces[self.hop.edge.id].rx++;
         self.hop.edge.packet.delete(self);
         self.current = self.hop.node;
         self.hop.node.packet.add(self);
+        self.cameFrom = self.hop;
         self.hop = null;
       }
       return;
@@ -819,18 +840,39 @@ function Packet(mesh, source, destination) {
       console.log('dropped - max hops exceeded', self.path.length, self.maxHops);
       self.dropped = true;
       self.current.packet.delete(self);
+      if (self.cameFrom) {
+        self.current.interfaces[self.cameFrom.edge.id].dropped++;
+      }
       return;
     }
 
     if (self.current === self.destination) {
       self.destination = self.source;
       self.source = self.current;
-      mesh.statistics.report.hops(self.path.length);
       self.path = [];
+      self.ticks = 0;
       return;
     }
 
-    self.hop = self.pathfinder(self.current, self.destination);
+    if (self.idealPath) {
+      const index = self.idealPath.indexOf(self.current);
+      if (index !== -1 && index < self.idealPath.length && self.idealPath[index + 1]) {
+        const next = self.idealPath[index + 1];
+        const hop = self.current.connections[next.id];
+
+        if (hop.node.online) {
+          self.hop = hop;
+        } else {
+          self.idealPath = null;
+        }
+      } else {
+        self.idealPath = null;
+      }
+    }
+
+    if (!self.hop) {
+      self.hop = self.pathfinder(self.current, self.destination);
+    }
 
     if (self.hop) {
       self.current.packet.delete(self);
@@ -844,6 +886,9 @@ function Packet(mesh, source, destination) {
       self.dropped = true;
       self.current.packet.delete(self);
       console.log('dropped - no route to host');
+      if (self.cameFrom) {
+        self.current.interfaces[self.cameFrom.edge.id].dropped++;
+      }
     }
   };
 
@@ -884,28 +929,7 @@ function Mesh({
   self.connections = {};
   self.edges = [];
 
-  //////////
-
-  self.statistics = {
-    hops: [],
-    dropped: 0,
-    average: {
-      hops: 0,
-      size: 0,
-      ticks: 0
-    },
-    report: {
-      hops: function(hops) {
-        if (self.statistics.hops.length > 999) {
-          self.statistics.hops.shift();
-        }
-        self.statistics.hops.push(hops);
-        self.statistics.average.hops = self.statistics.hops.reduce(function(a, b) {
-          return a + b;
-        }) / self.statistics.hops.length;
-      }
-    }
-  };
+  self.idealPaths = {};
 
   //////////
 
@@ -985,6 +1009,7 @@ function Mesh({
     console: document.getElementById('console'),
     crash: document.getElementById('crash'),
     health: document.getElementById('health'),
+    info: document.getElementById('info'),
     meshId: document.getElementById('mesh-id'),
     offline: document.getElementById('offline'),
     spinner: document.getElementById('spinner'),
@@ -992,9 +1017,10 @@ function Mesh({
     tools: {}
   };
   self.clearElement(self.elements.console);
+  self.clearElement(self.elements.info);
   self.elements.meshId.innerHTML = meshId;
 
-  self.action = 'crash';;
+  self.action = 'crash';
 
   function toolSelect() {
     for (const type in self.elements.tools) {
@@ -1047,13 +1073,9 @@ function Mesh({
       self.packets[i].route();
     }
     self.packets = self.packets.filter(function(packet) {
-      if (packet.dropped) {
-        self.statistics.dropped++;
-        return false;
-      }
-      //console.log('Routing time', Date.now() - start);
-      return packet;
+      return !packet.dropped;
     });
+    //console.log('Routing time', Date.now() - start);
 
     const health = Math.round(self.packets.length / (self.count * self.complexity) * 100);
     self.elements.health.innerHTML = health + '%';
@@ -1173,9 +1195,10 @@ function Enmeshed() {
         kernel = false;
       }
 
-      if (kernel) {
+      if (kernel && line[0] !== '<') {
         line = line.replace(/^([^ :]+):/, '<span style="color:#4b86b4">$1</span>:');
-        line = '<span style="color:#7fdb6a">[ ' + ((Date.now() - bootTime) / 1000).toFixed(6).padStart(10, ' ') + '] </span>' + line;
+        line = '<span style="color:#7fdb6a">[ ' + (((Date.now() - bootTime) / 1000) + (Math.rand(0, 1000) / 100000)).
+          toFixed(6).padStart(10, ' ') + '] </span>' + line;
       }
       line = line.replace(/__DATE/g, new Date()).
         replace(/__IP/g, generateIP);
@@ -1189,7 +1212,7 @@ function Enmeshed() {
       const mesh = new Mesh(games[index]);
       window.mesh = mesh;
     }
-  }, 25);
+  }, 50);
 }
 
 //////////
@@ -1215,6 +1238,7 @@ window.addEventListener('load', function() {
           <div data-tool="inspect">&#x260C;</div>
           <div data-tool="multiply">&#x29C9;</div>
         </div>
+        <pre id="info"></pre>
         <svg id="mesh" class="mesh"></svg>
         <pre id="console"></pre>
       </div>
