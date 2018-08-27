@@ -383,13 +383,8 @@
 // Game list as configuration options
 // Initial boot state (instead of node-packet)
 
-Math.rand = function(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-};
-
-Object.size = function(object) {
-  return Object.keys(object || {}).length;
-};
+const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+const size = (object) => Object.keys(object || {}).length;
 
 Map.prototype.getValue = function(key) {
   const value = this.get(key);
@@ -403,7 +398,7 @@ const IPs = {};
 function generateIP() {
   let address = null;
   while (address === null || IPs[address]) {
-    address = Math.rand(1, 254) + '.' + Math.rand(0, 254) + '.' + Math.rand(0, 254) + '.' + Math.rand(1, 254);
+    address = rand(1, 254) + '.' + rand(0, 254) + '.' + rand(0, 254) + '.' + rand(1, 254);
   }
   IPs[address] = true;
   return address;
@@ -572,7 +567,7 @@ function Edge(mesh, edgeId, start, end) {
     const color = (self.online) ? '#5691DC' : '#D34E53';
     const symbol = (self.online) ? '25C9' : '25CE';
     let info = 'Connection <span style="color:' + color + '"> &#x' + symbol + ';</span>\n\n';
-    info += start.address + ' &#x2510; \n' + end.address + ' &#x2518; ';
+    info += start.address + ' &#x2513; \n' + end.address + ' &#x251B2; ';
 
     mesh.elements.info.innerHTML = info;
   };
@@ -596,14 +591,14 @@ function Edge(mesh, edgeId, start, end) {
   };
 
   start.interfaces[edgeId] = {
-    name: 'me' + Object.size(start.interfaces),
+    name: 'me' + size(start.interfaces),
     rx: 0,
     tx: 0,
     dropped: 0
   };
 
   end.interfaces[edgeId] = {
-    name: 'me' + Object.size(end.interfaces),
+    name: 'me' + size(end.interfaces),
     rx: 0,
     tx: 0,
     dropped: 0
@@ -661,19 +656,19 @@ function Node(mesh) {
   self.object = 'node';
 
   self.online = true;
-  self.mtu = 512;
+  self.mtu = Math.pow(2, rand(9, 11));
 
   while (self.id === undefined || mesh.positions[self.id] !== undefined) {
-    self.x = Math.rand(0, mesh.width - 1);
-    self.y = Math.rand(0, mesh.height - 1);
+    self.x = rand(0, mesh.width - 1);
+    self.y = rand(0, mesh.height - 1);
 
     self.id = mesh.id(self.x, self.y);
   }
   mesh.positions[self.id] = self;
 
   self.pos = {
-    x: (self.x * mesh.scale) + (mesh.scale / 2) + Math.rand(-2, 2),
-    y: (self.y * mesh.scale) + (mesh.scale / 2) + Math.rand(-2, 2)
+    x: (self.x * mesh.scale) + (mesh.scale / 2) + rand(-2, 2),
+    y: (self.y * mesh.scale) + (mesh.scale / 2) + rand(-2, 2)
   };
 
   self.address = generateIP();
@@ -696,7 +691,7 @@ function Node(mesh) {
   };
 
   self.connect = function() {
-    for (let range = mesh.range; Object.size(self.connections) < mesh.minimum; range++) {
+    for (let range = mesh.range; size(self.connections) < mesh.minimum; range++) {
       self.search(range).forEach(function(neighbor) {
         const edgeId = [ self.id, neighbor.id ].sort().join('-');
         if (!mesh.connections[edgeId]) {
@@ -726,7 +721,7 @@ function Node(mesh) {
       const color = (self.online) ? '#5691DC' : '#D34E53';
       const symbol = (self.online) ? '25C9' : '25CE';
       let info = 'Node ' + self.address + '<span style="color:' + color + '"> &#x' + symbol + ';</span>\n\n';
-      info += 'Interfaces:'.padEnd(25, ' ') + '\n';
+      info += 'Interfaces (MTU ' + self.mtu + '):'.padEnd(25, ' ') + '\n';
       for (const interfaceId in self.interfaces) {
         const interface = self.interfaces[interfaceId];
         info += interface.name.padEnd(4, ' ') + ': &#x2944; ' + (interface.rx + '').padStart(3, ' ') + ' &#x2942; ' +
@@ -769,17 +764,17 @@ function Packet(mesh, source, destination) {
 
   self.destination = destination;
   while (self.destination === undefined || self.destination === self.source) {
-    self.destination = mesh.nodes[Math.rand(0, mesh.nodes.length - 1)];
+    self.destination = mesh.nodes[rand(0, mesh.nodes.length - 1)];
   }
 
   self.maxHops = Infinity;
   self.maxTicks = Infinity;
 
-  self.size = Math.pow(2, Math.rand(7, 12));
+  self.size = Math.pow(2, rand(7, 12));
 
   self.calculateChecksum = function() {
-    return (self.size + Object.size(self.source.connections) +
-              Object.size(self.destination.connections)).toString(16).padStart(4, '0');
+    return (self.size + size(self.source.connections) +
+              size(self.destination.connections)).toString(16).padStart(4, '0');
   };
   self.checksum = self.calculateChecksum();
 
@@ -974,14 +969,14 @@ function Packet(mesh, source, destination) {
 }
 
 function Mesh({
-  meshId, width, height, size, factor, scale, range, minimum, interval, complexity, maxHops, maxTTL, threshold
+  meshId, width, height, factor, scale, range, minimum, interval, complexity, maxHops, maxTTL, threshold
 }) {
   const self = this;
 
   /////////
 
-  self.width = width || size || 20;
-  self.height = height || size || 20;
+  self.width = width || 20;
+  self.height = height || 20;
 
   self.factor = factor || 0.25;
   self.scale = scale || 10;
@@ -1094,7 +1089,7 @@ function Mesh({
     toolbar: document.getElementById('toolbar'),
     tools: {}
   };
-  self.elements.console.innerHTML = '<div class="spinner">&#x2B82;</div> Connecting...';
+  self.elements.console.innerHTML = '<div class="spinner">&#x21C6;</div> Connecting...';
   self.clearElement(self.elements.info);
   self.elements.meshId.innerHTML = meshId;
 
@@ -1164,7 +1159,7 @@ function Mesh({
 
     if (!self.connected) {
       self.connected = true;
-      self.elements.console.innerHTML = '&#x2B7E; Connected!'; // Objective
+      self.elements.console.innerHTML = '&#x21B9; Connected!'; // Objective
     }
   }, self.interval);
 
@@ -1185,7 +1180,7 @@ function Mesh({
   }
 
   self.crash = function() {
-    const crashSymbols = '01012345678901X[]\\/?{}ABCDEFSSSSGGHHIJKLMM'.split('');
+    const crashSymbols = '01012345678901X[]\\/?{}ABCDEFSSSSGGHHIJKL'.split('');
     const crashTable = {
       S: [ 1, 14, ' ' ],
       G: [ 1, 3, '&#xFFFD;' ],
@@ -1193,15 +1188,14 @@ function Mesh({
       I: '&#x2400;',
       J: '&#x240D;',
       K: '&#x2421;',
-      L: '&#x2327;',
-      M: '&#x23FB;'
+      L: '&#x2327;'
     };
 
     let length = 0;
     function crashLookup(symbol) {
       symbol = crashTable[symbol] || symbol;
       if (Array.isArray(symbol)) {
-        const repeat = Math.rand(symbol[0], symbol[1]);
+        const repeat = rand(symbol[0], symbol[1]);
         length += repeat;
         return symbol[2].repeat(repeat);
       } else {
@@ -1212,7 +1206,7 @@ function Mesh({
 
     let crashText = '';
     for (length = 0; length < 2150;) {
-      crashText += crashLookup(crashSymbols[Math.rand(0, crashSymbols.length - 1)]);
+      crashText += crashLookup(crashSymbols[rand(0, crashSymbols.length - 1)]);
     }
 
     let state = 0;
@@ -1246,7 +1240,7 @@ function Mesh({
         self.elements.offline.classList.remove('hidden');
         self.elements.spinner.classList.add('hidden');
         self.svg.classList.add('blink');
-        self.elements.health.innerHTML = '&#x23FB;'; // 00D8
+        self.elements.health.innerHTML = 'offline';
         self.crashed = true;
       }
       state++;
@@ -1282,7 +1276,7 @@ function Enmeshed() {
 
       if (kernel && line[0] !== '<') {
         line = line.replace(/^([^ :]+):/, '<span style="color:#4b86b4">$1</span>:');
-        line = '<span style="color:#7fdb6a">[ ' + (((Date.now() - bootTime) / 1000) + (Math.rand(0, 1000) / 100000)).
+        line = '<span style="color:#7fdb6a">[ ' + (((Date.now() - bootTime) / 1000) + (rand(0, 1000) / 100000)).
           toFixed(6).padStart(10, ' ') + '] </span>' + line;
       }
       line = line.replace(/__DATE/g, new Date()).

@@ -3,6 +3,15 @@
 'use strict';
 const fs = require('fs');
 const child_process = require('child_process');
+try {
+  child_process.execSync('./build.js', {
+    stdio: 'inherit'
+  });
+  console.log();
+} catch (error) {
+  console.log(error);
+  process.exit(1);
+}
 
 require('http-server/bin/http-server');
 
