@@ -5,8 +5,9 @@
     <title>Enmeshed</title>
     <style>
     * {
-    font-family: monospace;
-    box-sizing: border-box;
+      font-family: monospace;
+      box-sizing: border-box;
+      user-select: none;
     }
     body {
       background-image: -webkit-radial-gradient(top, circle cover, #094781 0%, #07345E 80%) !important;
@@ -150,6 +151,15 @@
         opacity: 1;
       }
     }
+    #console {
+      position: absolute;
+      top: 530px;
+      height: 60px;
+      width: 944px;
+      overflow: hidden;
+      color: white;
+      font-size: 12px;
+    }
     .brand {
       position: absolute;
       left: 50%;
@@ -213,10 +223,6 @@
       width: 200px;
       text-align: center;
     }
-    .mesh-underline {
-      padding-bottom: 2px;
-      border-bottom: 1px dashed #5691DC;
-    }
     .spinner {
       display: inline-block;
       animation: spinner .8s ease infinite;
@@ -224,6 +230,14 @@
     @keyframes spinner {
       to {
         transform: rotate(360deg);
+      }
+    }
+    .blink {
+      animation: blink 2s ease-in-out infinite alternate
+    }
+    @keyframes blink {
+      to {
+        opacity: 0.6;
       }
     }
     .health {
@@ -238,12 +252,18 @@
       width: 32px;
       height: 400px;
       font-size: 28px;
-      line-height: 64px;
+      line-height: 42px;
       text-align: center;
     }
     [data-tool] {
+      padding-top: 8px;
       border-left: 2px solid transparent;
       cursor: pointer;
+    }
+    [data-tool] > div {
+      font-size: 8px;
+      line-height: 8px;
+      padding-bottom: 8px;
     }
     [data-tool="crash"]:hover, [data-tool="crash"].selected {
       border-left: 2px solid #D34E53;
@@ -272,13 +292,17 @@
     [data-tool="inspect"] {
       font-size: 32px;
       font-weight: 700;
-      transform: scale(1, -1);
     }
     [data-tool="inspect"]:hover, [data-tool="inspect"].selected {
       border-left: 2px solid #94C5CC;
     }
     [data-tool="multiply"]:hover, [data-tool="multiply"].selected {
       border-left: 2px solid #005b96;
+    }
+    .flip {
+      display: inline-block;
+      font-style: normal;
+      transform: scale(1, -1);
     }
     .node {
       fill: #5691DC;
@@ -316,7 +340,7 @@
       stroke: transparent;
     }
     .edge-offline-empty {
-      stroke: rgba(211, 78, 83, 0.2);
+      stroke: #D34E53;
     }
     .edge-packet-empty {
       stroke: transparent !important;
@@ -508,6 +532,9 @@ function Edge(mesh, edgeId, start, end) {
 
   self.object = 'edge';
   self.id = edgeId;
+
+  self.online = true;
+
   self.nodes = [
     start, end
   ];
@@ -529,7 +556,29 @@ function Edge(mesh, edgeId, start, end) {
   };
 
   self.elements.interact.onclick = function() {
-    console.log('%s <-> %s', start.address, end.address);
+    if (!self.effect) {
+      if (mesh.action === 'cut') {
+        self.online = false;
+        self.elements.empty.classList.add('edge-offline-empty');
+        self.effect = {
+          action: mesh.action,
+          timestamp: Date.now()
+        };
+      }
+    }
+  };
+
+  self.elements.interact.onmouseover = function() {
+    const color = (self.online) ? '#5691DC' : '#D34E53';
+    const symbol = (self.online) ? '25C9' : '25CE';
+    let info = 'Connection <span style="color:' + color + '"> &#x' + symbol + ';</span>\n\n';
+    info += start.address + ' &#x2510; \n' + end.address + ' &#x2518; ';
+
+    mesh.elements.info.innerHTML = info;
+  };
+
+  self.elements.interact.onmouseout = function() {
+    mesh.elements.info.innerHTML = '';
   };
 
   mesh.edges.push(self);
@@ -661,8 +710,16 @@ function Node(mesh) {
     self.element = mesh.svg.circle(self.pos.x, self.pos.y, mesh.scale / 4);
 
     self.element.onclick = function() {
-      self.online = !self.online;
-      self.element.classList.toggle('node-offline');
+      if (!self.effect) {
+        if (mesh.action === 'crash') {
+          self.online = false;
+          self.element.classList.add('node-offline');
+          self.effect = {
+            action: mesh.action,
+            timestamp: Date.now()
+          };
+        }
+      }
     };
 
     self.element.onmouseover = function() {
@@ -756,28 +813,37 @@ function Packet(mesh, source, destination) {
       });
 
       if (current === goal) {
-        const path = [ current ];
+        let path = [ goal ];
         const edges = [];
         let ticks = 0;
         while (cameFrom.has(current)) {
           const prev = current;
           current = cameFrom.get(current);
           path.push(current);
-          edges.push(current.connections[prev.id].edge);
-          ticks += current.connections[prev.id].edge.ticks;
-        }
 
-        path.reverse();
-        mesh.idealPaths[start.id + goal.id] = {
-          path,
-          edges
-        };
-        self.idealPath = path;
+          const edge = current.connections[prev.id].edge;
+          edges.push(edge);
+          ticks += edge.ticks;
+        }
 
         if (self.maxHops === Infinity) {
           self.maxHops = Math.ceil(path.length * mesh.maxHops);
           self.maxTicks = Math.ceil(ticks * mesh.maxTTL);
         }
+
+        mesh.idealPaths[goal.address + start.address] = {
+          path,
+          edges
+        };
+
+        path = path.slice().reverse();
+
+        mesh.idealPaths[start.address + goal.address] = {
+          path,
+          edges
+        };
+
+        self.idealPath = path;
 
         for (const id in path[0].connections) {
           const connection = path[0].connections[id];
@@ -794,7 +860,7 @@ function Packet(mesh, source, destination) {
       for (const id in current.connections) {
         const connection = current.connections[id];
         const neighbor = connection.node;
-        if (!neighbor.online || closedSet.has(neighbor)) {
+        if (!neighbor.online || !connection.edge.online || closedSet.has(neighbor)) {
           continue;
         }
 
@@ -847,10 +913,22 @@ function Packet(mesh, source, destination) {
     }
 
     if (self.current === self.destination) {
+      if (self.checksum !== self.calculateChecksum()) {
+        console.log('dropped - invalid checksum');
+        self.dropped = true;
+        self.current.packet.delete(self);
+        if (self.cameFrom) {
+          self.current.interfaces[self.cameFrom.edge.id].dropped++;
+        }
+      }
       self.destination = self.source;
       self.source = self.current;
       self.path = [];
       self.ticks = 0;
+      const pathId = self.source.address + self.destination.address;
+      if (mesh.idealPaths[pathId]) {
+        self.idealPath = mesh.idealPaths[pathId].path;
+      }
       return;
     }
 
@@ -860,7 +938,7 @@ function Packet(mesh, source, destination) {
         const next = self.idealPath[index + 1];
         const hop = self.current.connections[next.id];
 
-        if (hop.node.online) {
+        if (hop.node.online && hop.edge.online) {
           self.hop = hop;
         } else {
           self.idealPath = null;
@@ -915,7 +993,7 @@ function Mesh({
   self.complexity = complexity || 2;
 
   self.maxHops = maxHops || 1.2;
-  self.maxTTL = maxTTL || 1.5;
+  self.maxTTL = maxTTL || 2;
 
   self.threshold = threshold || 50;
 
@@ -1016,7 +1094,7 @@ function Mesh({
     toolbar: document.getElementById('toolbar'),
     tools: {}
   };
-  self.clearElement(self.elements.console);
+  self.elements.console.innerHTML = '<div class="spinner">&#x2B82;</div> Connecting...';
   self.clearElement(self.elements.info);
   self.elements.meshId.innerHTML = meshId;
 
@@ -1081,7 +1159,12 @@ function Mesh({
     self.elements.health.innerHTML = health + '%';
 
     if (health < self.threshold) {
-      self.crash();
+      return self.crash();
+    }
+
+    if (!self.connected) {
+      self.connected = true;
+      self.elements.console.innerHTML = '&#x2B7E; Connected!'; // Objective
     }
   }, self.interval);
 
@@ -1157,10 +1240,12 @@ function Mesh({
         self.elements.crash.innerHTML += crashText;
         self.elements.crash.classList.remove('hidden');
         self.elements.toolbar.classList.add('fade-out');
+        self.elements.console.classList.add('fade-out');
       } else if (state === 4) {
         self.crashing = clearInterval(self.crashing);
         self.elements.offline.classList.remove('hidden');
         self.elements.spinner.classList.add('hidden');
+        self.svg.classList.add('blink');
         self.elements.health.innerHTML = '&#x23FB;'; // 00D8
         self.crashed = true;
       }
@@ -1226,17 +1311,17 @@ window.addEventListener('load', function() {
     <div class="display">
       <div id="screen" class="screen hidden">
         <div class="title">GILGAMESH NETWORK VISUALIZER</div>
-        <div class="mesh-id"><div id="spinner" class="spinner">&#x169b;</div> mesh://<span id="mesh-id" class="mesh-underline"></span></div>
+        <div class="mesh-id"><div id="spinner" class="spinner">&#x169b;</div> mesh://<span id="mesh-id"></span></div>
         <div class="health">Network Health: <span id="health">100%</span></div>
         <div class="toolbar" id="toolbar">
-          <div data-tool="crash">&#x2349;</div>
-          <div data-tool="cut">&#x27DB;</div>
-          <div data-tool="slowdown">&#x29D6;</div>
-          <div data-tool="checksum">&#x2211;</div>
-          <div data-tool="reroute">&#x21AC;</div>
-          <div data-tool="trace">&#x27D0;</div>
-          <div data-tool="inspect">&#x260C;</div>
-          <div data-tool="multiply">&#x29C9;</div>
+          <div data-tool="crash">&#x2349;<div id="crash-use"></div></div>
+          <div data-tool="cut">&#x27DB;<div id="cut-use"></div></div>
+          <div data-tool="slowdown">&#x29D6;<div id="slowdown-use"></div></div>
+          <div data-tool="checksum">&#x2211;<div id="checksum-use"></div></div>
+          <div data-tool="reroute">&#x21AC;<div id="reroute-use"></div></div>
+          <div data-tool="trace">&#x27D0;<div id="trace-use"></div></div>
+          <div data-tool="inspect"><i class="flip">&#x260C;</i><div id="inspect-use"></div></div>
+          <div data-tool="multiply">&#x29C9;<div id="multiply-use"></div></div>
         </div>
         <pre id="info"></pre>
         <svg id="mesh" class="mesh"></svg>
