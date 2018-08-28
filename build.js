@@ -21,7 +21,10 @@ const safeSubstitutions = {
   'addresses': 'aa',
   'blink': 'b',
   'cameFrom': 'cf',
+  'connected': 'cd',
   'connection': 'c',
+  'current': 'cu',
+  'description': 'de',
   'destination': 'd',
   'edge': 'e',
   'edge-empty': 'ee',
@@ -35,7 +38,9 @@ const safeSubstitutions = {
   'element': 'el',
   'goal': 'g',
   'idealPath': 'ip',
-  'interface': 'i',
+  'interact': 'i',
+  'interface': 'f',
+  'hide': 'h',
   'node': 'n',
   'node-effect': 'ne',
   'node-effect-animate': 'nea',
@@ -43,7 +48,7 @@ const safeSubstitutions = {
   'node-effect-inspect': 'nei',
   'node-effect-multiply': 'nem',
   'node-effect-reroute': 'ner',
-  'node-effect-slowdown': 'nes',
+  'node-effect-slow': 'nes',
   'node-effect-trace': 'net',
   'node-offline': 'no',
   'node-packet': 'np',
@@ -52,9 +57,10 @@ const safeSubstitutions = {
   'offline-fade': 'of',
   'packet': 'p',
   'selected': 's',
-  'spinner': 'sp',
+  'self': 'se',
+  'source': 'so',
   'ticks': 'ts',
-  'toolbar': 't'
+  'toolbar': 'to'
 };
 
 const substitutions = Object.keys(safeSubstitutions).sort(function(a, b) {
@@ -103,7 +109,7 @@ const stringReplacer = function(match, p1) {
 
 substitutedHTML = substitutedHTML.replace(/(`[^`]*?`)/g, stringReplacer);
 substitutedHTML = substitutedHTML.replace(/('[^']*?')/g, stringReplacer);
-substitutedHTML = substitutedHTML.replace(/("[^"]*?")/g, stringReplacer);
+//substitutedHTML = substitutedHTML.replace(/("[^"]*?")/g, stringReplacer);
 
 for (const key of substitutions) {
   const pattern = new RegExp(key, 'g');

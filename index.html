@@ -74,7 +74,7 @@
       text-align: right;
       font-size: 10px;
     }
-    .hidden {
+    .hide {
       display: none !important;
     }
     .fade-out {
@@ -480,7 +480,7 @@ let prng = new MersenneTwister();
 const rand = (min, max) => Math.floor(prng.random() * (max - min + 1)) + min;
 const size = (object) => Object.keys(object || {}).length;
 
-Map.prototype.getValue = function(key) {
+Map.prototype.value = function(key) {
   const value = this.get(key);
   if (value === undefined) {
     return Infinity;
@@ -507,7 +507,6 @@ KERNEL supported cpus:
   MDB AuthenticMDB
 m47/fpu: Supporting XSAVE feature 0x001: 'm87 floating point registers'
 m47/fpu: Supporting XSAVE feature 0x002: 'SSE registers'
-m47/fpu: Supporting XSAVE feature 0x004: 'AVX registers'
 m47/fpu: xstate_offset[2]:  576, xstate_sizes[2]:  256
 m47/fpu: Enabled xstate features 0x7, context size is 832 bytes, using 'standard' format.
 e820: BIOS-provided physical RAM map:
@@ -528,7 +527,6 @@ Reserved but unavailable: 98 pages
 ACPI: PM-Timer IO Port: 0x1808
 ACPI: Local APIC address 0xfee00000
 ACPI: LAPIC_NMI (acpi_id[0x01] dfl dfl lint[0x0])
-ACPI: IRQ0 used by override.
 ACPI: IRQ9 used by override.
 Using ACPI (MADT) for SMP configuration information
 ACPI: HPET id: 0x8086a701 base: 0xfed00000
@@ -555,14 +553,9 @@ smp: Brought up 1 node, 4 CPUs
 NET: Registered protocol family 16
 PCI host bridge to bus 0000:00
 pci_bus 0000:00: root bus resource [io  0x0000-0x0cf7 window]
-pci_bus 0000:00: root bus resource [io  0x0d00-0xffff window]
-pci_bus 0000:00: root bus resource [mem 0x000a0000-0x000bffff window]
-pci_bus 0000:00: root bus resource [mem 0xa8000000-0xdfffffff window]
 pci_bus 0000:00: root bus resource [mem 0xfe000000-0xfe113fff window]
 pci_bus 0000:00: root bus resource [bus 00-3e]
-usbcore: registered new interface driver usbfs
-usbcore: registered new interface driver hub
-usbcore: registered new device driver usb
+usbcore: registered new interface drivers: usbfs, hub, usb
 NET: Registered protocol family 2
 TCP established hash table entries: 131072 (order: 8, 1048576 bytes)
 TCP bind hash table entries: 65536 (order: 8, 1048576 bytes)
@@ -861,6 +854,11 @@ function Node(mesh) {
     packets.add(packet);
     self.element.classList.add('node-packet');
     self.outline.classList.add('node-effect-animate');
+
+    if (self.effect && self.effect.type === 'checksum') {
+      console.log('rewriting checksum');
+      packet.checksum = 0;
+    }
   };
 
   self.packet.delete = function(packet) {
@@ -919,7 +917,7 @@ function Packet(mesh, source, destination) {
       openSet.forEach(function(value, key) {
         if (!current) {
           current = key;
-        } else if (value < fScore.getValue(current)) {
+        } else if (value < fScore.value(current)) {
           current = key;
         }
       });
@@ -976,10 +974,10 @@ function Packet(mesh, source, destination) {
           continue;
         }
 
-        const tgScore = gScore.getValue(current) + mesh.distance(current.pos, neighbor.pos);
+        const tgScore = gScore.value(current) + mesh.distance(current.pos, neighbor.pos);
         if (!openSet.has(neighbor)) {
           openSet.add(neighbor);
-        } else if (tgScore >= gScore.getValue(neighbor)) {
+        } else if (tgScore >= gScore.value(neighbor)) {
           continue;
         }
 
@@ -1033,6 +1031,7 @@ function Packet(mesh, source, destination) {
           self.current.interfaces[self.cameFrom.edge.id].dropped++;
         }
       }
+
       self.destination = self.source;
       self.source = self.current;
       self.path = [];
@@ -1250,50 +1249,50 @@ function Mesh({
     crash: {
       name: 'Segfault',
       color: '#D34E53',
-      description: 'Segfault a <b>node</b> making it completely unavailable and offline.',
+      description: 'Segfault a <u>node</u> making it completely unavailable and offline.',
       uses: -1
     },
     cut: {
       name: 'Cut',
       color: '#666',
-      description: 'Cut the <b>connection</b> between nodes.',
+      description: 'Cut the <u>connection</u> between nodes.',
       uses: -1
     },
     slow: {
       name: 'Slowdown',
       color: '#D9AF3C',
-      description: 'Slowdown all traffic through a <b>node</b> by setting its MTU to 128 bytes.',
+      description: 'Slowdown all traffic through a <u>node</u> by setting its MTU to 128 bytes.',
       uses: -1
     },
     checksum: {
       name: 'Checksum Rewrite',
       color: '#535C8E',
-      description: 'Rewrite the checksum of every packet passing through <b>node</b> so that it is dropped at its destination.',
+      description: 'Rewrite the checksum of every packet passing through <u>node</u> so that it is dropped at its destination.',
       uses: -1
     },
     reroute: {
       name: 'Random Route',
       color: '#9E379F',
-      description: 'Corrupt the route table of a <b>node</b> so that packets are randomly routed to different nodes.',
+      description: 'Corrupt the route table of a <u>node</u> so that packets are randomly routed to different nodes.',
       uses: -1
     },
     trace: {
       name: 'Packet Trace',
       color: '#AE6126',
-      description: 'Trace the path of packets originating at the given <b>node</b>.',
+      description: 'Trace the path of packets originating at the given <u>node</u>.',
       uses: -1
     },
     inspect: {
       name: 'Stateful Inspection',
       color: '#94C5CC',
-      description: 'Inspect the packets passing through the given <b>node</b>, extracting any useful data.',
+      description: 'Inspect the packets passing through the given <u>node</u>, extracting any useful data.',
       uses: -1
     },
     multiply: {
       name: 'Traffic Multiply',
       color: '#005B96',
-      description: 'Duplicate every packet that passing through the <b>node</b>.',
-      uses: 0
+      description: 'Duplicate every packet that passing through the <u>node</u>.',
+      uses: -1
     }
   };
 
@@ -1311,7 +1310,7 @@ function Mesh({
       tool.use.innerHTML = tool.uses;
     }
 
-    tool.element.classList.remove('hidden');
+    tool.element.classList.remove('hide');
 
     element.onclick = function() {
       for (const item in self.tools) {
@@ -1456,15 +1455,15 @@ function Mesh({
         }
       } else if (state === 3) {
         self.elements.crash.innerHTML += crashText;
-        self.elements.crash.classList.remove('hidden');
+        self.elements.crash.classList.remove('hide');
         self.elements.toolbar.classList.add('fade-out');
         self.console.element.classList.add('fade-out');
       } else if (state === 4) {
         self.crashing = clearInterval(self.crashing);
-        self.elements.offline.classList.remove('hidden');
-        self.elements.spinner.classList.add('hidden');
+        self.elements.offline.classList.remove('hide');
+        self.elements.spinner.classList.add('hide');
         self.svg.classList.add('blink');
-        self.elements.health.innerHTML = 'offline';
+        self.elements.health.innerHTML = 'OFFLINE';
         self.crashed = true;
       }
       state++;
@@ -1511,8 +1510,8 @@ function Enmeshed() {
       terminal.scrollTop = terminal.scrollHeight + terminal.clientHeight;
     } else {
       clearInterval(boot);
-      terminal.classList.add('hidden');
-      document.getElementById('screen').classList.remove('hidden');
+      terminal.classList.add('hide');
+      document.getElementById('screen').classList.remove('hide');
       const mesh = new Mesh(games[index]);
       window.mesh = mesh;
     }
@@ -1528,28 +1527,28 @@ window.addEventListener('load', function() {
   </head>
   <body>
     <div class="display">
-      <div id="screen" class="screen hidden">
+      <div id="screen" class="screen hide">
         <div class="title">GILGAMESH NETWORK VISUALIZER</div>
         <div class="mesh-id"><div id="spinner" class="spinner">&#x169b;</div> mesh://<span id="mesh-id"></span></div>
         <div class="health">Network Health: <span id="health">100%</span></div>
         <div class="toolbar" id="toolbar">
-          <div class="hidden" data-tool="info">&#x24D8;<div id="info-use"></div></div>
-          <div class="hidden" data-tool="crash">&#x2349;<div id="crash-use"></div></div>
-          <div class="hidden" data-tool="cut">&#x27DB;<div id="cut-use"></div></div>
-          <div class="hidden" data-tool="slow">&#x29D6;<div id="slow-use"></div></div>
-          <div class="hidden" data-tool="checksum">&#x2211;<div id="checksum-use"></div></div>
-          <div class="hidden" data-tool="reroute">&#x21AC;<div id="reroute-use"></div></div>
-          <div class="hidden" data-tool="trace">&#x27D0;<div id="trace-use"></div></div>
-          <div class="hidden" data-tool="inspect"><i class="flip">&#x260C;</i><div id="inspect-use"></div></div>
-          <div class="hidden" data-tool="multiply">&#x29C9;<div id="multiply-use"></div></div>
+          <div class="hide" data-tool="info">&#x24D8;<div id="info-use"></div></div>
+          <div class="hide" data-tool="crash">&#x2349;<div id="crash-use"></div></div>
+          <div class="hide" data-tool="cut">&#x27DB;<div id="cut-use"></div></div>
+          <div class="hide" data-tool="slow">&#x29D6;<div id="slow-use"></div></div>
+          <div class="hide" data-tool="checksum">&#x2211;<div id="checksum-use"></div></div>
+          <div class="hide" data-tool="reroute">&#x21AC;<div id="reroute-use"></div></div>
+          <div class="hide" data-tool="trace">&#x27D0;<div id="trace-use"></div></div>
+          <div class="hide" data-tool="inspect"><i class="flip">&#x260C;</i><div id="inspect-use"></div></div>
+          <div class="hide" data-tool="multiply">&#x29C9;<div id="multiply-use"></div></div>
         </div>
         <pre id="info"></pre>
         <svg id="mesh" class="mesh"></svg>
         <pre id="console"></pre>
       </div>
       <pre id="terminal" class="terminal"></pre>
-      <pre id="crash" class="crash hidden"></pre>
-      <div id="offline" class="offline hidden">
+      <pre id="crash" class="crash hide"></pre>
+      <div id="offline" class="offline hide">
         <div class="offline-banner">OFFLINE</div>
       </div>
       <div class="brand">MarkBook Pro</div>

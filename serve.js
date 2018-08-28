@@ -16,15 +16,14 @@ try {
 process.argv.push('./dist/');
 require('http-server/bin/http-server');
 
-let which;
-let debounce;
-let last;
+const last = {};
+const options = {
+  interval: 2500
+};
 
-function rebuild() {
-  const stat = fs.statSync('./index.html');
-  if (stat.mtimeMs !== last) {
-    last = stat.mtimeMs;
-    debounce = null;
+function rebuild(which, curr, prev) {
+  if (!last[which] || last[which].mtime != curr.mtime) {
+    last.which = curr;
 
     console.log(`\n${ which } changed, rebuilding...`);
     child_process.exec('./build.js', function(error, stdout, stderr) {
@@ -38,24 +37,5 @@ function rebuild() {
   }
 }
 
-fs.watchFile('./index.html', {
-  persistent: true,
-  interval: 250
-}, function() {
-  if (debounce) {
-    clearTimeout(debounce);
-  }
-  which = 'index.html';
-  debounce = setTimeout(rebuild, 250);
-});
-
-fs.watchFile('./build.js', {
-  persistent: true,
-  interval: 250
-}, function() {
-  if (debounce) {
-    clearTimeout(debounce);
-  }
-  which = 'build.js';
-  debounce = setTimeout(rebuild, 250);
-});
+fs.watchFile('./index.html', options, (curr, prev) => rebuild('index.html', curr, prev));
+fs.watchFile('./build.js', options, (curr, prev) => rebuild('build.js', curr, prev));
