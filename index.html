@@ -27,7 +27,7 @@
       width: 1000px;
       height: 660px;
     }
-    .display:before {
+    .display::before {
       content:'';
       position: absolute;
       top: -11px;
@@ -133,7 +133,7 @@
       transform: translate(-50%, -50%);
       letter-spacing: 32px;
     }
-    .offline-banner:before {
+    .offline-banner::before {
       content: '';
       position: absolute;
       top: 20px;
@@ -183,7 +183,7 @@
       width: 1160px;
       height: 26px;
     }
-    .base:before {
+    .base::before {
       content:"";
       display: block;
       border-radius: 0 0 10px 10px;
@@ -281,7 +281,7 @@
       border-left: 2px solid #535C8E;
     }
     [data-tool="reroute"]:hover, [data-tool="reroute"].selected {
-      border-left: 2px solid #9e379f;
+      border-left: 2px solid #9E379F;
     }
     [data-tool="trace"] {
       font-size: 32px;
@@ -297,7 +297,7 @@
       border-left: 2px solid #94C5CC;
     }
     [data-tool="multiply"]:hover, [data-tool="multiply"].selected {
-      border-left: 2px solid #005b96;
+      border-left: 2px solid #005B96;
     }
     .flip {
       display: inline-block;
@@ -310,6 +310,39 @@
     .node:hover {
       stroke: #5691DC;
       stroke-width: 7px;
+    }
+    .node-effect {
+      stroke: transparent;
+      stroke-width: 2px;
+      fill: transparent;
+      pointer-events: none;
+    }
+    .node:hover + .node-effect {
+      stroke-width: 4px;
+      stroke-dasharray: none;
+      animation: none;
+    }
+    .node-effect-animate {
+      stroke-dasharray: 5 2;
+      animation: edge-progress 3s linear infinite reverse;
+    }
+    .node-effect-slowdown {
+      stroke: #D9AF3C;
+    }
+    .node-effect-checksum {
+      stroke: #535C8E;
+    }
+    .node-effect-reroute {
+      stroke: #9E379F;
+    }
+    .node-effect-trace {
+      stroke: #AE6126;
+    }
+    .node-effect-inspect {
+      stroke: #94C5CC;
+    }
+    .node-effect-multiply {
+      stroke: #005B96;
     }
     .node-packet {
       fill: #8BBF50;
@@ -605,14 +638,18 @@ function Edge(mesh, edgeId, start, end) {
 
   self.elements.interact.onclick = function() {
     if (!self.effect) {
-      if (mesh.action === 'cut') {
+      if (mesh.effect === 'cut') {
         self.online = false;
         self.elements.empty.classList.add('edge-offline-empty');
-        self.effect = {
-          action: mesh.action,
-          timestamp: Date.now()
-        };
+      } else {
+        return;
       }
+      self.effect = {
+        effect: mesh.effect,
+        timestamp: Date.now()
+      };
+
+      mesh.effects.push(self.effect);
     }
   };
 
@@ -752,18 +789,37 @@ function Node(mesh) {
   };
 
   self.createElement = function() {
-    self.element = mesh.svg.circle(self.pos.x, self.pos.y, mesh.scale / 4);
+    const radius = mesh.scale / 4;
+    self.element = mesh.svg.circle(self.pos.x, self.pos.y, radius);
+    self.outline = mesh.svg.circle(self.pos.x, self.pos.y, radius + 2, 'node-effect');
 
     self.element.onclick = function() {
       if (!self.effect) {
-        if (mesh.action === 'crash') {
+        if (mesh.effect === 'crash') {
           self.online = false;
           self.element.classList.add('node-offline');
-          self.effect = {
-            action: mesh.action,
-            timestamp: Date.now()
-          };
+        } else if (mesh.effect === 'slowdown') {
+          self.outline.classList.add('node-effect-slowdown');
+        } else if (mesh.effect === 'checksum') {
+          self.outline.classList.add('node-effect-checksum');
+        } else if (mesh.effect === 'reroute') {
+          self.outline.classList.add('node-effect-reroute');
+        } else if (mesh.effect === 'trace') {
+          self.outline.classList.add('node-effect-trace');
+        } else if (mesh.effect === 'inspect') {
+          self.outline.classList.add('node-effect-inspect');
+        } else if (mesh.effect === 'multiply') {
+          self.outline.classList.add('node-effect-multiply');
+        } else {
+          return;
         }
+
+        self.effect = {
+          effect: mesh.effect,
+          timestamp: Date.now()
+        };
+
+        mesh.effects.push(self.effect);
       }
     };
 
@@ -790,15 +846,15 @@ function Node(mesh) {
   self.packet = {};
   self.packet.add = function(packet) {
     packets.add(packet);
-    if (packets.size) {
-      self.element.classList.add('node-packet');
-    }
+    self.element.classList.add('node-packet');
+    self.outline.classList.add('node-effect-animate');
   };
 
   self.packet.delete = function(packet) {
     packets.delete(packet);
     if (!packets.size) {
       self.element.classList.remove('node-packet');
+      self.outline.classList.remove('node-effect-animate');
     }
   };
 
@@ -1045,6 +1101,8 @@ function Mesh({
 
   //////////
 
+  self.effects = [];
+
   self.addresses = {};
 
   self.positions = {};
@@ -1095,8 +1153,8 @@ function Mesh({
   function initSvg() {
     const svg = document.getElementById('mesh');
 
-    svg.style.width = (self.width * self.scale) + 'px';
-    svg.style.height = (self.height * self.scale) + 'px';
+    svg.style.width = ((self.width * self.scale) + 8) + 'px';
+    svg.style.height = ((self.height * self.scale) + 8) + 'px';
 
     self.clearElement(svg);
 
@@ -1108,8 +1166,8 @@ function Mesh({
 
     svg.circle = function(x, y, radius, className) {
       const attributes = {
-        cx: x,
-        cy: y,
+        cx: x + 4,
+        cy: y + 4,
         r: radius,
         class: className || 'node'
       };
@@ -1118,10 +1176,10 @@ function Mesh({
 
     svg.line = function(x1, y1, x2, y2, className) {
       const attributes = {
-        x1: x1,
-        y1: y1,
-        x2: x2,
-        y2: y2,
+        x1: x1 + 4,
+        y1: y1 + 4,
+        x2: x2 + 4,
+        y2: y2 + 4,
         class: className || 'edge'
       };
       return svg.add('line', attributes);
@@ -1148,12 +1206,12 @@ function Mesh({
   self.clearElement(self.elements.info);
   self.elements.meshId.innerHTML = meshId;
 
-  self.action = 'crash';
+  self.effect = 'crash';
 
   function toolSelect() {
     for (const type in self.elements.tools) {
       if (self.elements.tools[type] === this) {
-        self.action = type;
+        self.effect = type;
         self.elements.tools[type].classList.add('selected');
       } else {
         self.elements.tools[type].classList.remove('selected');
