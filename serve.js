@@ -15,19 +15,25 @@ try {
 
 require('http-server/bin/http-server');
 
-function rebuild() {
-  console.log('\nindex.html changed, rebuilding...');
-  child_process.exec('./build.js', function(error, stdout, stderr) {
-    if (error || stderr) {
-      console.log(stderr);
-    }
-    if (stdout) {
-      console.log(stdout);
-    }
-  });
-}
-
 let debounce;
+let last;
+function rebuild() {
+  const stat = fs.statSync('./index.html');
+  if (stat.mtimeMs !== last) {
+    last = stat.mtimeMs;
+    debounce = null;
+
+    console.log('\nindex.html changed, rebuilding...');
+    child_process.exec('./build.js', function(error, stdout, stderr) {
+      if (error || stderr) {
+        console.log(stderr);
+      }
+      if (stdout) {
+        console.log(stdout);
+      }
+    });
+  }
+}
 
 fs.watch('./index.html', {
   persistent: true

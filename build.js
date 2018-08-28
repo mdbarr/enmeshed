@@ -50,7 +50,7 @@ console.log();
 
 console.log('Uglifying JavaScript...');
 try {
-  child_process.execSync('./node_modules/.bin/uglifyjs --compress --mangle --rename --output ./build/index.min.js ./build/index.js');
+  child_process.execSync('./node_modules/.bin/uglifyjs --compress --mangle --rename --toplevel --output ./build/index.min.js ./build/index.js');
 } catch (error) {
   console.log('UglifyJS failed');
   process.exit(1);

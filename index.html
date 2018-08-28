@@ -376,22 +376,17 @@
 // Packet.speed: size / ticks
 // Packet.ttl (in ticks)
 // Interface reliability, tx_load, rx_load (queue strategy)
-// Fake Protocol and header contents (MESH/Gilgamesh)
-//  Checksum, Version, Flags (Urgent)
 // Text compression for game text
 // Dynamic prefix based className instead of classList
-// Game list as configuration options
-// Initial boot state (instead of node-packet)
-
-const now = () => Date.now();
 
 function MersenneTwister(seed) {
-  seed = seed || now();
+  seed = seed || Date.now();
   this.N = 624;
   this.M = 397;
   this.MATRIX_A = 0x9908b0df;
   this.UPPER_MASK = 0x80000000;
   this.LOWER_MASK = 0x7fffffff;
+  this.I = Math.pow(2, 32);
 
   this.mt = new Array(this.N);
   this.mti = this.N + 1;
@@ -435,8 +430,9 @@ MersenneTwister.prototype.random = function() {
   y ^= (y << 7) & 0x9d2c5680;
   y ^= (y << 15) & 0xefc60000;
   y ^= (y >>> 18);
+  y = y >>> 0;
 
-  return (y >>> 0) * (1.0 / 4294967296.0);
+  return (y + 0.5) / this.I;
 };
 
 let prng = new MersenneTwister();
@@ -464,18 +460,17 @@ function generateIP() {
 //////////
 
 const dmesg = `<div class="banner">Gilgamesh OS version 4.15.0-33-generic (build 2436)</div>
-Command line: BOOT_IMAGE=/gilgamesh-4.15.0-33-generic root=/dev/sda1  ro
+Command line: BOOT_IMAGE=/gilgamesh-4.15.0-33-generic root=/dev/sda2:ro
 KERNEL supported cpus:
   Meshtel GenuineMeshtel
   MDB AuthenticMDB
-  Griffin GriffinHauls
 m47/fpu: Supporting XSAVE feature 0x001: 'm87 floating point registers'
 m47/fpu: Supporting XSAVE feature 0x002: 'SSE registers'
 m47/fpu: Supporting XSAVE feature 0x004: 'AVX registers'
 m47/fpu: xstate_offset[2]:  576, xstate_sizes[2]:  256
 m47/fpu: Enabled xstate features 0x7, context size is 832 bytes, using 'standard' format.
 e820: BIOS-provided physical RAM map:
-DMI:  /NUC5i7RYB, BIOS RYBDWi35.86A.0350.2015.0812.1722 08/12/2015
+DMI: NUC5i7RYB, BIOS RYBDWi35.86A.0305.2018.0128.7122 08/13/2018
 e820: update [mem 0x00000000-0x00000fff] usable ==> reserved
 e820: remove [mem 0x000a0000-0x000fffff] usable
 total RAM covered: 16288M
@@ -514,7 +509,7 @@ CPU0: Thermal monitoring enabled (TM1)
 process: using mwait in idle threads
 smp: Bringing up secondary CPUs ...
 m47: Booting SMP configuration:
-	.... node  #0, CPUs:      #1 #2 #3
+    node  #0, CPUs:      #1 #2 #3
 smp: Brought up 1 node, 4 CPUs
 NET: Registered protocol family 16
 PCI host bridge to bus 0000:00
@@ -539,13 +534,13 @@ NET: Registered protocol family 31
 Bluetooth: HCI device and connection manager initialized
 Bluetooth: HCI socket layer initialized
 Bluetooth: L2CAP socket layer initialized
-Bluetooth: SCO socket layer initialized
 EXT5-fs (sda2): mounting ext4 file system using the ext5 subsystem
 EXT5-fs (sda2): mounted filesystem with journal.
 Bridge firewalling registered
 nf_conntrack version 0.5.0 (65536 buckets, 262144 max)
 Initializing XFRM netlink socket
 Netfilter messages via NETLINK v0.30.
+random: initializing mersenne twister
 MeshConnect initializing interface
 Entering interactive mode...
 
@@ -584,6 +579,7 @@ function Edge(mesh, edgeId, start, end) {
 
   self.object = 'edge';
   self.id = edgeId;
+  self.name = mesh.edges.length.toString(16).padStart(4, 0);
 
   self.online = true;
 
@@ -614,19 +610,16 @@ function Edge(mesh, edgeId, start, end) {
         self.elements.empty.classList.add('edge-offline-empty');
         self.effect = {
           action: mesh.action,
-          timestamp: now()
+          timestamp: Date.now()
         };
       }
     }
   };
 
   self.elements.interact.onmouseover = function() {
-    const color = (self.online) ? '#5691DC' : '#D34E53';
-    const symbol = (self.online) ? '25C9' : '25CE';
-    let info = 'Connection <span style="color:' + color + '"> &#x' + symbol + ';</span>\n\n';
-    info += start.address + ' &#x2513; \n' + end.address + ' &#x251B; ';
-
-    mesh.elements.info.innerHTML = info;
+    mesh.elements.info.innerHTML = 'Connection #' + self.name + mesh.dotColor(self) + '\n\n' +
+        mesh.dotColor(start) + ' ' + start.address + ' &#x2513; \n' +
+        mesh.dotColor(end) + ' ' + end.address + ' &#x251B; ';
   };
 
   self.elements.interact.onmouseout = function() {
@@ -724,8 +717,8 @@ function Node(mesh) {
   mesh.positions[self.id] = self;
 
   self.pos = {
-    x: (self.x * mesh.scale) + (mesh.scale / 2) + rand(-2, 2),
-    y: (self.y * mesh.scale) + (mesh.scale / 2) + rand(-2, 2)
+    x: (self.x * mesh.scale) + (mesh.scale / 2) + rand(-mesh.perturb, mesh.perturb),
+    y: (self.y * mesh.scale) + (mesh.scale / 2) + rand(-mesh.perturb, mesh.perturb)
   };
 
   self.address = generateIP();
@@ -768,17 +761,15 @@ function Node(mesh) {
           self.element.classList.add('node-offline');
           self.effect = {
             action: mesh.action,
-            timestamp: now()
+            timestamp: Date.now()
           };
         }
       }
     };
 
     self.element.onmouseover = function() {
-      const color = (self.online) ? '#5691DC' : '#D34E53';
-      const symbol = (self.online) ? '25C9' : '25CE';
-      let info = 'Node ' + self.address + '<span style="color:' + color + '"> &#x' + symbol + ';</span>\n\n';
-      info += 'Interfaces (MTU ' + self.mtu + '):'.padEnd(25, ' ') + '\n';
+      let info = 'Node ' + self.address + mesh.dotColor(self) + '\n\n' +
+          'Interfaces (MTU ' + self.mtu + '):'.padEnd(25, ' ') + '\n';
       for (const interfaceId in self.interfaces) {
         const interface = self.interfaces[interfaceId];
         info += interface.name.padEnd(4, ' ') + ': &#x2944; ' + (interface.rx + '').padStart(3, ' ') + ' &#x2942; ' +
@@ -1085,14 +1076,18 @@ function Mesh({
     }
   };
 
+  self.dotColor = function(object) {
+    const color = (object.online) ? '#5691DC' : '#D34E53';
+    const symbol = (object.online) ? '25C9' : '25CE';
+    return '<span style="color:' + color + '"> &#x' + symbol + ';</span>';
+  };
+
   //////////
 
   function createSvgNode(name, attributes) {
     const element = document.createElementNS('http://www.w3.org/2000/svg', name);
     for (const key in attributes) {
-      element.setAttributeNS(null, key.replace(/[A-Z]/g, function(match) {
-        return '-' + match.toLowerCase();
-      }), attributes[key]);
+      element.setAttributeNS(null, key.toLowerCase(), attributes[key]);
     }
     return element;
   }
@@ -1178,6 +1173,7 @@ function Mesh({
 
   self.count = Math.floor(self.width * self.height * self.factor);
   self.scope = Math.ceil(self.count % 10);
+  self.perturb = Math.ceil(self.scale / 5);
 
   for (let i = 0; i < self.count; i++) {
     self.nodes.push(new Node(self));
@@ -1201,14 +1197,14 @@ function Mesh({
   }
 
   self.router = setInterval(function() {
-    //const start = now();
+    //const start = Date.now();
     for (let i = 0; i < self.packets.length; i++) {
       self.packets[i].route();
     }
     self.packets = self.packets.filter(function(packet) {
       return !packet.dropped;
     });
-    //console.log('Routing time', now() - start);
+    //console.log('Routing time', Date.now() - start);
 
     const health = Math.round(self.packets.length / (self.count * self.complexity) * 100);
     self.elements.health.innerHTML = health + '%';
@@ -1320,14 +1316,14 @@ function Enmeshed() {
     width: 20,
     height: 20,
     scale: 25,
-    seed: 948485
+    seed: 483983
   } ];
 
   const terminal = document.getElementById('terminal');
   const lines = dmesg.split('\n');
 
   let kernel = true;
-  const bootTime = now();
+  const bootTime = Date.now();
   const boot = setInterval(function() {
     if (lines.length) {
       let line = lines.shift();
@@ -1337,7 +1333,7 @@ function Enmeshed() {
 
       if (kernel && line[0] !== '<') {
         line = line.replace(/^([^ :]+):/, '<span style="color:#4b86b4">$1</span>:');
-        line = '<span style="color:#7fdb6a">[ ' + (((now() - bootTime) / 1000) + (rand(0, 1000) / 100000)).
+        line = '<span style="color:#7fdb6a">[ ' + (((Date.now() - bootTime) / 1000) + (rand(0, 1000) / 100000)).
           toFixed(6).padStart(10, ' ') + '] </span>' + line;
       }
       line = line.replace(/__DATE/g, new Date()).
