@@ -332,7 +332,7 @@
     }
     .node-effect-animate {
       stroke-dasharray: 5 2;
-      animation: edge-progress 3s linear infinite reverse;
+      animation: progress 3s linear infinite reverse;
     }
     .node-effect-slowdown {
       stroke: #D9AF3C;
@@ -389,14 +389,14 @@
     .edge-packet-forward {
       stroke: #8BBF50;
       stroke-dasharray: 5;
-      animation: edge-progress 3s linear infinite;
+      animation: progress 3s linear infinite;
     }
     .edge-packet-reverse {
       stroke: #3B6D3D;
       stroke-dasharray: 5;
-      animation: edge-progress 3s linear infinite reverse;
+      animation: progress 3s linear infinite reverse;
     }
-    @keyframes edge-progress {
+    @keyframes progress {
       to {
         stroke-dashoffset: 100;
       }
@@ -653,7 +653,7 @@ function Edge(mesh, edgeId, start, end) {
         return;
       }
       self.effect = {
-        effect: mesh.effect,
+        type: mesh.effect,
         timestamp: Date.now()
       };
 
@@ -823,7 +823,7 @@ function Node(mesh) {
         }
 
         self.effect = {
-          effect: mesh.effect,
+          type: mesh.effect,
           timestamp: Date.now()
         };
 
@@ -840,6 +840,11 @@ function Node(mesh) {
           (interface.tx + '').padStart(3, ' ') + ' &#x21E3; ' + (interface.dropped + '').padStart(2, ' ') + '\n';
       }
       info += '\nRX &#x2944;, TX &#x2942;, DROPPED &#x21E3;';
+
+      if (self.online && self.effect) {
+        info += '\n\n<span style="color:red">' + 'Malware detected:'.padEnd(25, ' ') +
+          '</span>\n' + self.effect.type;
+      }
 
       mesh.elements.info.innerHTML = info;
     };

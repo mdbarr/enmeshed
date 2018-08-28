@@ -13,17 +13,20 @@ try {
   process.exit(1);
 }
 
+process.argv.push('./dist/');
 require('http-server/bin/http-server');
 
+let which;
 let debounce;
 let last;
+
 function rebuild() {
   const stat = fs.statSync('./index.html');
   if (stat.mtimeMs !== last) {
     last = stat.mtimeMs;
     debounce = null;
 
-    console.log('\nindex.html changed, rebuilding...');
+    console.log(`\n${ which } changed, rebuilding...`);
     child_process.exec('./build.js', function(error, stdout, stderr) {
       if (error || stderr) {
         console.log(stderr);
@@ -35,11 +38,24 @@ function rebuild() {
   }
 }
 
-fs.watch('./index.html', {
-  persistent: true
+fs.watchFile('./index.html', {
+  persistent: true,
+  interval: 250
 }, function() {
   if (debounce) {
     clearTimeout(debounce);
   }
+  which = 'index.html';
+  debounce = setTimeout(rebuild, 250);
+});
+
+fs.watchFile('./build.js', {
+  persistent: true,
+  interval: 250
+}, function() {
+  if (debounce) {
+    clearTimeout(debounce);
+  }
+  which = 'build.js';
   debounce = setTimeout(rebuild, 250);
 });
