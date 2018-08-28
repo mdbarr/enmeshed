@@ -247,7 +247,7 @@
     }
     .toolbar {
       position: absolute;
-      top: 28px;
+      top: 30px;
       left: 0px;
       width: 32px;
       height: 400px;
@@ -256,14 +256,22 @@
       text-align: center;
     }
     [data-tool] {
-      padding-top: 8px;
+      padding-top: 6px;
       border-left: 2px solid transparent;
       cursor: pointer;
     }
     [data-tool] > div {
       font-size: 8px;
       line-height: 8px;
-      padding-bottom: 8px;
+      padding-bottom: 6px;
+    }
+    [data-tool="info"] {
+      font-size: 20px;
+      font-weight: 700;
+      padding-left: 6px;
+    }
+    [data-tool="info"]:hover, [data-tool="info"].selected {
+      border-left: 2px solid #FFF;
     }
     [data-tool="crash"]:hover, [data-tool="crash"].selected {
       border-left: 2px solid #D34E53;
@@ -1206,7 +1214,7 @@ function Mesh({
   self.clearElement(self.elements.info);
   self.elements.meshId.innerHTML = meshId;
 
-  self.effect = 'crash';
+  self.effect = 'info';
 
   function toolSelect() {
     for (const type in self.elements.tools) {
@@ -1225,7 +1233,7 @@ function Mesh({
     element.onclick = toolSelect;
   });
 
-  self.elements.tools.crash.classList.add('selected');
+  self.elements.tools.info.classList.add('selected');
 
   //////////
 
@@ -1423,6 +1431,7 @@ window.addEventListener('load', function() {
         <div class="mesh-id"><div id="spinner" class="spinner">&#x169b;</div> mesh://<span id="mesh-id"></span></div>
         <div class="health">Network Health: <span id="health">100%</span></div>
         <div class="toolbar" id="toolbar">
+          <div data-tool="info">&#x24D8;<div id="info-use"></div></div>
           <div data-tool="crash">&#x2349;<div id="crash-use"></div></div>
           <div data-tool="cut">&#x27DB;<div id="cut-use"></div></div>
           <div data-tool="slowdown">&#x29D6;<div id="slowdown-use"></div></div>
