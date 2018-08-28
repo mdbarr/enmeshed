@@ -279,7 +279,7 @@
     [data-tool="cut"]:hover, [data-tool="cut"].selected {
       border-left: 2px solid #666;
     }
-    [data-tool="slowdown"]:hover, [data-tool="slowdown"].selected {
+    [data-tool="slow"]:hover, [data-tool="slow"].selected {
       border-left: 2px solid #D9AF3C;
     }
     [data-tool="checksum"] {
@@ -334,7 +334,7 @@
       stroke-dasharray: 5 2;
       animation: progress 3s linear infinite reverse;
     }
-    .node-effect-slowdown {
+    .node-effect-slow {
       stroke: #D9AF3C;
     }
     .node-effect-checksum {
@@ -410,7 +410,7 @@
 // | |___  | |\  | | |  | | | |___   ___) | |  _  | | |___  | |_| |
 // |_____| |_| \_| |_|  |_| |_____| |____/  |_| |_| |_____| |____/
 //
-// Attack type: offline, misroute, slowdown (MTU?), reconfigure,
+// Attack type: offline, misroute, slow (MTU?), reconfigure,
 //  rewrite(header/flags)
 // Node auto-healing after attacks (especially offline)
 //  TTL inversely proprotionate to number of deployed attacks
@@ -806,8 +806,8 @@ function Node(mesh) {
         if (mesh.effect === 'crash') {
           self.online = false;
           self.element.classList.add('node-offline');
-        } else if (mesh.effect === 'slowdown') {
-          self.outline.classList.add('node-effect-slowdown');
+        } else if (mesh.effect === 'slow') {
+          self.outline.classList.add('node-effect-slow');
         } else if (mesh.effect === 'checksum') {
           self.outline.classList.add('node-effect-checksum');
         } else if (mesh.effect === 'reroute') {
@@ -1205,40 +1205,137 @@ function Mesh({
   //////////
 
   self.elements = {
-    console: document.getElementById('console'),
     crash: document.getElementById('crash'),
     health: document.getElementById('health'),
     info: document.getElementById('info'),
     meshId: document.getElementById('mesh-id'),
     offline: document.getElementById('offline'),
     spinner: document.getElementById('spinner'),
-    toolbar: document.getElementById('toolbar'),
-    tools: {}
+    toolbar: document.getElementById('toolbar')
   };
-  self.elements.console.innerHTML = '<div class="spinner">&#x21C6;</div> Connecting...';
+
   self.clearElement(self.elements.info);
   self.elements.meshId.innerHTML = meshId;
 
+  self.console = {
+    element: document.getElementById('console'),
+    buffer: '',
+    log: function(string) {
+      this.buffer += string;
+      this.element.innerHTML = this.buffer;
+    },
+    clear: function() {
+      this.element.innerHTML = this.buffer = '';
+      return this;
+    },
+    display: function(string) {
+      this.element.innerHTML = string;
+    },
+    reset: function() {
+      this.element.innerHTML = this.buffer;
+    }
+  };
+
+  self.console.clear().log('<div class="spinner">&#x21C6;</div> Connecting...');
+
   self.effect = 'info';
 
-  function toolSelect() {
-    for (const type in self.elements.tools) {
-      if (self.elements.tools[type] === this) {
-        self.effect = type;
-        self.elements.tools[type].classList.add('selected');
-      } else {
-        self.elements.tools[type].classList.remove('selected');
-      }
+  self.tools = {
+    info: {
+      name: 'Information',
+      color: 'white',
+      description: 'Scan nodes and connections.',
+      uses: -1
+    },
+    crash: {
+      name: 'Segfault',
+      color: '#D34E53',
+      description: 'Segfault a <b>node</b> making it completely unavailable and offline.',
+      uses: -1
+    },
+    cut: {
+      name: 'Cut',
+      color: '#666',
+      description: 'Cut the <b>connection</b> between nodes.',
+      uses: -1
+    },
+    slow: {
+      name: 'Slowdown',
+      color: '#D9AF3C',
+      description: 'Slowdown all traffic through a <b>node</b> by setting its MTU to 128 bytes.',
+      uses: -1
+    },
+    checksum: {
+      name: 'Checksum Rewrite',
+      color: '#535C8E',
+      description: 'Rewrite the checksum of every packet passing through <b>node</b> so that it is dropped at its destination.',
+      uses: -1
+    },
+    reroute: {
+      name: 'Random Route',
+      color: '#9E379F',
+      description: 'Corrupt the route table of a <b>node</b> so that packets are randomly routed to different nodes.',
+      uses: -1
+    },
+    trace: {
+      name: 'Packet Trace',
+      color: '#AE6126',
+      description: 'Trace the path of packets originating at the given <b>node</b>.',
+      uses: -1
+    },
+    inspect: {
+      name: 'Stateful Inspection',
+      color: '#94C5CC',
+      description: 'Inspect the packets passing through the given <b>node</b>, extracting any useful data.',
+      uses: -1
+    },
+    multiply: {
+      name: 'Traffic Multiply',
+      color: '#005B96',
+      description: 'Duplicate every packet that passing through the <b>node</b>.',
+      uses: 0
     }
-  }
+  };
 
   document.querySelectorAll('[data-tool]').forEach(function(element) {
     const type = element.dataset.tool;
-    self.elements.tools[type] = element;
-    element.onclick = toolSelect;
+    const tool = self.tools[type];
+    tool.element = element;
+    tool.use = document.getElementById(type + '-use');
+
+    if (tool.uses < 0) {
+      tool.uses = Infinity;
+    } else if (tool.uses === 0) {
+      return;
+    } else {
+      tool.use.innerHTML = tool.uses;
+    }
+
+    tool.element.classList.remove('hidden');
+
+    element.onclick = function() {
+      for (const item in self.tools) {
+        if (item === type) {
+          self.effect = item;
+          self.tools[item].element.classList.add('selected');
+        } else {
+          self.tools[item].element.classList.remove('selected');
+        }
+      }
+    };
+
+    element.onmouseover = function() {
+      const item = self.tools[type];
+      const info = '<span style="text-decoration:underline;color:' + item.color + '">' + item.name + '</span>\n' + item.description;
+      self.console.display(info);
+    };
+
+    element.onmouseout = function() {
+      self.console.reset();
+    };
   });
 
-  self.elements.tools.info.classList.add('selected');
+  self.tools.info.element.classList.add('selected');
 
   //////////
 
@@ -1286,7 +1383,7 @@ function Mesh({
 
     if (!self.connected) {
       self.connected = true;
-      self.elements.console.innerHTML = '&#x21B9; Connected!'; // Objective
+      self.console.clear().log('&#x21B9; Connected!'); // Objective
     }
   }, self.interval);
 
@@ -1361,7 +1458,7 @@ function Mesh({
         self.elements.crash.innerHTML += crashText;
         self.elements.crash.classList.remove('hidden');
         self.elements.toolbar.classList.add('fade-out');
-        self.elements.console.classList.add('fade-out');
+        self.console.element.classList.add('fade-out');
       } else if (state === 4) {
         self.crashing = clearInterval(self.crashing);
         self.elements.offline.classList.remove('hidden');
@@ -1436,15 +1533,15 @@ window.addEventListener('load', function() {
         <div class="mesh-id"><div id="spinner" class="spinner">&#x169b;</div> mesh://<span id="mesh-id"></span></div>
         <div class="health">Network Health: <span id="health">100%</span></div>
         <div class="toolbar" id="toolbar">
-          <div data-tool="info">&#x24D8;<div id="info-use"></div></div>
-          <div data-tool="crash">&#x2349;<div id="crash-use"></div></div>
-          <div data-tool="cut">&#x27DB;<div id="cut-use"></div></div>
-          <div data-tool="slowdown">&#x29D6;<div id="slowdown-use"></div></div>
-          <div data-tool="checksum">&#x2211;<div id="checksum-use"></div></div>
-          <div data-tool="reroute">&#x21AC;<div id="reroute-use"></div></div>
-          <div data-tool="trace">&#x27D0;<div id="trace-use"></div></div>
-          <div data-tool="inspect"><i class="flip">&#x260C;</i><div id="inspect-use"></div></div>
-          <div data-tool="multiply">&#x29C9;<div id="multiply-use"></div></div>
+          <div class="hidden" data-tool="info">&#x24D8;<div id="info-use"></div></div>
+          <div class="hidden" data-tool="crash">&#x2349;<div id="crash-use"></div></div>
+          <div class="hidden" data-tool="cut">&#x27DB;<div id="cut-use"></div></div>
+          <div class="hidden" data-tool="slow">&#x29D6;<div id="slow-use"></div></div>
+          <div class="hidden" data-tool="checksum">&#x2211;<div id="checksum-use"></div></div>
+          <div class="hidden" data-tool="reroute">&#x21AC;<div id="reroute-use"></div></div>
+          <div class="hidden" data-tool="trace">&#x27D0;<div id="trace-use"></div></div>
+          <div class="hidden" data-tool="inspect"><i class="flip">&#x260C;</i><div id="inspect-use"></div></div>
+          <div class="hidden" data-tool="multiply">&#x29C9;<div id="multiply-use"></div></div>
         </div>
         <pre id="info"></pre>
         <svg id="mesh" class="mesh"></svg>

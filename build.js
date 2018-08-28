@@ -86,9 +86,40 @@ const htmlSize = html.length;
 mkdirp.sync(BUILD_DIR);
 
 //////////
+// Substitutions
+console.log('Performing safe substitutions...');
+let substitutedHTML = html;
+
+const strings = [];
+const stringReplacer = function(match, p1) {
+  const bare = p1.replace(/['"`]/g, '');
+  if (!safeSubstitutions[bare]) {
+    const reference = '__STRING_' + strings.length + '__';
+    strings.push(p1);
+    return reference;
+  }
+  return p1;
+};
+
+substitutedHTML = substitutedHTML.replace(/(`[^`]*?`)/g, stringReplacer);
+substitutedHTML = substitutedHTML.replace(/('[^']*?')/g, stringReplacer);
+substitutedHTML = substitutedHTML.replace(/("[^"]*?")/g, stringReplacer);
+
+for (const key of substitutions) {
+  const pattern = new RegExp(key, 'g');
+  substitutedHTML = substitutedHTML.replace(pattern, safeSubstitutions[key]);
+}
+
+strings.forEach(function(item, index) {
+  const reference = '__STRING_' + index + '__';
+  substitutedHTML = substitutedHTML.replace(new RegExp(reference, 'g'), item);
+});
+console.log('  index.html (%s) -> index.html (%s)\n', bytes(htmlSize), bytes(substitutedHTML.length));
+
+//////////
 // JavaScript
 let script;
-html = html.replace(/<script>([^]+)<\/script>/, function (match, p1) {
+html = substitutedHTML.replace(/<script>([^]+)<\/script>/, function (match, p1) {
   script = p1;
   return '<script>__SCRIPT__</script>';
 });
@@ -145,20 +176,11 @@ console.log('  index.css (%s) -> index.min.css (%s)\n', bytes(style.length), byt
 console.log('Building compressed HTML...');
 html = html.split(/\n+/).map(x => x.trim()).join('').replace(/>[\s\n]+</g, '><');
 const compressedHTML = html.replace('__SCRIPT__', minScript).replace('__STYLE__', minStyle);
-fs.writeFileSync(BUILD_DIR + '/index.min.html', compressedHTML);
-const compressedSize = compressedHTML.length;
-console.log('  index.html (%s) -> build/index.min.html (%s)\n', bytes(htmlSize), bytes(compressedSize));
 
-console.log('Performing safe substitutions...');
-let substitutedHTML = compressedHTML;
-for (const key of substitutions) {
-  const pattern = new RegExp(key, 'g');
-  substitutedHTML = substitutedHTML.replace(pattern, safeSubstitutions[key]);
-}
 mkdirp.sync(DIST_DIR);
-fs.writeFileSync(DIST_DIR + '/index.html', substitutedHTML);
+fs.writeFileSync(DIST_DIR + '/index.html', compressedHTML);
 const htmlStat = fs.statSync(DIST_DIR + '/index.html');
-console.log('  build/index.min.html (%s) -> dist/index.html (%s)\n', bytes(compressedSize), bytes(htmlStat.size));
+console.log('  index.html (%s) -> dist/index.html (%s)\n', bytes(htmlSize), bytes(htmlStat.size));
 
 /////////
 // Zip
