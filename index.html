@@ -383,7 +383,64 @@
 // Game list as configuration options
 // Initial boot state (instead of node-packet)
 
-const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+const now = () => Date.now();
+
+function MersenneTwister(seed) {
+  seed = seed || now();
+  this.N = 624;
+  this.M = 397;
+  this.MATRIX_A = 0x9908b0df;
+  this.UPPER_MASK = 0x80000000;
+  this.LOWER_MASK = 0x7fffffff;
+
+  this.mt = new Array(this.N);
+  this.mti = this.N + 1;
+
+  this.mt[0] = seed >>> 0;
+  for (this.mti = 1; this.mti < this.N; this.mti++) {
+    const s = this.mt[this.mti - 1] ^ (this.mt[this.mti - 1] >>> 30);
+    this.mt[this.mti] = (((((s & 0xffff0000) >>> 16) * 1812433253) << 16) +
+                           (s & 0x0000ffff) * 1812433253) + this.mti;
+    this.mt[this.mti] >>>= 0;
+  }
+};
+
+MersenneTwister.prototype.random = function() {
+  const mag01 = new Array(0x0, this.MATRIX_A);
+  let y;
+
+  if (this.mti >= this.N) {
+    let kk;
+
+    for (kk = 0; kk < this.N - this.M; kk++) {
+      y = (this.mt[kk] & this.UPPER_MASK) | (this.mt[kk + 1] & this.LOWER_MASK);
+      this.mt[kk] = this.mt[kk + this.M] ^ (y >>> 1) ^ mag01[y & 0x1];
+    }
+
+    for (;kk < this.N - 1; kk++) {
+      y = (this.mt[kk] & this.UPPER_MASK) | (this.mt[kk + 1] & this.LOWER_MASK);
+      this.mt[kk] = this.mt[kk + (this.M - this.N)] ^ (y >>> 1) ^ mag01[y & 0x1];
+    }
+
+    y = (this.mt[this.N - 1] & this.UPPER_MASK) | (this.mt[0] & this.LOWER_MASK);
+
+    this.mt[this.N - 1] = this.mt[this.M - 1] ^ (y >>> 1) ^ mag01[y & 0x1];
+
+    this.mti = 0;
+  }
+
+  y = this.mt[this.mti++];
+
+  y ^= (y >>> 11);
+  y ^= (y << 7) & 0x9d2c5680;
+  y ^= (y << 15) & 0xefc60000;
+  y ^= (y >>> 18);
+
+  return (y >>> 0) * (1.0 / 4294967296.0);
+};
+
+let prng = new MersenneTwister();
+const rand = (min, max) => Math.floor(prng.random() * (max - min + 1)) + min;
 const size = (object) => Object.keys(object || {}).length;
 
 Map.prototype.getValue = function(key) {
@@ -557,7 +614,7 @@ function Edge(mesh, edgeId, start, end) {
         self.elements.empty.classList.add('edge-offline-empty');
         self.effect = {
           action: mesh.action,
-          timestamp: Date.now()
+          timestamp: now()
         };
       }
     }
@@ -567,7 +624,7 @@ function Edge(mesh, edgeId, start, end) {
     const color = (self.online) ? '#5691DC' : '#D34E53';
     const symbol = (self.online) ? '25C9' : '25CE';
     let info = 'Connection <span style="color:' + color + '"> &#x' + symbol + ';</span>\n\n';
-    info += start.address + ' &#x2513; \n' + end.address + ' &#x251B2; ';
+    info += start.address + ' &#x2513; \n' + end.address + ' &#x251B; ';
 
     mesh.elements.info.innerHTML = info;
   };
@@ -711,7 +768,7 @@ function Node(mesh) {
           self.element.classList.add('node-offline');
           self.effect = {
             action: mesh.action,
-            timestamp: Date.now()
+            timestamp: now()
           };
         }
       }
@@ -969,11 +1026,14 @@ function Packet(mesh, source, destination) {
 }
 
 function Mesh({
-  meshId, width, height, factor, scale, range, minimum, interval, complexity, maxHops, maxTTL, threshold
+  meshId, width, height, factor, scale, range, minimum, interval, complexity, maxHops, maxTTL, threshold, seed
 }) {
   const self = this;
 
   /////////
+
+  seed = seed || parseInt(meshId.replace(/:/g, ''), 16);
+  prng = new MersenneTwister(seed);
 
   self.width = width || 20;
   self.height = height || 20;
@@ -1141,14 +1201,14 @@ function Mesh({
   }
 
   self.router = setInterval(function() {
-    //const start = Date.now();
+    //const start = now();
     for (let i = 0; i < self.packets.length; i++) {
       self.packets[i].route();
     }
     self.packets = self.packets.filter(function(packet) {
       return !packet.dropped;
     });
-    //console.log('Routing time', Date.now() - start);
+    //console.log('Routing time', now() - start);
 
     const health = Math.round(self.packets.length / (self.count * self.complexity) * 100);
     self.elements.health.innerHTML = health + '%';
@@ -1256,17 +1316,18 @@ function Enmeshed() {
   const index = 0;
 
   const games = [ {
-    meshId: 'fe23::91ff::5c34',
+    meshId: 'fe42::92ff::57c4',
     width: 20,
     height: 20,
-    scale: 25
+    scale: 25,
+    seed: 948485
   } ];
 
   const terminal = document.getElementById('terminal');
   const lines = dmesg.split('\n');
 
   let kernel = true;
-  const bootTime = Date.now();
+  const bootTime = now();
   const boot = setInterval(function() {
     if (lines.length) {
       let line = lines.shift();
@@ -1276,7 +1337,7 @@ function Enmeshed() {
 
       if (kernel && line[0] !== '<') {
         line = line.replace(/^([^ :]+):/, '<span style="color:#4b86b4">$1</span>:');
-        line = '<span style="color:#7fdb6a">[ ' + (((Date.now() - bootTime) / 1000) + (rand(0, 1000) / 100000)).
+        line = '<span style="color:#7fdb6a">[ ' + (((now() - bootTime) / 1000) + (rand(0, 1000) / 100000)).
           toFixed(6).padStart(10, ' ') + '] </span>' + line;
       }
       line = line.replace(/__DATE/g, new Date()).

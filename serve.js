@@ -35,5 +35,5 @@ fs.watch('./index.html', {
   if (debounce) {
     clearTimeout(debounce);
   }
-  debounce = setTimeout(rebuild, 100);
+  debounce = setTimeout(rebuild, 250);
 });
