@@ -93,6 +93,33 @@ const htmlSize = html.length;
 mkdirp.sync(BUILD_DIR);
 
 //////////
+// JavaScript
+let script;
+html = html.replace(/<script>([^]+)<\/script>/, function (match, p1) {
+  script = p1;
+  return '<script>__SCRIPT__</script>';
+});
+fs.writeFileSync(BUILD_DIR + '/index.js', script);
+
+console.log('Linting original Javascript...');
+try {
+  child_process.execSync('./node_modules/.bin/eslint --fix ./build/index.js', {
+    stdio: 'inherit'
+  });
+} catch (error) {
+  console.log('Linting failed.');
+  process.exit(0);
+}
+
+const lintedScript = fs.readFileSync(BUILD_DIR + '/index.js').toString();
+if (lintedScript !== script) {
+  console.log('  Updating index.html with linted JavaScript.');
+  fs.writeFileSync(INDEX_HTML, html.replace('__SCRIPT__', lintedScript));
+}
+html = html.replace('__SCRIPT__', script);
+console.log();
+
+//////////
 // Substitutions
 console.log('Performing safe substitutions...');
 let substitutedHTML = html;
@@ -125,14 +152,13 @@ console.log('  index.html (%s) -> index.html (%s)\n', bytes(htmlSize), bytes(sub
 
 //////////
 // JavaScript
-let script;
 html = substitutedHTML.replace(/<script>([^]+)<\/script>/, function (match, p1) {
   script = p1;
   return '<script>__SCRIPT__</script>';
 });
 fs.writeFileSync(BUILD_DIR + '/index.js', script);
 
-console.log('Linting Javascript...');
+console.log('Linting substituted Javascript...');
 try {
   child_process.execSync('./node_modules/.bin/eslint --fix ./build/index.js', {
     stdio: 'inherit'
@@ -140,12 +166,6 @@ try {
 } catch (error) {
   console.log('Linting failed.');
   process.exit(0);
-}
-
-const newScript = fs.readFileSync(BUILD_DIR + '/index.js').toString();
-if (newScript !== script) {
-  console.log('  Updating index.html with linted JavaScript.');
-  fs.writeFileSync(INDEX_HTML, html.replace('__SCRIPT__', newScript));
 }
 console.log();
 
@@ -157,7 +177,7 @@ try {
   process.exit(0);
 }
 const minScript = fs.readFileSync(BUILD_DIR + '/index.min.js').toString();
-console.log('  index.js (%s) -> index.min.js (%s)\n', bytes(newScript.length), bytes(minScript.length));
+console.log('  index.js (%s) -> index.min.js (%s)\n', bytes(script.length), bytes(minScript.length));
 
 //////////
 // CSS

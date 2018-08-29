@@ -21,8 +21,8 @@ const options = {
   interval: 2500
 };
 
-function rebuild(which, curr, prev) {
-  if (!last[which] || last[which].mtime != curr.mtime) {
+function rebuild(which, curr) {
+  if (!last[which] || last[which].mtime !== curr.mtime) {
     last.which = curr;
 
     console.log(`\n${ which } changed, rebuilding...`);
