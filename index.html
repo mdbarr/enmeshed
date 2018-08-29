@@ -160,6 +160,18 @@
       color: white;
       font-size: 12px;
     }
+    #retry {
+      position: absolute;
+      top: 580px;
+      right: 20px;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+    }
+    #retry:hover::before {
+      content: 'Restart ';
+      font-size: 12px;
+    }
     .brand {
       position: absolute;
       left: 50%;
@@ -476,7 +488,7 @@ MersenneTwister.prototype.random = function() {
   return (y + 0.5) / this.I;
 };
 
-let prng = new MersenneTwister();
+const prng = new MersenneTwister();
 const rand = (min, max) => Math.floor(prng.random() * (max - min + 1)) + min;
 const size = (object) => Object.keys(object || {}).length;
 
@@ -772,19 +784,19 @@ function Node(mesh) {
   self.object = 'node';
 
   self.online = true;
-  self.mtu = Math.pow(2, rand(9, 11));
+  self.mtu = Math.pow(2, mesh.rand(9, 11));
 
   while (self.id === undefined || mesh.positions[self.id] !== undefined) {
-    self.x = rand(0, mesh.width - 1);
-    self.y = rand(0, mesh.height - 1);
+    self.x = mesh.rand(0, mesh.width - 1);
+    self.y = mesh.rand(0, mesh.height - 1);
 
     self.id = mesh.id(self.x, self.y);
   }
   mesh.positions[self.id] = self;
 
   self.pos = {
-    x: (self.x * mesh.scale) + (mesh.scale / 2) + rand(-mesh.perturb, mesh.perturb),
-    y: (self.y * mesh.scale) + (mesh.scale / 2) + rand(-mesh.perturb, mesh.perturb)
+    x: (self.x * mesh.scale) + (mesh.scale / 2) + mesh.rand(-mesh.perturb, mesh.perturb),
+    y: (self.y * mesh.scale) + (mesh.scale / 2) + mesh.rand(-mesh.perturb, mesh.perturb)
   };
 
   self.address = generateIP();
@@ -915,13 +927,13 @@ function Packet(mesh, source, destination) {
 
   self.destination = destination;
   while (self.destination === undefined || self.destination === self.source) {
-    self.destination = mesh.nodes[rand(0, mesh.nodes.length - 1)];
+    self.destination = mesh.nodes[mesh.rand(0, mesh.nodes.length - 1)];
   }
 
   self.maxHops = Infinity;
   self.maxTicks = Infinity;
 
-  self.size = Math.pow(2, rand(7, 12));
+  self.size = Math.pow(2, mesh.rand(7, 12));
 
   self.calculateChecksum = function() {
     return (self.size + size(self.source.connections) +
@@ -1089,7 +1101,7 @@ function Packet(mesh, source, destination) {
         routes.push(connection);
       }
       if (routes.length) {
-        self.hop = routes[rand(0, routes.length)];
+        self.hop = routes[mesh.rand(0, routes.length)];
         console.log('rerouted');
       }
     } else if (self.idealPath) {
@@ -1142,8 +1154,7 @@ function Mesh({
 
   /////////
 
-  seed = seed || parseInt(meshId.replace(/:/g, ''), 16);
-  prng = new MersenneTwister(seed);
+  seed = seed || parseInt(meshId.replace(/[^a-f\d]/g, ''), 16);
 
   self.width = width || 20;
   self.height = height || 20;
@@ -1161,20 +1172,6 @@ function Mesh({
   self.maxTTL = maxTTL || 2;
 
   self.threshold = threshold || 50;
-
-  //////////
-
-  self.effects = [];
-
-  self.addresses = {};
-
-  self.positions = {};
-  self.nodes = [];
-
-  self.connections = {};
-  self.edges = [];
-
-  self.idealPaths = {};
 
   //////////
 
@@ -1215,9 +1212,13 @@ function Mesh({
 
   function initSvg() {
     const svg = document.getElementById('mesh');
+    const svgHeight = (self.height * self.scale) + 8;
 
     svg.style.width = ((self.width * self.scale) + 8) + 'px';
-    svg.style.height = ((self.height * self.scale) + 8) + 'px';
+    svg.style.height = svgHeight + 'px';
+    if ((510 - svgHeight) / 2 > 0) {
+      svg.style.marginTop = ((510 - svgHeight) / 2) + 'px';
+    }
 
     self.clearElement(svg);
 
@@ -1250,8 +1251,6 @@ function Mesh({
     return svg;
   }
 
-  self.svg = initSvg();
-
   //////////
 
   self.elements = {
@@ -1260,12 +1259,10 @@ function Mesh({
     info: document.getElementById('info'),
     meshId: document.getElementById('mesh-id'),
     offline: document.getElementById('offline'),
+    retry: document.getElementById('retry'),
     spinner: document.getElementById('spinner'),
     toolbar: document.getElementById('toolbar')
   };
-
-  self.clearElement(self.elements.info);
-  self.elements.meshId.innerHTML = meshId;
 
   self.console = {
     element: document.getElementById('console'),
@@ -1286,8 +1283,6 @@ function Mesh({
       this.element.innerHTML = this.buffer;
     }
   };
-
-  self.console.clear().log('<div class="spinner">&#x21C6;</div> Connecting...');
 
   self.tools = {
     info: {
@@ -1346,101 +1341,147 @@ function Mesh({
     }
   };
 
-  self.effect = self.tools.info;
-
-  document.querySelectorAll('[data-tool]').forEach(function(element) {
-    const type = element.dataset.tool;
-    const tool = self.tools[type];
-    tool.type = type;
-    tool.element = element;
-    tool.use = document.getElementById(type + '-use');
-
-    if (tool.uses < 0) {
-      tool.uses = Infinity;
-    } else if (tool.uses === 0) {
-      return;
-    } else {
-      tool.use.innerHTML = tool.uses;
-    }
-
-    tool.element.classList.remove('hide');
-
-    element.onclick = function() {
-      for (const item in self.tools) {
-        if (item === type) {
-          self.effect = self.tools[type];
-          self.tools[item].element.classList.add('selected');
-        } else {
-          self.tools[item].element.classList.remove('selected');
-        }
-      }
-    };
-
-    element.onmouseover = function() {
-      const item = self.tools[type];
-      const info = '<span style="text-decoration:underline;color:' + item.color + '">' + item.name + '</span>\n' + item.description;
-      self.console.display(info);
-    };
-
-    element.onmouseout = function() {
-      self.console.reset();
-    };
-  });
-
-  self.tools.info.element.classList.add('selected');
-
   //////////
 
-  self.count = Math.floor(self.width * self.height * self.factor);
-  self.scope = Math.ceil(self.count % 10);
-  self.perturb = Math.ceil(self.scale / 5);
+  self.init = function() {
+    self.connected = false;
 
-  for (let i = 0; i < self.count; i++) {
-    self.nodes.push(new Node(self));
-  }
+    self.prng = new MersenneTwister(seed);
+    self.rand = (min, max) => Math.floor(self.prng.random() * (max - min + 1)) + min;
 
-  self.nodes.forEach(function(node) {
-    node.connect();
-  });
+    self.effects = [];
 
-  for (let i = 0; i < self.count; i++) {
-    self.nodes[i].createElement();
-  }
+    self.addresses = {};
 
-  /////////
+    self.positions = {};
+    self.nodes = [];
 
-  self.packets = [];
-  for (let c = 0; c < self.complexity; c++) {
-    for (let i = 0; i < self.count; i++) {
-      self.packets.push(new Packet(self, self.nodes[i]));
-    }
-  }
+    self.connections = {};
+    self.edges = [];
 
-  self.crashed = false;
+    self.idealPaths = {};
 
-  self.router = setInterval(function() {
-    //const start = Date.now();
-    for (let i = 0; i < self.packets.length; i++) {
-      self.packets[i].route();
-    }
-    self.packets = self.packets.filter(function(packet) {
-      return !packet.dropped;
+    //////////
+
+    self.svg = initSvg();
+
+    self.clearElement(self.elements.info);
+    self.elements.meshId.innerHTML = meshId;
+    self.elements.health.innerHTML = '100%';
+
+    self.console.clear().log('<div class="spinner">&#x21C6;</div> Connecting...');
+
+    self.effect = self.tools.info;
+
+    document.querySelectorAll('[data-tool]').forEach(function(element) {
+      const type = element.dataset.tool;
+      const tool = self.tools[type];
+      tool.type = type;
+      tool.element = element;
+      tool.use = document.getElementById(type + '-use');
+
+      if (tool.uses < 0 || tool.uses === Infinity) {
+        tool.uses = Infinity;
+      } else if (tool.uses === 0) {
+        tool.element.classList.add('hide');
+        return;
+      } else {
+        tool.use.innerHTML = tool.uses;
+      }
+      tool.element.classList.remove('hide');
+
+      element.onclick = function() {
+        for (const item in self.tools) {
+          if (item === type) {
+            self.effect = self.tools[type];
+            self.tools[item].element.classList.add('selected');
+          } else {
+            self.tools[item].element.classList.remove('selected');
+          }
+        }
+      };
+
+      element.onmouseover = function() {
+        const item = self.tools[type];
+        const info = '<span style="text-decoration:underline;color:' + item.color + '">' + item.name + '</span>\n' + item.description;
+        self.console.display(info);
+      };
+
+      element.onmouseout = function() {
+        self.console.reset();
+      };
     });
-    //console.log('Routing time', Date.now() - start);
 
-    const health = Math.round(self.packets.length / (self.count * self.complexity) * 100);
-    self.elements.health.innerHTML = health + '%';
+    self.tools.info.element.classList.add('selected');
 
-    if (health < self.threshold && !self.crashed) {
-      return self.crash();
+    self.count = Math.floor(self.width * self.height * self.factor);
+    self.scope = Math.ceil(self.count % 10);
+    self.perturb = Math.ceil(self.scale / 5);
+
+    for (let i = 0; i < self.count; i++) {
+      self.nodes.push(new Node(self));
     }
 
-    if (!self.connected) {
-      self.connected = true;
-      self.console.clear().log('&#x21B9; Connected!');
-      self.console.log('\n&#x2729; Objective: ' + objective);
+    self.nodes.forEach(function(node) {
+      node.connect();
+    });
+
+    for (let i = 0; i < self.count; i++) {
+      self.nodes[i].createElement();
     }
-  }, self.interval);
+
+    /////////
+
+    self.packets = [];
+    for (let c = 0; c < self.complexity; c++) {
+      for (let i = 0; i < self.count; i++) {
+        self.packets.push(new Packet(self, self.nodes[i]));
+      }
+    }
+
+    self.crashed = false;
+
+    if (self.router) {
+      clearInterval(self.router);
+    }
+
+    self.router = setInterval(function() {
+      if (self.crashed) {
+        return;
+      }
+      //const start = Date.now();
+      for (let i = 0; i < self.packets.length; i++) {
+        self.packets[i].route();
+      }
+      self.packets = self.packets.filter(function(packet) {
+        return !packet.dropped;
+      });
+      //console.log('Routing time', Date.now() - start);
+
+      const health = Math.round(self.packets.length / (self.count * self.complexity) * 100);
+      self.elements.health.innerHTML = health + '%';
+
+      if (health < self.threshold && !self.crashed) {
+        return self.crash();
+      }
+
+      if (!self.connected) {
+        self.connected = true;
+        self.console.clear().log('&#x21B9; Connected!');
+        self.console.log('\n&#x2729; Objective: ' + objective);
+
+        self.elements.retry.classList.remove('hide');
+        self.elements.retry.onclick = function() {
+          self.crashed = true;
+          self.elements.retry.classList.add('hide');
+          if (self.router) {
+            clearInterval(self.router);
+          }
+          self.init();
+        };
+      }
+    }, self.interval);
+  };
 
   //////////
 
@@ -1478,7 +1519,7 @@ function Mesh({
     function crashLookup(symbol) {
       symbol = crashTable[symbol] || symbol;
       if (Array.isArray(symbol)) {
-        const repeat = rand(symbol[0], symbol[1]);
+        const repeat = self.rand(symbol[0], symbol[1]);
         length += repeat;
         return symbol[2].repeat(repeat);
       } else {
@@ -1489,7 +1530,7 @@ function Mesh({
 
     let crashText = '';
     for (length = 0; length < 2150;) {
-      crashText += crashLookup(crashSymbols[rand(0, crashSymbols.length - 1)]);
+      crashText += crashLookup(crashSymbols[self.rand(0, crashSymbols.length - 1)]);
     }
 
     let state = 0;
@@ -1535,6 +1576,10 @@ function Mesh({
 
   /////////
 
+  self.init();
+
+  /////////
+
   return self;
 }
 
@@ -1544,15 +1589,15 @@ function Enmeshed() {
   const games = [ {
     //meshId: 'fe42::92ff::57c4',
     meshId: '[::1]',
-    width: 20,
-    height: 20,
-    scale: 25,
-    seed: 483983,
+    width: 10,
+    height: 10,
+    scale: 35,
+    seed: 4839,
     objective: 'Crash the network any way you can.'
   } ];
 
   const terminal = document.getElementById('terminal');
-  const lines = dmesg.split('\n');
+  const lines = dmesg.split('\n'); //.slice(0, 0); // HACK
 
   let kernel = true;
   const bootTime = Date.now();
@@ -1628,6 +1673,7 @@ window.addEventListener('load', function() {
       <div id="offline" class="offline hide">
         <div class="offline-banner">OFFLINE</div>
       </div>
+      <div id="retry" class="hide" title="Retry / Restart">&#x21BB;</div>
       <div class="brand">MarkBook Pro</div>
     </div>
     <div class="base"></div>
