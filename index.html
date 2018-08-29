@@ -10,7 +10,7 @@
       user-select: none;
     }
     body {
-      background-image: -webkit-radial-gradient(top, circle cover, #094781 0%, #07345E 80%) !important;
+      background-image: -webkit-radial-gradient(top, circle cover, #094781 0%, #07345E 80%);
       padding: 20px;
       margin: 20px;
       min-width: 1200px;
@@ -540,7 +540,7 @@ RCU: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=4
 NR_IRQS: 524544, nr_irqs: 728, preallocated irqs: 16
 Console: colour dummy device 80x25
 console [tty0] enabled
-ACPI: Core revision 20170831
+ACPI: Core revision 20180813
 ACPI: 6 ACPI AML tables successfully acquired and loaded
 Security Framework initialized
 mce: CPU supports 7 MCE banks
@@ -639,25 +639,25 @@ function Edge(mesh, edgeId, start, end) {
 
   self.elements.interact.onclick = function() {
     if (!self.effect) {
-      if (mesh.effect === 'cut') {
+      if (mesh.effect.type === 'cut') {
         self.online = false;
         self.elements.empty.classList.add('edge-offline-empty');
       } else {
         return;
       }
-      self.effect = {
-        type: mesh.effect,
+      self.effect = Object.assign({
         timestamp: Date.now()
-      };
+      }, mesh.tools[mesh.effect.type]);
 
       mesh.effects.push(self.effect);
     }
   };
 
   self.elements.interact.onmouseover = function() {
+    const len = Math.max(start.address.length, end.address.length);
     mesh.elements.info.innerHTML = 'Connection #' + self.name + mesh.dotColor(self) + '\n\n' +
-        mesh.dotColor(start) + ' ' + start.address + ' &#x2513; \n' +
-        mesh.dotColor(end) + ' ' + end.address + ' &#x251B; ';
+         mesh.dotColor(start) + '  &#x21B1; ' + start.address.padStart(len, ' ') + ' \n' +
+         mesh.dotColor(end) + '  ' + end.address.padEnd(len, ' ') + ' &#x21B2; ';
   };
 
   self.elements.interact.onmouseout = function() {
@@ -796,29 +796,37 @@ function Node(mesh) {
 
     self.element.onclick = function() {
       if (!self.effect) {
-        if (mesh.effect === 'crash') {
-          self.online = false;
-          self.element.classList.add('node-offline');
-        } else if (mesh.effect === 'slow') {
-          self.outline.classList.add('node-effect-slow');
-        } else if (mesh.effect === 'checksum') {
-          self.outline.classList.add('node-effect-checksum');
-        } else if (mesh.effect === 'reroute') {
-          self.outline.classList.add('node-effect-reroute');
-        } else if (mesh.effect === 'trace') {
-          self.outline.classList.add('node-effect-trace');
-        } else if (mesh.effect === 'inspect') {
-          self.outline.classList.add('node-effect-inspect');
-        } else if (mesh.effect === 'multiply') {
-          self.outline.classList.add('node-effect-multiply');
-        } else {
-          return;
+        switch (mesh.effect.type) {
+          case 'crash':
+            self.online = false;
+            self.element.classList.add('node-offline');
+            break;
+          case 'slow':
+            self.mtu = 256;
+            self.outline.classList.add('node-effect-slow');
+            break;
+          case 'checksum':
+            self.outline.classList.add('node-effect-checksum');
+            break;
+          case 'reroute':
+            self.outline.classList.add('node-effect-reroute');
+            break;
+          case 'trace':
+            self.outline.classList.add('node-effect-trace');
+            break;
+          case 'inspect':
+            self.outline.classList.add('node-effect-inspect');
+            break;
+          case 'multiply':
+            self.outline.classList.add('node-effect-multiply');
+            break;
+          default:
+            return;
         }
 
-        self.effect = {
-          type: mesh.effect,
+        self.effect = Object.assign({
           timestamp: Date.now()
-        };
+        }, mesh.tools[mesh.effect.type]);
 
         mesh.effects.push(self.effect);
       }
@@ -1043,7 +1051,20 @@ function Packet(mesh, source, destination) {
       return;
     }
 
-    if (self.idealPath) {
+    if (self.current.effect && self.current.effect.type === 'reroute') {
+      const routes = [];
+      for (const id in self.current.connections) {
+        const connection = self.current.connections[id];
+        if (!connection.node.online || !connection.edge.online) {
+          continue;
+        }
+        routes.push(connection);
+      }
+      if (routes.length) {
+        self.hop = routes[rand(0, routes.length)];
+        console.log('rerouted');
+      }
+    } else if (self.idealPath) {
       const index = self.idealPath.indexOf(self.current);
       if (index !== -1 && index < self.idealPath.length && self.idealPath[index + 1]) {
         const next = self.idealPath[index + 1];
@@ -1085,7 +1106,9 @@ function Packet(mesh, source, destination) {
 }
 
 function Mesh({
-  meshId, width, height, factor, scale, range, minimum, interval, complexity, maxHops, maxTTL, threshold, seed
+  meshId, width, height, factor, scale, range, minimum,
+  interval, complexity, maxHops, maxTTL, threshold, seed,
+  objective
 }) {
   const self = this;
 
@@ -1147,8 +1170,8 @@ function Mesh({
   };
 
   self.dotColor = function(object) {
-    const color = (object.online) ? '#5691DC' : '#D34E53';
-    const symbol = (object.online) ? '25C9' : '25CE';
+    const color = object.online ? (object.effect ? object.effect.color : '#5691DC') : '#D34E53';
+    const symbol = object.online ? '25C9' : '25CE';
     return '<span style="color:' + color + '"> &#x' + symbol + ';</span>';
   };
 
@@ -1222,6 +1245,7 @@ function Mesh({
     log: function(string) {
       this.buffer += string;
       this.element.innerHTML = this.buffer;
+      this.element.scrollTop = this.element.scrollHeight + this.element.clientHeight;
     },
     clear: function() {
       this.element.innerHTML = this.buffer = '';
@@ -1236,8 +1260,6 @@ function Mesh({
   };
 
   self.console.clear().log('<div class="spinner">&#x21C6;</div> Connecting...');
-
-  self.effect = 'info';
 
   self.tools = {
     info: {
@@ -1261,7 +1283,7 @@ function Mesh({
     slow: {
       name: 'Slowdown',
       color: '#D9AF3C',
-      description: 'Slowdown all traffic through a <u>node</u> by setting its MTU to 128 bytes.',
+      description: 'Slowdown all traffic through a <u>node</u> by setting its MTU to 256 bytes.',
       uses: -1
     },
     checksum: {
@@ -1296,9 +1318,12 @@ function Mesh({
     }
   };
 
+  self.effect = self.tools.info;
+
   document.querySelectorAll('[data-tool]').forEach(function(element) {
     const type = element.dataset.tool;
     const tool = self.tools[type];
+    tool.type = type;
     tool.element = element;
     tool.use = document.getElementById(type + '-use');
 
@@ -1315,7 +1340,7 @@ function Mesh({
     element.onclick = function() {
       for (const item in self.tools) {
         if (item === type) {
-          self.effect = item;
+          self.effect = self.tools[type];
           self.tools[item].element.classList.add('selected');
         } else {
           self.tools[item].element.classList.remove('selected');
@@ -1382,7 +1407,8 @@ function Mesh({
 
     if (!self.connected) {
       self.connected = true;
-      self.console.clear().log('&#x21B9; Connected!'); // Objective
+      self.console.clear().log('&#x21B9; Connected!');
+      self.console.log('\n&#x2729; Objective: ' + objective);
     }
   }, self.interval);
 
@@ -1479,11 +1505,13 @@ function Enmeshed() {
   const index = 0;
 
   const games = [ {
-    meshId: 'fe42::92ff::57c4',
+    //meshId: 'fe42::92ff::57c4',
+    meshId: '[::1]',
     width: 20,
     height: 20,
     scale: 25,
-    seed: 483983
+    seed: 483983,
+    objective: 'Crash the network any way you can.'
   } ];
 
   const terminal = document.getElementById('terminal');

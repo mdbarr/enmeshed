@@ -56,8 +56,9 @@ const safeSubstitutions = {
   'offline-banner': 'ob',
   'offline-fade': 'of',
   'packet': 'p',
+  'seed': 'se',
   'selected': 's',
-  'self': 'se',
+  'self': 'sl',
   'source': 'so',
   'ticks': 'ts',
   'toolbar': 'to'
