@@ -498,6 +498,34 @@ function generateIP() {
   return address;
 }
 
+function sequence(worker, done) {
+  let i = 0;
+
+  function queue(func, delay) {
+    setTimeout(func, delay || 0);
+  }
+
+  function next(timeout) {
+    if (timeout === false) {
+      if (done) {
+        queue(done);
+      }
+    } else {
+      i++;
+      timeout = (timeout === undefined) ? 100 : parseInt(timeout);
+      queue(iterate, timeout);
+    }
+  }
+
+  function iterate() {
+    queue(function() {
+      worker(next, i);
+    });
+  }
+
+  iterate();
+}
+
 //////////
 
 const dmesg = `<div class="banner">Gilgamesh OS version 4.15.0-33-generic (build 2436)</div>
@@ -577,7 +605,7 @@ Netfilter messages via NETLINK v0.30.
 random: initializing mersenne twister
 MeshConnect initializing interface
 Entering interactive mode...
-
+?2500
 
 Welcome to Gilgamesh 47.04.3 LTS (Gilgamesh OS 4.73.0-22  m47_64)
 
@@ -599,7 +627,7 @@ mark@terminus:~$ ./enmeshed
 
 --------------------------------------------------------------------
 
- 1) Story Mode
+ 1) New Game
 
  2) Challenge Mode
 
@@ -1109,7 +1137,7 @@ function Mesh({
   meshId, width, height, factor, scale, range, minimum,
   interval, complexity, maxHops, maxTTL, threshold, seed,
   objective
-}) {
+}, callback) {
   const self = this;
 
   /////////
@@ -1388,6 +1416,8 @@ function Mesh({
     }
   }
 
+  self.crashed = false;
+
   self.router = setInterval(function() {
     //const start = Date.now();
     for (let i = 0; i < self.packets.length; i++) {
@@ -1401,7 +1431,7 @@ function Mesh({
     const health = Math.round(self.packets.length / (self.count * self.complexity) * 100);
     self.elements.health.innerHTML = health + '%';
 
-    if (health < self.threshold) {
+    if (health < self.threshold && !self.crashed) {
       return self.crash();
     }
 
@@ -1413,8 +1443,6 @@ function Mesh({
   }, self.interval);
 
   //////////
-
-  self.crashed = false;
 
   function crashNode(node) {
     node.element.classList.remove('node-packet');
@@ -1429,6 +1457,12 @@ function Mesh({
   }
 
   self.crash = function() {
+    if (self.crashing) {
+      return;
+    } else {
+      self.crashing = true;
+    }
+
     const crashSymbols = '01012345678901X[]\\/?{}ABCDEFSSSSGGHHIJKL'.split('');
     const crashTable = {
       S: [ 1, 14, ' ' ],
@@ -1464,7 +1498,7 @@ function Mesh({
     const step2 = step1 * 2;
     const step3 = self.nodes.length;
 
-    self.crashing = setInterval(function() {
+    const loop = setInterval(function() {
       if (state === 0) {
         clearInterval(self.router);
 
@@ -1485,12 +1519,15 @@ function Mesh({
         self.elements.toolbar.classList.add('fade-out');
         self.console.element.classList.add('fade-out');
       } else if (state === 4) {
-        self.crashing = clearInterval(self.crashing);
+        clearInterval(loop);
         self.elements.offline.classList.remove('hide');
         self.elements.spinner.classList.add('hide');
         self.svg.classList.add('blink');
         self.elements.health.innerHTML = 'OFFLINE';
         self.crashed = true;
+        if (callback) {
+          return callback(self);
+        }
       }
       state++;
     }, self.interval);
@@ -1519,9 +1556,18 @@ function Enmeshed() {
 
   let kernel = true;
   const bootTime = Date.now();
-  const boot = setInterval(function() {
+  sequence(function(next) {
     if (lines.length) {
       let line = lines.shift();
+      let timeout = 25 + rand(0, 35);
+
+      line = line.replace(/__DATE/g, new Date()).
+        replace(/__IP/g, generateIP).
+        replace(/^\?(\d+)/, function(a, t) {
+          timeout = parseInt(t);
+          return '';
+        });
+
       if (!line.length) {
         kernel = false;
       }
@@ -1531,19 +1577,22 @@ function Enmeshed() {
         line = '<span style="color:#7fdb6a">[ ' + (((Date.now() - bootTime) / 1000) + (rand(0, 1000) / 100000)).
           toFixed(6).padStart(10, ' ') + '] </span>' + line;
       }
-      line = line.replace(/__DATE/g, new Date()).
-        replace(/__IP/g, generateIP);
 
       terminal.innerHTML += line + '\n';
       terminal.scrollTop = terminal.scrollHeight + terminal.clientHeight;
+
+      next(timeout);
     } else {
-      clearInterval(boot);
       terminal.classList.add('hide');
       document.getElementById('screen').classList.remove('hide');
-      const mesh = new Mesh(games[index]);
+      const mesh = new Mesh(games[index], function() {
+        next(false);
+      });
       window.mesh = mesh;
     }
-  }, 50);
+  }, function() {
+    console.log('done!');
+  });
 }
 
 //////////
