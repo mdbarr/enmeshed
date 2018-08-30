@@ -642,7 +642,7 @@ Netfilter messages via NETLINK v0.30.
 random: initializing mersenne twister
 MeshConnect initializing interface
 Entering interactive mode...
-?2500!!
+?2000!!
 
 Welcome to Gilgamesh 47.04.3 LTS (Gilgamesh OS 4.73.0-22  m47_64)
 
@@ -654,7 +654,7 @@ Welcome to Gilgamesh 47.04.3 LTS (Gilgamesh OS 4.73.0-22  m47_64)
  Swap usage:   0%                 IP address for mesh0: __IP
 
 
-mark@terminus:~$ ./enmeshed
+&P./enmeshed
 
    _____   _   _   __  __   _____   ____    _   _   _____   ____
   | ____| | \\ | | |  \\/  | | ____| / ___|  | | | | | ____| |  _ \\
@@ -669,7 +669,8 @@ mark@terminus:~$ ./enmeshed
  2) Challenge Mode
 
  3) Continue
-`;
+
+&E!!&I`;
 
 //////////
 
@@ -1493,7 +1494,7 @@ function Mesh({
       if (!self.connected) {
         self.connected = true;
         self.console.clear().log('&#x21B9; Connected!');
-        self.console.log('\n&#x2729; Objective: ' + objective);
+        self.console.log('\n&#x2691; Objective: ' + objective);
 
         self.elements.retry.classList.remove('hide');
         self.elements.retry.onclick = function() {
@@ -1611,11 +1612,6 @@ function Mesh({
 function Enmeshed() {
   const index = 0;
 
-  function remove(id) {
-    const element = document.getElementById(id);
-    return (element) ? element.parentNode.removeChild(element) : true;
-  }
-
   const games = [ {
     //meshId: 'fe42::92ff::57c4',
     meshId: '[::1]',
@@ -1626,9 +1622,26 @@ function Enmeshed() {
     objective: 'Crash the network any way you can.'
   } ];
 
+  const span = (hex) => '<span style="color:' + hex + '">';
+  const green = span('#7fdb6a');
+  const blue = span('#4b86b4');
   const cursor = '<u id="cursor"></u>';
 
+  const ps1 = green + 'mark@terminus</span>:' + blue + '~</span>$ ';
+  const ps2 = '<span style="font-weight: 700">enmeshed#</span> ';
+
   const terminal = document.getElementById('terminal');
+
+  function print(string, cont) {
+    terminal.innerHTML += string + (!cont ? '\n' : '');
+    terminal.scrollTop = terminal.scrollHeight + terminal.clientHeight;
+  }
+
+  function nocursor() {
+    const element = document.getElementById('cursor');
+    return (element) ? element.parentNode.removeChild(element) : true;
+  }
+
   const lines = dmesg.split('\n'); //.slice(0, 0); // HACK
 
   let kernel = true;
@@ -1638,8 +1651,9 @@ function Enmeshed() {
     if (lines.length) {
       let line = lines.shift();
       let timeout = 25 + rand(0, 35);
+      let input = false;
 
-      remove('cursor');
+      nocursor();
 
       line = line.replace(/__DATE/g, new Date()).
         replace(/__IP/g, generateIP).
@@ -1647,22 +1661,36 @@ function Enmeshed() {
           timeout = parseInt(t);
           return '';
         }).
-        replace(/!!/, cursor);
+        replace(/&I/, function() {
+          input = true;
+          return '';
+        }).
+        replace(/!!/, cursor).
+        replace(/&P/, ps1).
+        replace(/&E/, ps2);
 
       if (!line.length) {
         kernel = false;
       }
 
       if (kernel && line[0] !== '<') {
-        line = line.replace(/^([^ :]+):/, '<span style="color:#4b86b4">$1</span>:');
-        line = '<span style="color:#7fdb6a">[ ' + (((Date.now() - bootTime) / 1000) + (rand(0, 1000) / 100000)).
+        line = line.replace(/^([^ :]+):/, blue + '$1</span>:');
+        line = green + '[ ' + (((Date.now() - bootTime) / 1000) + (rand(0, 1000) / 100000)).
           toFixed(6).padStart(10, ' ') + '] </span>' + line;
       }
 
-      terminal.innerHTML += line + '\n';
-      terminal.scrollTop = terminal.scrollHeight + terminal.clientHeight;
+      print(line, input);
 
-      next(timeout);
+      if (input) {
+        window.onkeyup = function(evt) {
+          window.onkeyup = null;
+          nocursor();
+          print(String.fromCharCode(evt.keyCode));
+          next();
+        };
+      } else {
+        next(timeout);
+      }
     } else {
       terminal.classList.add('hide');
       document.getElementById('screen').classList.remove('hide');
@@ -1709,7 +1737,7 @@ window.addEventListener('load', function() {
       <div id="offline" class="offline hide">
         <div class="offline-banner">OFFLINE</div>
       </div>
-      <div id="retry" class="hide" title="Retry / Restart">&#x21BB;</div><div id="retry-text">Restart!</div>
+      <div id="retry" class="hide" title="Restart">&#x21BB;</div><div id="retry-text">Restart!</div>
       <div class="brand">MarkBook Pro</div>
     </div>
     <div class="base"></div>
