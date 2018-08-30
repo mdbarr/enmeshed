@@ -528,7 +528,7 @@ Map.prototype.value = function(key) {
   return value;
 };
 
-const IPs = {};
+let IPs = {};
 function generateIP() {
   let address = null;
   while (address === null || IPs[address]) {
@@ -552,7 +552,7 @@ function sequence(worker, done) {
       }
     } else {
       i++;
-      timeout = (timeout === undefined) ? 100 : parseInt(timeout);
+      timeout = (timeout === undefined || timeout < 0) ? 100 : parseInt(timeout);
       queue(iterate, timeout);
     }
   }
@@ -643,37 +643,40 @@ nf_conntrack version 0.5.0 (65536 buckets, 262144 max)
 Initializing XFRM netlink socket
 Netfilter messages via NETLINK v0.30.
 random: initializing mersenne twister
-MeshConnect initializing interface
-Entering interactive mode...
-?2000!!
+MeshConnect initializing interface mesh0
+&K
+?2000Entering interactive mode...!!
 
 Welcome to Gilgamesh 47.04.3 LTS (Gilgamesh OS 4.73.0-22  m47_64)
 
- System information as of __DATE
+ System information as of __DT
 
  System load:  0.0                Processes:              135
- Usage of /:   2.1% of 212.50GB   Users logged in:        1
- Memory usage: 1%                 IP address for en0: __IP
- Swap usage:   0%                 IP address for mesh0: __IP
+ Usage of /:   2.1% of 256GB      Users logged in:        1
+ Memory usage: 1%                 IP address for en0:     __IP
+ Swap usage:   0%                 IP address for mesh0:   __IP
 
 
-&P./enmeshed
+Last login: __DP
 
-   _____   _   _   __  __   _____   ____    _   _   _____   ____
-  | ____| | \\ | | |  \\/  | | ____| / ___|  | | | | | ____| |  _ \\
-  |  _|   |  \\| | | |\\/| | |  _|   \\___ \\  | |_| | |  _|   | | | |
-  | |___  | |\\  | | |  | | | |___   ___) | |  _  | | |___  | |_| |
-  |_____| |_| \\_| |_|  |_| |_____| |____/  |_| |_| |_____| |____/
+You have new mail.
+&P&T./enmeshed
 
---------------------------------------------------------------------
+&B   _____   _   _   __  __   _____   ____    _   _   _____   ____
+&B  | ____| | \\ | | |  \\/  | | ____| / ___|  | | | | | ____| |  _ \\
+&B  |  _|   |  \\| | | |\\/| | |  _|   \\___ \\  | |_| | |  _|   | | | |
+&B  | |___  | |\\  | | |  | | | |___   ___) | |  _  | | |___  | |_| |
+&B  |_____| |_| \\_| |_|  |_| |_____| |____/  |_| |_| |_____| |____/
+
+&C&R68&#x2501;
 
  1) New Game
 
- 2) Challenge Mode
+ 2) Random Mesh
 
  3) Continue
 
-&E!!&I`;
+&E&I`;
 
 //////////
 
@@ -1395,6 +1398,8 @@ function Mesh({
   self.init = function() {
     self.connected = false;
 
+    IPs = {};
+
     self.prng = new MersenneTwister(seed);
     self.rand = (min, max) => Math.floor(self.prng.random() * (max - min + 1)) + min;
 
@@ -1592,6 +1597,7 @@ function Mesh({
 
     const loop = setInterval(function() {
       if (state === 0) {
+        self.elements.retry.classList.add('hide');
         clearInterval(self.router);
 
         for (let i = 0; i < step1; i++) {
@@ -1649,15 +1655,17 @@ function Enmeshed() {
 
   const span = (hex) => '<span style="color:' + hex + '">';
   const green = span('#7fdb6a');
-  const blue = span('#4b86b4');
+  const cyan = span('#4b86b4');
+  const blue = span('#0073b1');
   const cursor = '<u id="cursor"></u>';
 
   const ps1 = green + 'mark@terminus</span>:' + blue + '~</span>$ ';
-  const ps2 = '<span style="font-weight: 700">enmeshed#</span> ';
+  const ps2 = '<span style="font-weight:700">' + blue + 'enmeshed</span>#</span> ';
 
   const terminal = document.getElementById('terminal');
 
   function print(string, cont) {
+    string = string || '';
     terminal.innerHTML += string + (!cont ? '\n' : '');
     terminal.scrollTop = terminal.scrollHeight + terminal.clientHeight;
   }
@@ -1677,10 +1685,12 @@ function Enmeshed() {
       let line = lines.shift();
       let timeout = 25 + rand(0, 35);
       let input = false;
+      let chars = false;
 
       nocursor();
 
-      line = line.replace(/__DATE/g, new Date()).
+      line = line.replace(/__DT/g, new Date()).
+        replace(/__DP/g, new Date(Date.now() - 101823000)).
         replace(/__IP/g, generateIP).
         replace(/^\?(\d+)/, function(a, t) {
           timeout = parseInt(t);
@@ -1692,21 +1702,50 @@ function Enmeshed() {
         }).
         replace(/!!/, cursor).
         replace(/&P/, ps1).
-        replace(/&E/, ps2);
-
-      if (!line.length) {
-        kernel = false;
-      }
+        replace(/&E/, ps2).
+        replace(/&R(\d+)(.*?)$/, function(a, d, s) {
+          return s.repeat(parseInt(d));
+        }).
+        replace(/&T(.*)$/, function(a, c) {
+          chars = c;
+          return '';
+        }).
+        replace(/&K/, function() {
+          kernel = false;
+          return '';
+        }).
+        replace(/^&B(.*)$/, blue + '$1</span>').
+        replace(/^&C(.*)$/, cyan + '$1</span>');
 
       if (kernel && line[0] !== '<') {
-        line = line.replace(/^([^ :]+):/, blue + '$1</span>:');
+        line = line.replace(/^([^ :]+):/, cyan + '$1</span>:');
         line = green + '[ ' + (((Date.now() - bootTime) / 1000) + (rand(0, 1000) / 100000)).
           toFixed(6).padStart(10, ' ') + '] </span>' + line;
       }
 
-      print(line, input);
+      print(line, input || chars);
 
-      if (input) {
+      if (chars) {
+        print(cursor, true);
+        chars = chars.split('');
+        sequence(function(cont, i) {
+          if (i === 0) {
+            return cont(500);
+          }
+          nocursor();
+          if (chars.length) {
+            const l = chars.shift();
+            print(l + cursor, true);
+            cont(l.charCodeAt(0) - 20);
+          } else {
+            cont(false);
+          }
+        }, function() {
+          print();
+          next(25);
+        });
+      } else if (input) {
+        print(cursor, true);
         window.onkeyup = function(evt) {
           window.onkeyup = null;
           nocursor();
