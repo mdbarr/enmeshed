@@ -1,4 +1,4 @@
-<!doctype html>
+<doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8">
@@ -66,7 +66,7 @@
       color: white;
       overflow: hidden;
     }
-    .cursor::before {
+    #cursor::before {
       content: '\02588';
       display: inline-block;
       color: white;
@@ -642,7 +642,7 @@ Netfilter messages via NETLINK v0.30.
 random: initializing mersenne twister
 MeshConnect initializing interface
 Entering interactive mode...
-?2500<u class="cursor"></u>
+?2500!!
 
 Welcome to Gilgamesh 47.04.3 LTS (Gilgamesh OS 4.73.0-22  m47_64)
 
@@ -1213,7 +1213,7 @@ function Mesh({
     return Math.sqrt(Math.pow(b.x - a.x, 2) + Math.pow(b.y - a.y, 2));
   };
 
-  self.clearElement = function(element) {
+  self.clear = function(element) {
     while (element.firstChild) {
       element.removeChild(element.firstChild);
     }
@@ -1245,7 +1245,7 @@ function Mesh({
       svg.style.marginTop = ((510 - svgHeight) / 2) + 'px';
     }
 
-    self.clearElement(svg);
+    self.clear(svg);
 
     svg.add = function(name, attributes) {
       const node = createSvgNode(name, attributes);
@@ -1390,7 +1390,7 @@ function Mesh({
 
     self.svg = initSvg();
 
-    self.clearElement(self.elements.info);
+    self.clear(self.elements.info);
     self.elements.meshId.innerHTML = meshId;
     self.elements.health.innerHTML = '100%';
 
@@ -1611,6 +1611,11 @@ function Mesh({
 function Enmeshed() {
   const index = 0;
 
+  function remove(id) {
+    const element = document.getElementById(id);
+    return (element) ? element.parentNode.removeChild(element) : true;
+  }
+
   const games = [ {
     //meshId: 'fe42::92ff::57c4',
     meshId: '[::1]',
@@ -1621,22 +1626,28 @@ function Enmeshed() {
     objective: 'Crash the network any way you can.'
   } ];
 
+  const cursor = '<u id="cursor"></u>';
+
   const terminal = document.getElementById('terminal');
   const lines = dmesg.split('\n'); //.slice(0, 0); // HACK
 
   let kernel = true;
   const bootTime = Date.now();
+
   sequence(function(next) {
     if (lines.length) {
       let line = lines.shift();
       let timeout = 25 + rand(0, 35);
+
+      remove('cursor');
 
       line = line.replace(/__DATE/g, new Date()).
         replace(/__IP/g, generateIP).
         replace(/^\?(\d+)/, function(a, t) {
           timeout = parseInt(t);
           return '';
-        });
+        }).
+        replace(/!!/, cursor);
 
       if (!line.length) {
         kernel = false;
