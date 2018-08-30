@@ -10,7 +10,7 @@ try {
   console.log();
 } catch (error) {
   console.log(error);
-  process.exit(1);
+  process.exit(0);
 }
 
 process.argv.push('./dist/');
@@ -26,14 +26,14 @@ function rebuild(which, curr) {
     last.which = curr;
 
     console.log(`\n${ which } changed, rebuilding...`);
-    child_process.exec('./build.js', function(error, stdout, stderr) {
-      if (error || stderr) {
-        console.log(stderr);
-      }
-      if (stdout) {
-        console.log(stdout);
-      }
-    });
+    try {
+      child_process.execSync('./build.js', {
+        stdio: 'inherit'
+      });
+      console.log();
+    } catch (error) {
+      console.log(error);
+    }
   }
 }
 

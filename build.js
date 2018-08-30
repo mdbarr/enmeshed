@@ -99,11 +99,11 @@ html = html.replace(/<script>([^]+)<\/script>/, function (match, p1) {
   script = p1;
   return '<script>__SCRIPT__</script>';
 });
-fs.writeFileSync(BUILD_DIR + '/index.js', script);
+fs.writeFileSync(BUILD_DIR + '/index.pre.js', script);
 
 console.log('Linting original Javascript...');
 try {
-  child_process.execSync('./node_modules/.bin/eslint --fix ./build/index.js', {
+  child_process.execSync('./node_modules/.bin/eslint --fix ./build/index.pre.js', {
     stdio: 'inherit'
   });
 } catch (error) {
@@ -111,7 +111,7 @@ try {
   process.exit(0);
 }
 
-const lintedScript = fs.readFileSync(BUILD_DIR + '/index.js').toString();
+const lintedScript = fs.readFileSync(BUILD_DIR + '/index.pre.js').toString();
 if (lintedScript !== script) {
   console.log('  Updating index.html with linted JavaScript.');
   fs.writeFileSync(INDEX_HTML, html.replace('__SCRIPT__', lintedScript));
@@ -156,11 +156,11 @@ html = substitutedHTML.replace(/<script>([^]+)<\/script>/, function (match, p1) 
   script = p1;
   return '<script>__SCRIPT__</script>';
 });
-fs.writeFileSync(BUILD_DIR + '/index.js', script);
+fs.writeFileSync(BUILD_DIR + '/index.sub.js', script);
 
 console.log('Linting substituted Javascript...');
 try {
-  child_process.execSync('./node_modules/.bin/eslint --fix ./build/index.js', {
+  child_process.execSync('./node_modules/.bin/eslint --fix ./build/index.sub.js', {
     stdio: 'inherit'
   });
 } catch (error) {
@@ -171,7 +171,7 @@ console.log();
 
 console.log('Uglifying JavaScript...');
 try {
-  child_process.execSync('./node_modules/.bin/uglifyjs --compress --mangle --rename --toplevel --output ./build/index.min.js ./build/index.js');
+  child_process.execSync('./node_modules/.bin/uglifyjs --compress --mangle --rename --toplevel --output ./build/index.min.js ./build/index.sub.js');
 } catch (error) {
   console.log('UglifyJS failed');
   process.exit(0);
