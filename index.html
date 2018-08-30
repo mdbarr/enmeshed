@@ -371,9 +371,6 @@
       stroke-dasharray: 5 2;
       animation: progress 3s linear infinite reverse;
     }
-    .node-effect-slow {
-      stroke: #D9AF3C;
-    }
     .node-effect-checksum {
       stroke: #535C8E;
     }
@@ -416,6 +413,12 @@
     }
     .edge-reverse {
       stroke: transparent;
+    }
+    .edge-slow {
+      stroke: #D9AF3C !important;
+    }
+    .edge-empty-slow {
+      stroke: rgba(217, 175, 60, 0.3);
     }
     .edge-offline-empty {
       stroke: #D34E53;
@@ -682,6 +685,7 @@ function Edge(mesh, edgeId, start, end) {
   self.name = mesh.edges.length.toString(16).padStart(4, 0);
 
   self.online = true;
+  self.speed = mesh.rand(1, mesh.speeds.length - 1);
 
   self.nodes = [
     start, end
@@ -708,6 +712,11 @@ function Edge(mesh, edgeId, start, end) {
       if (mesh.effect.type === 'cut') {
         self.online = false;
         self.elements.empty.classList.add('edge-offline-empty');
+      } else if (mesh.effect.type === 'slow') {
+        self.speed = 0;
+        self.elements.empty.classList.add('edge-empty-slow');
+        self.elements.forward.classList.add('edge-slow');
+        self.elements.reverse.classList.add('edge-slow');
       } else {
         return;
       }
@@ -723,7 +732,8 @@ function Edge(mesh, edgeId, start, end) {
     const len = Math.max(start.address.length, end.address.length);
     mesh.elements.info.innerHTML = 'Connection #' + self.name + mesh.dotColor(self) + '\n\n' +
          mesh.dotColor(start) + '  &#x21B1; ' + start.address.padStart(len, ' ') + ' \n' +
-         mesh.dotColor(end) + '  ' + end.address.padEnd(len, ' ') + ' &#x21B2; ';
+      mesh.dotColor(end) + '  ' + end.address.padEnd(len, ' ') + ' &#x21B2; ' +
+      '\n\n' + 'Bandwidth:'.padEnd(len + 3, ' ') + '\n' + mesh.speeds[self.speed].name + '  ';
   };
 
   self.elements.interact.onmouseout = function() {
@@ -810,7 +820,6 @@ function Node(mesh) {
   self.object = 'node';
 
   self.online = true;
-  self.mtu = Math.pow(2, mesh.rand(9, 11));
 
   while (self.id === undefined || mesh.positions[self.id] !== undefined) {
     self.x = mesh.rand(0, mesh.width - 1);
@@ -867,10 +876,6 @@ function Node(mesh) {
             self.online = false;
             self.element.classList.add('node-offline');
             break;
-          case 'slow':
-            self.mtu = 256;
-            self.outline.classList.add('node-effect-slow');
-            break;
           case 'checksum':
             self.outline.classList.add('node-effect-checksum');
             break;
@@ -900,7 +905,7 @@ function Node(mesh) {
 
     self.element.onmouseover = function() {
       let info = 'Node ' + self.address + mesh.dotColor(self) + '\n\n' +
-          'Interfaces (MTU ' + self.mtu + '):'.padEnd(25, ' ') + '\n';
+          'Interfaces:'.padEnd(25, ' ') + '\n';
       for (const interfaceId in self.interfaces) {
         const interface = self.interfaces[interfaceId];
         info += interface.name.padEnd(4, ' ') + ': &#x2944; ' + (interface.rx + '').padStart(3, ' ') + ' &#x2942; ' +
@@ -959,7 +964,7 @@ function Packet(mesh, source, destination) {
   self.maxHops = Infinity;
   self.maxTicks = Infinity;
 
-  self.size = Math.pow(2, mesh.rand(7, 12));
+  self.size = mesh.rand(1, mesh.speeds.length - 1);
 
   self.calculateChecksum = function() {
     return (self.size + size(self.source.connections) +
@@ -1007,7 +1012,7 @@ function Packet(mesh, source, destination) {
 
           const edge = current.connections[prev.id].edge;
           edges.push(edge);
-          ticks += edge.ticks;
+          ticks += Math.ceil(edge.ticks * (mesh.speeds[self.size].value / mesh.speeds[edge.speed].value));
         }
 
         if (self.maxHops === Infinity) {
@@ -1065,7 +1070,7 @@ function Packet(mesh, source, destination) {
 
   self.route = function() {
     if (self.current.object === 'edge' && self.hop) {
-      if (self.hop.ticks) {
+      if (self.count) {
         if (self.ticks > self.maxTicks) {
           console.log('dropped - TTL exceeded', self.ticks, self.maxTicks);
           self.dropped = true;
@@ -1073,7 +1078,7 @@ function Packet(mesh, source, destination) {
           self.hop.source.interfaces[self.hop.edge.id].dropped++;
           return;
         }
-        self.hop.ticks--;
+        self.count--;
         self.ticks++;
       } else {
         self.hop.node.interfaces[self.hop.edge.id].rx++;
@@ -1153,7 +1158,8 @@ function Packet(mesh, source, destination) {
     if (self.hop) {
       self.current.packet.delete(self);
       self.current.interfaces[self.hop.edge.id].tx++;
-      self.hop.ticks = self.hop.edge.ticks;
+      self.count = Math.ceil(self.hop.edge.ticks * (mesh.speeds[self.size].value /
+                                                    mesh.speeds[self.hop.edge.speed].value));
 
       self.current = self.hop.edge;
       self.hop.edge.packet.add(self);
@@ -1310,6 +1316,23 @@ function Mesh({
     }
   };
 
+  self.speeds = [ {
+    name: '512Mbps',
+    value: 0.5
+  }, {
+    name: '1024Mbps',
+    value: 1
+  }, {
+    name: '2048Mbps',
+    value: 2
+  }, {
+    name: '4096Mbps',
+    value: 3
+  }, {
+    name: '8192Mbps',
+    value: 4
+  } ];
+
   self.tools = {
     info: {
       name: 'Information',
@@ -1330,9 +1353,9 @@ function Mesh({
       uses: -1
     },
     slow: {
-      name: 'Slowdown',
+      name: 'Slow',
       color: '#D9AF3C',
-      description: 'Slowdown all traffic through a <u>node</u> by setting its MTU to 256 bytes.',
+      description: 'Slow all traffic through a <u>connection</u> by reducing its bandwidth to ' + self.speeds[0].name + '.',
       uses: -1
     },
     checksum: {
@@ -1405,6 +1428,8 @@ function Mesh({
       tool.type = type;
       tool.element = element;
       tool.use = document.getElementById(type + '-use');
+
+      tool.element.classList.remove('selected');
 
       if (tool.uses < 0 || tool.uses === Infinity) {
         tool.uses = Infinity;
