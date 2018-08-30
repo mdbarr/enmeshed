@@ -66,6 +66,20 @@
       color: white;
       overflow: hidden;
     }
+    .cursor::before {
+      content: '\02588';
+      display: inline-block;
+      color: white;
+      animation: cursor 1s step-end infinite;
+    }
+    @keyframes cursor {
+      from, to {
+        color: white;
+      }
+      50% {
+        color: #181818;
+      }
+    }
     #info {
       position: absolute;
       width: 150px;
@@ -168,9 +182,20 @@
       font-size: 20px;
       cursor: pointer;
     }
-    #retry:hover::before {
-      content: 'Restart ';
+    #retry:hover {
+      animation: spinner .8s ease infinite;
+    }
+    #retry-text {
+      position: absolute;
+      top: 584px;
+      right: 42px;
       font-size: 12px;
+      line-height: 20px;
+      color: white;
+      opacity: 0;
+    }
+    #retry:hover + #retry-text {
+      opacity: 1;
     }
     .brand {
       position: absolute;
@@ -617,7 +642,7 @@ Netfilter messages via NETLINK v0.30.
 random: initializing mersenne twister
 MeshConnect initializing interface
 Entering interactive mode...
-?2500
+?2500<u class="cursor"></u>
 
 Welcome to Gilgamesh 47.04.3 LTS (Gilgamesh OS 4.73.0-22  m47_64)
 
@@ -1673,7 +1698,7 @@ window.addEventListener('load', function() {
       <div id="offline" class="offline hide">
         <div class="offline-banner">OFFLINE</div>
       </div>
-      <div id="retry" class="hide" title="Retry / Restart">&#x21BB;</div>
+      <div id="retry" class="hide" title="Retry / Restart">&#x21BB;</div><div id="retry-text">Restart!</div>
       <div class="brand">MarkBook Pro</div>
     </div>
     <div class="base"></div>
