@@ -57,10 +57,13 @@ const safeSubstitutions = {
   'offline': 'o',
   'offline-banner': 'ob',
   'offline-fade': 'of',
+  'online': 'on',
   'packet': 'p',
+  'positions': 'ps',
   'seed': 'se',
   'selected': 's',
   'self': 'sl',
+  'sequence': 'sq',
   'source': 'so',
   'ticks': 'ts',
   'toolbar': 'to'

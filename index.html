@@ -157,6 +157,19 @@
       height: 125px;
       z-index: -1;
     }
+    #continue {
+      position: absolute;
+      right: 8px;
+      bottom: 0px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 4px;
+      background-color: rgba(24,24,24,0.3);
+    }
+    #continue:hover {
+        color: #D34E53;
+    }
     @keyframes offline-fade {
       from {
         opacity: 0;
@@ -587,8 +600,6 @@ On node 0 totalpages: 4164976
   DMA zone: 64 pages used for memmap
   DMA zone: 26 pages reserved
   DMA zone: 3997 pages, LIFO batch:0
-  DMA32 zone: 10296 pages used for memmap
-  DMA32 zone: 658899 pages, LIFO batch:31
   Normal zone: 54720 pages used for memmap
   Normal zone: 3502080 pages, LIFO batch:31
 Reserved but unavailable: 98 pages
@@ -623,7 +634,7 @@ PCI host bridge to bus 0000:00
 pci_bus 0000:00: root bus resource [io  0x0000-0x0cf7 window]
 pci_bus 0000:00: root bus resource [mem 0xfe000000-0xfe113fff window]
 pci_bus 0000:00: root bus resource [bus 00-3e]
-usbcore: registered new interface drivers: usbfs, hub, usb
+    usbcore: registered new interface drivers: usbfs, hub, usb, mesh
 NET: Registered protocol family 2
 TCP established hash table entries: 131072 (order: 8, 1048576 bytes)
 TCP bind hash table entries: 65536 (order: 8, 1048576 bytes)
@@ -646,6 +657,11 @@ random: initializing mersenne twister
 MeshConnect initializing interface mesh0
 &K
 ?2000Entering interactive mode...!!
+&L
+Gilgamesh 47.04.3 LTS terminus tty0
+
+terminus login: &Tmark
+Password: &T***************
 
 Welcome to Gilgamesh 47.04.3 LTS (Gilgamesh OS 4.73.0-22  m47_64)
 
@@ -1183,7 +1199,7 @@ function Packet(mesh, source, destination) {
 function Mesh({
   meshId, width, height, factor, scale, range, minimum,
   interval, complexity, maxHops, maxTTL, threshold, seed,
-  objective
+  objective, uses
 }, callback) {
   const self = this;
 
@@ -1289,6 +1305,7 @@ function Mesh({
   //////////
 
   self.elements = {
+    cont: document.getElementById('continue'),
     crash: document.getElementById('crash'),
     health: document.getElementById('health'),
     info: document.getElementById('info'),
@@ -1347,51 +1364,63 @@ function Mesh({
       name: 'Segfault',
       color: '#D34E53',
       description: 'Segfault a <u>node</u> making it completely unavailable and offline.',
-      uses: -1
+      uses: 0
     },
     cut: {
       name: 'Cut',
       color: '#666',
       description: 'Cut the <u>connection</u> between nodes.',
-      uses: -1
+      uses: 0
     },
     slow: {
       name: 'Slow',
       color: '#D9AF3C',
       description: 'Slow all traffic through a <u>connection</u> by reducing its bandwidth to ' + self.speeds[0].name + '.',
-      uses: -1
+      uses: 0
     },
     checksum: {
       name: 'Checksum Rewrite',
       color: '#535C8E',
       description: 'Rewrite the checksum of every packet passing through <u>node</u> so that it is dropped at its destination.',
-      uses: -1
+      uses: 0
     },
     reroute: {
       name: 'Random Route',
       color: '#9E379F',
       description: 'Corrupt the route table of a <u>node</u> so that packets are randomly routed to different nodes.',
-      uses: -1
+      uses: 0
     },
     trace: {
       name: 'Packet Trace',
       color: '#AE6126',
       description: 'Trace the path of packets originating at the given <u>node</u>.',
-      uses: -1
+      uses: 0
     },
     inspect: {
       name: 'Stateful Inspection',
       color: '#94C5CC',
       description: 'Inspect the packets passing through the given <u>node</u>, extracting any useful data.',
-      uses: -1
+      uses: 0
     },
     multiply: {
       name: 'Traffic Multiply',
       color: '#005B96',
-      description: 'Duplicate every packet that passing through the <u>node</u>.',
-      uses: -1
+      description: 'Duplicate every packet that passes through the <u>node</u>.',
+      uses: 0
+    },
+    meshcoin: {
+      name: 'MeshCoin Miner',
+      color: '#0073B1',
+      description: 'Mine MeshCoins using a portion of a <u>node</u>&apos;s CPU as packets pass through.',
+      uses: 0
     }
   };
+
+  if (uses) {
+    for (const key in uses) {
+      self.tools[key].uses = uses[key];
+    }
+  }
 
   //////////
 
@@ -1418,6 +1447,10 @@ function Mesh({
     //////////
 
     self.svg = initSvg();
+
+    self.elements.toolbar.classList.remove('fade-out');
+    self.console.element.classList.remove('fade-out');
+    self.elements.spinner.classList.remove('hide');
 
     self.clear(self.elements.info);
     self.elements.meshId.innerHTML = meshId;
@@ -1524,7 +1557,7 @@ function Mesh({
       if (!self.connected) {
         self.connected = true;
         self.console.clear().log('&#x21B9; Connected!');
-        self.console.log('\n&#x2691; Objective: ' + objective);
+        self.console.log('\n&#x2605; Objective: ' + objective);
 
         self.elements.retry.classList.remove('hide');
         self.elements.retry.onclick = function() {
@@ -1612,7 +1645,7 @@ function Mesh({
           crashNode(self.nodes[i]);
         }
       } else if (state === 3) {
-        self.elements.crash.innerHTML += crashText;
+        self.elements.crash.innerHTML = crashText;
         self.elements.crash.classList.remove('hide');
         self.elements.toolbar.classList.add('fade-out');
         self.console.element.classList.add('fade-out');
@@ -1624,7 +1657,15 @@ function Mesh({
         self.elements.health.innerHTML = 'OFFLINE';
         self.crashed = true;
         if (callback) {
-          return callback(self);
+          self.elements.cont.classList.remove('hide');
+          self.elements.cont.onclick = function() {
+            self.elements.crash.classList.add('hide');
+            self.elements.offline.classList.add('hide');
+            self.svg.classList.remove('blink');
+            return callback(self);
+          };
+        } else {
+          self.elements.cont.classList.add('hide');
         }
       }
       state++;
@@ -1641,16 +1682,28 @@ function Mesh({
 }
 
 function Enmeshed() {
-  const index = 0;
-
   const games = [ {
     //meshId: 'fe42::92ff::57c4',
-    meshId: '[::1]',
+    meshId: '[::1]/tutorial/1',
     width: 10,
     height: 10,
     scale: 35,
     seed: 4839,
-    objective: 'Crash the network any way you can.'
+    objective: 'Use Segfaults to take the mesh offline.',
+    uses: {
+      crash: -1
+    }
+  }, {
+    meshId: '[::1]/tutorial/2',
+    width: 10,
+    height: 10,
+    scale: 35,
+    factor: 0.05,
+    seed: 42536,
+    objective: 'Use cuts to take the mesh offline.',
+    uses: {
+      cut: -1
+    }
   } ];
 
   const span = (hex) => '<span style="color:' + hex + '">';
@@ -1663,6 +1716,7 @@ function Enmeshed() {
   const ps2 = '<span style="font-weight:700">' + blue + 'enmeshed</span>#</span> ';
 
   const terminal = document.getElementById('terminal');
+  const screen = document.getElementById('screen');
 
   function print(string, cont) {
     string = string || '';
@@ -1680,12 +1734,39 @@ function Enmeshed() {
   let kernel = true;
   const bootTime = Date.now();
 
+  const state = 0;
+
+  function play(i, next) {
+    terminal.classList.add('hide');
+    screen.classList.remove('hide');
+    const mesh = new Mesh(games[i], function() {
+      terminal.classList.remove('hide');
+      screen.classList.add('hide');
+      i++;
+      console.log('playing', i);
+      if (i < games.length) {
+        play(i, next);
+      } else {
+
+        next(false);
+      }
+    });
+    window.mesh = mesh;
+  }
+
+  function parse(cmd, next) {
+    if (state === 0 && cmd === '1') {
+      play(0, next);
+    }
+  }
+
   sequence(function(next) {
     if (lines.length) {
       let line = lines.shift();
       let timeout = 25 + rand(0, 35);
       let input = false;
       let chars = false;
+      let cmd = '';
 
       nocursor();
 
@@ -1714,6 +1795,10 @@ function Enmeshed() {
           kernel = false;
           return '';
         }).
+        replace(/&L/, function() {
+          terminal.innerHTML = '';
+          return '';
+        }).
         replace(/^&B(.*)$/, blue + '$1</span>').
         replace(/^&C(.*)$/, cyan + '$1</span>');
 
@@ -1735,8 +1820,9 @@ function Enmeshed() {
           nocursor();
           if (chars.length) {
             const l = chars.shift();
+            const d = Math.max(l.charCodeAt(0) - 20, 50);
             print(l + cursor, true);
-            cont(l.charCodeAt(0) - 20);
+            cont(d);
           } else {
             cont(false);
           }
@@ -1745,23 +1831,26 @@ function Enmeshed() {
           next(25);
         });
       } else if (input) {
+        cmd = '';
         print(cursor, true);
         window.onkeyup = function(evt) {
-          window.onkeyup = null;
-          nocursor();
-          print(String.fromCharCode(evt.keyCode));
-          next();
+          if (evt.keyCode !== 13) {
+            console.log('char', evt.key, evt.keyCode);
+            console.log(evt);
+            cmd += evt.key;
+            nocursor();
+            print(evt.key + cursor, true);
+          } else {
+            console.log('input done');
+            window.onkeyup = null;
+            parse(cmd, next);
+          }
         };
       } else {
         next(timeout);
       }
     } else {
-      terminal.classList.add('hide');
-      document.getElementById('screen').classList.remove('hide');
-      const mesh = new Mesh(games[index], function() {
-        next(false);
-      });
-      window.mesh = mesh;
+      next(false);
     }
   }, function() {
     console.log('done!');
@@ -1800,6 +1889,7 @@ window.addEventListener('load', function() {
       <pre id="crash" class="crash hide"></pre>
       <div id="offline" class="offline hide">
         <div class="offline-banner">OFFLINE</div>
+        <div id="continue">Continue...</div>
       </div>
       <div id="retry" class="hide" title="Restart">&#x21BB;</div><div id="retry-text">Restart!</div>
       <div class="brand">MarkBook Pro</div>
