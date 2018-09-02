@@ -63,6 +63,7 @@
       height: 600px;
       padding: 8px;
       font-size: 8px;
+      line-height: 11px;
       color: white;
       overflow: hidden;
     }
@@ -581,7 +582,7 @@ function sequence(worker, done) {
 
 //////////
 
-const dmesg = `<div class="banner">Gilgamesh OS version 4.15.0-33-generic (build 2436)</div>
+const boot = `<div class="banner">Gilgamesh OS version 4.15.0-33-generic (build 2436)</div>
 Command line: BOOT_IMAGE=/gilgamesh-4.15.0-33-generic root=/dev/sda2:ro
 KERNEL supported cpus:
   Meshtel GenuineMeshtel
@@ -661,19 +662,19 @@ MeshConnect initializing interface mesh0
 Gilgamesh 47.04.3 LTS terminus tty0
 
 terminus login: &Tmark
-Password: &T***************
+Password: &T&R15*
 
 Welcome to Gilgamesh 47.04.3 LTS (Gilgamesh OS 4.73.0-22  m47_64)
 
- System information as of __DT
+ System information as of &DT
 
  System load:  0.0                Processes:              135
  Usage of /:   2.1% of 256GB      Users logged in:        1
- Memory usage: 1%                 IP address for en0:     __IP
- Swap usage:   0%                 IP address for mesh0:   __IP
+ Memory usage: 1%                 IP address for en0:     &IP
+ Swap usage:   0%                 IP address for mesh0:   &IP
 
 
-Last login: __DP
+Last login: &DP
 
 You have new mail.
 &P&T./enmeshed
@@ -684,7 +685,7 @@ You have new mail.
 &B  | |___  | |\\  | | |  | | | |___   ___) | |  _  | | |___  | |_| |
 &B  |_____| |_| \\_| |_|  |_| |_____| |____/  |_| |_| |_____| |____/
 
-&C&R68&#x2501;
+&C&R68&#x2500;
 
  1) New Game
 
@@ -1712,7 +1713,7 @@ function Enmeshed() {
   const blue = span('#0073b1');
   const cursor = '<u id="cursor"></u>';
 
-  const ps1 = green + 'mark@terminus</span>:' + blue + '~</span>$ ';
+  const ps1 = green + 'mark@terminus</span>:' + cyan + '~</span>$ ';
   const ps2 = '<span style="font-weight:700">' + blue + 'enmeshed</span>#</span> ';
 
   const terminal = document.getElementById('terminal');
@@ -1729,7 +1730,7 @@ function Enmeshed() {
     return (element) ? element.parentNode.removeChild(element) : true;
   }
 
-  const lines = dmesg.split('\n'); //.slice(0, 0); // HACK
+  const lines = boot.split('\n'); //.slice(0, 0); // HACK
 
   let kernel = true;
   const bootTime = Date.now();
@@ -1770,9 +1771,12 @@ function Enmeshed() {
 
       nocursor();
 
-      line = line.replace(/__DT/g, new Date()).
-        replace(/__DP/g, new Date(Date.now() - 101823000)).
-        replace(/__IP/g, generateIP).
+      line = line.replace(/&DT/g, new Date()).
+        replace(/&DP/g, new Date(Date.now() - 101823000)).
+        replace(/&IP/g, generateIP).
+        replace(/&R(\d+)(.*?)$/, function(a, d, s) {
+          return s.repeat(parseInt(d));
+        }).
         replace(/^\?(\d+)/, function(a, t) {
           timeout = parseInt(t);
           return '';
@@ -1784,9 +1788,6 @@ function Enmeshed() {
         replace(/!!/, cursor).
         replace(/&P/, ps1).
         replace(/&E/, ps2).
-        replace(/&R(\d+)(.*?)$/, function(a, d, s) {
-          return s.repeat(parseInt(d));
-        }).
         replace(/&T(.*)$/, function(a, c) {
           chars = c;
           return '';
@@ -1833,16 +1834,18 @@ function Enmeshed() {
       } else if (input) {
         cmd = '';
         print(cursor, true);
-        window.onkeyup = function(evt) {
+        window.onkeypress = function(evt) {
           if (evt.keyCode !== 13) {
             console.log('char', evt.key, evt.keyCode);
             console.log(evt);
-            cmd += evt.key;
-            nocursor();
-            print(evt.key + cursor, true);
+            if (evt.key.length === 1) {
+              cmd += evt.key;
+              nocursor();
+              print(evt.key + cursor, true);
+            }
           } else {
             console.log('input done');
-            window.onkeyup = null;
+            window.onkeypress = null;
             parse(cmd, next);
           }
         };
@@ -1880,6 +1883,7 @@ window.addEventListener('load', function() {
           <div class="hide" data-tool="trace">&#x27D0;<div id="trace-use"></div></div>
           <div class="hide" data-tool="inspect"><i class="flip">&#x260C;</i><div id="inspect-use"></div></div>
           <div class="hide" data-tool="multiply">&#x29C9;<div id="multiply-use"></div></div>
+          <div class="hide" data-tool="meshcoin">&#x20A1;<div id="meshcoin-use"></div></div>
         </div>
         <pre id="info"></pre>
         <svg id="mesh" class="mesh"></svg>
