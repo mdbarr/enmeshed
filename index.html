@@ -68,7 +68,7 @@
       overflow: hidden;
     }
     #cursor::before {
-      content: '\02588';
+      content: '\0275A';
       display: inline-block;
       color: white;
       animation: cursor 1s step-end infinite;
@@ -431,6 +431,9 @@
     .edge-slow {
       stroke: #D9AF3C !important;
     }
+    .edge-cut {
+      stroke: #D34E53 !important;
+    }
     .edge-empty-slow {
       stroke: rgba(217, 175, 60, 0.3);
     }
@@ -663,7 +666,7 @@ Gilgamesh 47.04.3 LTS terminus tty0
 
 terminus login: &Tmark
 Password: &T&R15*
-
+?800!!
 Welcome to Gilgamesh 47.04.3 LTS (Gilgamesh OS 4.73.0-22  m47_64)
 
  System information as of &DT
@@ -693,7 +696,9 @@ You have new mail.
 
  3) Continue
 
-&E&I`;
+&I
+You winned it!!!
+`;
 
 //////////
 
@@ -729,10 +734,12 @@ function Edge(mesh, edgeId, start, end) {
 
   self.elements.interact.onclick = function() {
     if (!self.effect) {
-      if (mesh.effect.type === 'cut') {
+      if (mesh.effect.type === 'cut' && mesh.tools.cut.decrement()) {
         self.online = false;
         self.elements.empty.classList.add('edge-offline-empty');
-      } else if (mesh.effect.type === 'slow') {
+        self.elements.forward.classList.add('edge-cut');
+        self.elements.reverse.classList.add('edge-cut');
+      } else if (mesh.effect.type === 'slow' && mesh.tools.slow.decrement()) {
         self.speed = 0;
         self.elements.empty.classList.add('edge-empty-slow');
         self.elements.forward.classList.add('edge-slow');
@@ -891,28 +898,23 @@ function Node(mesh) {
 
     self.element.onclick = function() {
       if (!self.effect) {
-        switch (mesh.effect.type) {
-          case 'crash':
-            self.online = false;
-            self.element.classList.add('node-offline');
-            break;
-          case 'checksum':
-            self.outline.classList.add('node-effect-checksum');
-            break;
-          case 'reroute':
-            self.outline.classList.add('node-effect-reroute');
-            break;
-          case 'trace':
-            self.outline.classList.add('node-effect-trace');
-            break;
-          case 'inspect':
-            self.outline.classList.add('node-effect-inspect');
-            break;
-          case 'multiply':
-            self.outline.classList.add('node-effect-multiply');
-            break;
-          default:
-            return;
+        if (mesh.effect.type === 'crash' && mesh.tools.crash.decrement()) {
+          self.online = false;
+          self.element.classList.add('node-offline');
+        } else if (mesh.effect.type === 'checksum' && mesh.tools.checksum.decrement()) {
+          self.outline.classList.add('node-effect-checksum');
+        } else if (mesh.effect.type === 'reroute' && mesh.tools.reroute.decrement()) {
+          self.outline.classList.add('node-effect-reroute');
+        } else if (mesh.effect.type === 'trace' && mesh.tools.trace.decrement()) {
+          self.outline.classList.add('node-effect-trace');
+        } else if (mesh.effect.type === 'inspect' && mesh.tools.inspect.decrement()) {
+          self.outline.classList.add('node-effect-inspect');
+        } else if (mesh.effect.type === 'multiply' && mesh.tools.multiply.decrement()) {
+          self.outline.classList.add('node-effect-multiply');
+        } else if (mesh.effect.type === 'meshcoin' && mesh.tools.meshcoin.decrement()) {
+          self.outline.classList.add('node-effect-meshcoin');
+        } else {
+          return;
         }
 
         self.effect = Object.assign({
@@ -1417,12 +1419,6 @@ function Mesh({
     }
   };
 
-  if (uses) {
-    for (const key in uses) {
-      self.tools[key].uses = uses[key];
-    }
-  }
-
   //////////
 
   self.init = function() {
@@ -1459,6 +1455,12 @@ function Mesh({
 
     self.console.clear().log('<div class="spinner">&#x21C6;</div> Connecting...');
 
+    if (uses) {
+      for (const key in uses) {
+        self.tools[key].uses = uses[key];
+      }
+    }
+
     self.effect = self.tools.info;
 
     document.querySelectorAll('[data-tool]').forEach(function(element) {
@@ -1469,6 +1471,17 @@ function Mesh({
       tool.use = document.getElementById(type + '-use');
 
       tool.element.classList.remove('selected');
+      tool.decrement = function() {
+        if (tool.uses === Infinity) {
+          return true;
+        } else if (tool.uses > 0) {
+          tool.uses--;
+          tool.use.innerHTML = tool.uses;
+          return true;
+        } else {
+          return false;
+        }
+      };
 
       if (tool.uses < 0 || tool.uses === Infinity) {
         tool.uses = Infinity;
@@ -1683,7 +1696,7 @@ function Mesh({
 }
 
 function Enmeshed() {
-  const games = [ {
+  const stages = [ {
     //meshId: 'fe42::92ff::57c4',
     meshId: '[::1]/tutorial/1',
     width: 10,
@@ -1692,7 +1705,7 @@ function Enmeshed() {
     seed: 4839,
     objective: 'Use Segfaults to take the mesh offline.',
     uses: {
-      crash: -1
+      crash: 4
     }
   }, {
     meshId: '[::1]/tutorial/2',
@@ -1703,18 +1716,21 @@ function Enmeshed() {
     seed: 42536,
     objective: 'Use cuts to take the mesh offline.',
     uses: {
-      cut: -1
+      cut: 5
     }
   } ];
 
-  const span = (hex) => '<span style="color:' + hex + '">';
-  const green = span('#7fdb6a');
-  const cyan = span('#4b86b4');
-  const blue = span('#0073b1');
+  const span = (hex) => '<span style="color:#' + hex + '">';
+  const green = span('7fDB6A');
+  const cyan = span('4b86B4');
+  const blue = span('4f9ed8');
   const cursor = '<u id="cursor"></u>';
+  const input = '<span id="input"></span>';
 
-  const ps1 = green + 'mark@terminus</span>:' + cyan + '~</span>$ ';
-  const ps2 = '<span style="font-weight:700">' + blue + 'enmeshed</span>#</span> ';
+  const ps1 = green + 'mark@terminus</span>:' + blue + '~</span>$ ';
+  const ps2 = '<span style="font-weight:700">' + cyan + 'enmeshed</span>#</span> ';
+
+  const prompt = ps2;
 
   const terminal = document.getElementById('terminal');
   const screen = document.getElementById('screen');
@@ -1725,9 +1741,14 @@ function Enmeshed() {
     terminal.scrollTop = terminal.scrollHeight + terminal.clientHeight;
   }
 
-  function nocursor() {
-    const element = document.getElementById('cursor');
+  function remove(id) {
+    const element = document.getElementById(id);
     return (element) ? element.parentNode.removeChild(element) : true;
+  }
+
+  function nocursor() {
+    remove('input');
+    remove('cursor');
   }
 
   const lines = boot.split('\n'); //.slice(0, 0); // HACK
@@ -1740,16 +1761,15 @@ function Enmeshed() {
   function play(i, next) {
     terminal.classList.add('hide');
     screen.classList.remove('hide');
-    const mesh = new Mesh(games[i], function() {
+    const mesh = new Mesh(stages[i], function() {
       terminal.classList.remove('hide');
       screen.classList.add('hide');
       i++;
       console.log('playing', i);
-      if (i < games.length) {
+      if (i < stages.length) {
         play(i, next);
       } else {
-
-        next(false);
+        next();
       }
     });
     window.mesh = mesh;
@@ -1758,15 +1778,17 @@ function Enmeshed() {
   function parse(cmd, next) {
     if (state === 0 && cmd === '1') {
       play(0, next);
+      return true;
     }
+    return false;
   }
 
   sequence(function(next) {
     if (lines.length) {
       let line = lines.shift();
       let timeout = 25 + rand(0, 35);
-      let input = false;
-      let chars = false;
+      let inputMode = false;
+      let typing = false;
       let cmd = '';
 
       nocursor();
@@ -1782,14 +1804,14 @@ function Enmeshed() {
           return '';
         }).
         replace(/&I/, function() {
-          input = true;
+          inputMode = true;
           return '';
         }).
         replace(/!!/, cursor).
         replace(/&P/, ps1).
         replace(/&E/, ps2).
         replace(/&T(.*)$/, function(a, c) {
-          chars = c;
+          typing = c;
           return '';
         }).
         replace(/&K/, function() {
@@ -1800,7 +1822,7 @@ function Enmeshed() {
           terminal.innerHTML = '';
           return '';
         }).
-        replace(/^&B(.*)$/, blue + '$1</span>').
+        replace(/^&B(.*)$/, cyan + '$1</span>').
         replace(/^&C(.*)$/, cyan + '$1</span>');
 
       if (kernel && line[0] !== '<') {
@@ -1809,18 +1831,18 @@ function Enmeshed() {
           toFixed(6).padStart(10, ' ') + '] </span>' + line;
       }
 
-      print(line, input || chars);
+      print(line, inputMode || typing);
 
-      if (chars) {
+      if (typing) {
         print(cursor, true);
-        chars = chars.split('');
+        typing = typing.split('');
         sequence(function(cont, i) {
           if (i === 0) {
             return cont(500);
           }
           nocursor();
-          if (chars.length) {
-            const l = chars.shift();
+          if (typing.length) {
+            const l = typing.shift();
             const d = Math.max(l.charCodeAt(0) - 20, 50);
             print(l + cursor, true);
             cont(d);
@@ -1831,22 +1853,30 @@ function Enmeshed() {
           print();
           next(25);
         });
-      } else if (input) {
+      } else if (inputMode) {
         cmd = '';
-        print(cursor, true);
+        print(prompt + input + cursor, true);
         window.onkeypress = function(evt) {
           if (evt.keyCode !== 13) {
             console.log('char', evt.key, evt.keyCode);
             console.log(evt);
             if (evt.key.length === 1) {
               cmd += evt.key;
-              nocursor();
-              print(evt.key + cursor, true);
+              //nocursor();
+              //print(evt.key + cursor, true);
+              document.getElementById('input').innerHTML = cmd;
             }
           } else {
-            console.log('input done');
-            window.onkeypress = null;
-            parse(cmd, next);
+            if (parse(cmd, next)) {
+              console.log('input done');
+              window.onkeypress = null;
+            } else {
+              nocursor();
+              print(cmd);
+              print(cmd + ': command not found');
+              cmd = '';
+              print(prompt + input + cursor, true);
+            }
           }
         };
       } else {
@@ -1875,7 +1905,7 @@ window.addEventListener('load', function() {
         <div class="health">Network Health: <span id="health">100%</span></div>
         <div class="toolbar" id="toolbar">
           <div class="hide" data-tool="info">&#x24D8;<div id="info-use"></div></div>
-          <div class="hide" data-tool="crash">&#x2349;<div id="crash-use"></div></div>
+          <div class="hide" data-tool="crash">&#x29B0;<div id="crash-use"></div></div>
           <div class="hide" data-tool="cut">&#x27DB;<div id="cut-use"></div></div>
           <div class="hide" data-tool="slow">&#x29D6;<div id="slow-use"></div></div>
           <div class="hide" data-tool="checksum">&#x2211;<div id="checksum-use"></div></div>
@@ -1883,7 +1913,7 @@ window.addEventListener('load', function() {
           <div class="hide" data-tool="trace">&#x27D0;<div id="trace-use"></div></div>
           <div class="hide" data-tool="inspect"><i class="flip">&#x260C;</i><div id="inspect-use"></div></div>
           <div class="hide" data-tool="multiply">&#x29C9;<div id="multiply-use"></div></div>
-          <div class="hide" data-tool="meshcoin">&#x20A1;<div id="meshcoin-use"></div></div>
+          <div class="hide" data-tool="meshcoin">&#x1D6F;<div id="meshcoin-use"></div></div>
         </div>
         <pre id="info"></pre>
         <svg id="mesh" class="mesh"></svg>

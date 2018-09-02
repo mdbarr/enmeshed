@@ -27,6 +27,7 @@ const safeSubstitutions = {
   'description': 'de',
   'destination': 'd',
   'edge': 'e',
+  'edge-cut': 'ec',
   'edge-empty': 'ee',
   'edge-empty-slow': 'ees',
   'edge-forward': 'ef',
