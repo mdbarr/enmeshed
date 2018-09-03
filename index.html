@@ -400,6 +400,12 @@
     .node-effect-multiply {
       stroke: #005B96;
     }
+    .node-effect-meshcoin {
+      stroke: #FFF;
+    }
+    .node-effect-immutable {
+      stroke: #FFC100;
+    }
     .node-packet {
       fill: #8BBF50;
     }
@@ -680,15 +686,16 @@ Welcome to Gilgamesh 47.04.3 LTS (Gilgamesh OS 4.73.0-22  m47_64)
 Last login: &DP
 
 You have new mail.
-&P&T./enmeshed
+&P&T./enmeshed`;
 
+const menu = `
 &B   _____   _   _   __  __   _____   ____    _   _   _____   ____
 &B  | ____| | \\ | | |  \\/  | | ____| / ___|  | | | | | ____| |  _ \\
 &B  |  _|   |  \\| | | |\\/| | |  _|   \\___ \\  | |_| | |  _|   | | | |
 &B  | |___  | |\\  | | |  | | | |___   ___) | |  _  | | |___  | |_| |
 &B  |_____| |_| \\_| |_|  |_| |_____| |____/  |_| |_| |_____| |____/
 
-&C&R68&#x2500;
+&B&R68&#x2500;
 
  1) New Game
 
@@ -698,6 +705,20 @@ You have new mail.
 
 &I
 You winned it!!!
+`;
+
+const email = `
+&P&Tmail --read 1
+?500Date: &DE
+From: Unverified Sender <unverified@gilgamesh.network>
+To: Mark Barr <mark@enmeshed.net>
+Subject: Programmers Hate This Mesh Network, Find Out Why!
+Attachments: enmeshed.zip (~5KB, password protected)
+<div id="email">
+
+</div>
+&C
+&G0
 `;
 
 //////////
@@ -1726,6 +1747,7 @@ function Enmeshed() {
   const blue = span('4f9ed8');
   const cursor = '<u id="cursor"></u>';
   const input = '<span id="input"></span>';
+  const enter = 'Press ENTER to continue...';
 
   const ps1 = green + 'mark@terminus</span>:' + blue + '~</span>$ ';
   const ps2 = '<span style="font-weight:700">' + cyan + 'enmeshed</span>#</span> ';
@@ -1751,7 +1773,7 @@ function Enmeshed() {
     remove('cursor');
   }
 
-  const lines = boot.split('\n'); //.slice(0, 0); // HACK
+  const lines = (boot + menu).split('\n'); //.slice(0, 0); // HACK
 
   let kernel = true;
   const bootTime = Date.now();
@@ -1777,7 +1799,9 @@ function Enmeshed() {
 
   function parse(cmd, next) {
     if (state === 0 && cmd === '1') {
-      play(0, next);
+      const msg = email.split(/\n/);
+      lines.unshift(...msg);
+      next();
       return true;
     }
     return false;
@@ -1786,21 +1810,25 @@ function Enmeshed() {
   sequence(function(next) {
     if (lines.length) {
       let line = lines.shift();
+
       let timeout = 25 + rand(0, 35);
       let inputMode = false;
-      let typing = false;
       let cmd = '';
+
+      let typing = false;
+      let pause = false;
 
       nocursor();
 
       line = line.replace(/&DT/g, new Date()).
         replace(/&DP/g, new Date(Date.now() - 101823000)).
+        replace(/&DE/g, new Date(Date.now() - 6120000).toUTCString()).
         replace(/&IP/g, generateIP).
-        replace(/&R(\d+)(.*?)$/, function(a, d, s) {
-          return s.repeat(parseInt(d));
+        replace(/&R(\d+)(.*?)$/, function(match, count, string) {
+          return string.repeat(parseInt(count));
         }).
-        replace(/^\?(\d+)/, function(a, t) {
-          timeout = parseInt(t);
+        replace(/^\?(\d+)/, function(match, wait) {
+          timeout = parseInt(wait);
           return '';
         }).
         replace(/&I/, function() {
@@ -1810,8 +1838,12 @@ function Enmeshed() {
         replace(/!!/, cursor).
         replace(/&P/, ps1).
         replace(/&E/, ps2).
-        replace(/&T(.*)$/, function(a, c) {
-          typing = c;
+        replace(/&G(\d+)/, function(match, game) {
+          play(game, next);
+          return true;
+        }).
+        replace(/&T(.*)$/, function(match, characters) {
+          typing = characters;
           return '';
         }).
         replace(/&K/, function() {
@@ -1822,8 +1854,11 @@ function Enmeshed() {
           terminal.innerHTML = '';
           return '';
         }).
-        replace(/^&B(.*)$/, cyan + '$1</span>').
-        replace(/^&C(.*)$/, cyan + '$1</span>');
+        replace(/&C/, function() {
+          pause = true;
+          return enter;
+        }).
+        replace(/^&B(.*)$/, cyan + '$1</span>');
 
       if (kernel && line[0] !== '<') {
         line = line.replace(/^([^ :]+):/, cyan + '$1</span>:');
@@ -1831,7 +1866,7 @@ function Enmeshed() {
           toFixed(6).padStart(10, ' ') + '] </span>' + line;
       }
 
-      print(line, inputMode || typing);
+      print(line, inputMode || typing || pause);
 
       if (typing) {
         print(cursor, true);
@@ -1856,27 +1891,33 @@ function Enmeshed() {
       } else if (inputMode) {
         cmd = '';
         print(prompt + input + cursor, true);
-        window.onkeypress = function(evt) {
-          if (evt.keyCode !== 13) {
-            console.log('char', evt.key, evt.keyCode);
-            console.log(evt);
-            if (evt.key.length === 1) {
-              cmd += evt.key;
-              //nocursor();
-              //print(evt.key + cursor, true);
+        window.onkeypress = function(event) {
+          if (event.keyCode !== 13) {
+            console.log('char', event.key, event.keyCode);
+            console.log(event);
+            if (event.key.length === 1) {
+              cmd += event.key;
               document.getElementById('input').innerHTML = cmd;
             }
           } else {
+            nocursor();
+            print(cmd);
             if (parse(cmd, next)) {
               console.log('input done');
               window.onkeypress = null;
             } else {
-              nocursor();
-              print(cmd);
               print(cmd + ': command not found');
               cmd = '';
               print(prompt + input + cursor, true);
             }
+          }
+        };
+      } else if (pause) {
+        print(cursor, true);
+        window.onkeypress = function(event) {
+          if (event.keyCode === 13) {
+            window.onkeypress = null;
+            next();
           }
         };
       } else {

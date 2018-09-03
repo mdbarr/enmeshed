@@ -25,7 +25,7 @@ function rebuild(which, curr) {
   if (!last[which] || last[which].mtime !== curr.mtime) {
     last.which = curr;
 
-    console.log('\n');
+    console.log();
     console.log('-'.repeat(80));
     console.log(`\n${ which } changed, rebuilding...`);
     try {
