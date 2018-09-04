@@ -89,6 +89,17 @@
       text-align: right;
       font-size: 10px;
     }
+    .decrypt {
+      animation: decrypt 2s forwards;
+    }
+    @keyframes decrypt {
+      from {
+        color: #0073b1;
+      }
+      to {
+        color: white;
+      }
+    }
     #email {
       padding-left: 10px;
       width: 320px;
@@ -168,15 +179,17 @@
       left: 50%;
       transform: translateX(-50%);
       bottom: 0px;
-      color: black;
+      color: white;
       font-size: 16px;
       cursor: pointer;
       padding: 4px 8px 2px 8px;
-      background-color: white;
+      background-color: #181818;
       border-radius: 5px 5px 0 0;
+      border: 4px solid rgba(255,0,0,0.5);
+      border-bottom: 0;
     }
     #continue:hover {
-        color: #D34E53;
+      color: #F00;
     }
     @keyframes offline-fade {
       from {
@@ -738,7 +751,7 @@ a shame if, somehow, those meshes went offline and the demo
 was a disaster... I've attach a list of addresses I found on a
 sticky note while security trashed your desk.
 Good luck,
-  -Deborah`.replace(/\n/g, '<br>');
+  -Deborah`.replace(/\n/g, '&');
 
 const email = `
 &P&Tmail --read 1
@@ -1906,9 +1919,13 @@ function Enmeshed() {
           return string || enter;
         }).
         replace(/&Y/, function() {
-          document.getElementById('email').innerHTML =
-            rot13(document.getElementById('email').textContent, true);
-          document.getElementById('attachment').innerHTML = 'enmeshed.zip (13 KB)';
+          const em = document.getElementById('email');
+          const at = document.getElementById('attachment');
+          em.innerHTML = rot13(em.textContent, true).
+            replace(/&/g, '<br>').replace(/\s/g, '&nbsp;');
+          em.classList.add('decrypt');
+          at.innerHTML = 'enmeshed.zip (13 KB)';
+          at.classList.add('decrypt');
           return '';
         }).
         replace(/&B(.*?)&b/, '<span style="font-weight:700;color:#aaa">$1</span>').
