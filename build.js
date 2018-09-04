@@ -156,6 +156,7 @@ strings.forEach(function(item, index) {
   const reference = '__STRING_' + index + '__';
   substitutedHTML = substitutedHTML.replace(new RegExp(reference, 'g'), item);
 });
+substitutedHTML = substitutedHTML.replace(/([^.])console\.log\([^)]*?\);/g, '$1');
 console.log('  index.html (%s) -> index.html (%s)\n', bytes(htmlSize), bytes(substitutedHTML.length));
 
 //////////

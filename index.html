@@ -89,6 +89,11 @@
       text-align: right;
       font-size: 10px;
     }
+    #email {
+      padding-left: 10px;
+      width: 320px;
+      white-space: normal;
+    }
     .hide {
       display: none !important;
     }
@@ -160,13 +165,15 @@
     }
     #continue {
       position: absolute;
-      right: 8px;
+      left: 50%;
+      transform: translateX(-50%);
       bottom: 0px;
-      color: white;
+      color: black;
       font-size: 16px;
       cursor: pointer;
-      padding: 4px;
-      background-color: rgba(24,24,24,0.3);
+      padding: 4px 8px 2px 8px;
+      background-color: white;
+      border-radius: 5px 5px 0 0;
     }
     #continue:hover {
         color: #D34E53;
@@ -539,6 +546,21 @@ MersenneTwister.prototype.random = function() {
   return (y + 0.5) / this.I;
 };
 
+function rot13(text, decrypt) {
+  let string = '';
+  for (let i = 0; i < text.length; i++) {
+    let value = text.charCodeAt(i);
+    value += (decrypt) ? -13 : 13;
+    if (value > 126) {
+      value = 32 + (value - 127);
+    } else if (value < 32) {
+      value = 127 + (value - 32);
+    }
+    string += String.fromCharCode(value);
+  }
+  return string;
+}
+
 const prng = new MersenneTwister();
 const rand = (min, max) => Math.floor(prng.random() * (max - min + 1)) + min;
 const size = (object) => Object.keys(object || {}).length;
@@ -673,7 +695,7 @@ Gilgamesh 47.04.3 LTS terminus tty0
 terminus login: &Tmark
 Password: &T&R15*
 ?800!!
-Welcome to Gilgamesh 47.04.3 LTS (Gilgamesh OS 4.73.0-22  m47_64)
+Welcome to Gilgamesh 47.04.3 LTS (Gilgamesh OS 4.73.0-22 m47_64)
 
  System information as of &DT
 
@@ -689,13 +711,13 @@ You have new mail.
 &P&T./enmeshed`;
 
 const menu = `
-&B   _____   _   _   __  __   _____   ____    _   _   _____   ____
-&B  | ____| | \\ | | |  \\/  | | ____| / ___|  | | | | | ____| |  _ \\
-&B  |  _|   |  \\| | | |\\/| | |  _|   \\___ \\  | |_| | |  _|   | | | |
-&B  | |___  | |\\  | | |  | | | |___   ___) | |  _  | | |___  | |_| |
-&B  |_____| |_| \\_| |_|  |_| |_____| |____/  |_| |_| |_____| |____/
+&U   _____   _   _   __  __   _____   ____    _   _   _____   ____
+&U  | ____| | \\ | | |  \\/  | | ____| / ___|  | | | | | ____| |  _ \\
+&U  |  _|   |  \\| | | |\\/| | |  _|   \\___ \\  | |_| | |  _|   | | | |
+&U  | |___  | |\\  | | |  | | | |___   ___) | |  _  | | |___  | |_| |
+&U  |_____| |_| \\_| |_|  |_| |_____| |____/  |_| |_| |_____| |____/
 
-&B&R68&#x2500;
+&U&R68&#x2500;
 
  1) New Game
 
@@ -707,17 +729,32 @@ const menu = `
 You winned it!!!
 `;
 
+const message = `Mark,
+  I still can't believe they forced you out of the company you
+founded because you tried to block the sale of Gilgamesh as a
+framework for surveillance and censorship. The board is moving
+forward with a large scale, multi-mesh demo today. It would be
+a shame if, somehow, those meshes went offline and the demo
+was a disaster... I've attach a list of addresses I found on a
+sticky note while security trashed your desk.
+Good luck,
+  -Deborah`.replace(/\n/g, '<br>');
+
 const email = `
 &P&Tmail --read 1
-?500Date: &DE
-From: Unverified Sender <unverified@gilgamesh.network>
-To: Mark Barr <mark@enmeshed.net>
-Subject: Programmers Hate This Mesh Network, Find Out Why!
-Attachments: enmeshed.zip (~5KB, password protected)
-<div id="email">
+&V&#x250C;&R67&#x2500;
+  &BDate:&b &DE
+  &BFrom:&b Unverified Sender &lt;unverified@gilgamesh.network&gt;
+  &BTo:&b Mark Barr &lt;mark@enmeshed.net&gt;
+  &BSubject:&b Programmers Hate This Mesh Network, Find Out Why!
+  &BAttachments:&b <span id="attachment">mesh.pdf.exe</span>
+  <div id="email">${ rot13(message) }</div>
+&V&#x2514;&R67&#x2500;
 
-</div>
-&C
+Encrypted message detected
+  decrypting&T&R45.
+&Y
+&CPress ENTER to download attachment and delete message.
 &G0
 `;
 
@@ -1745,14 +1782,14 @@ function Enmeshed() {
   const green = span('7fDB6A');
   const cyan = span('4b86B4');
   const blue = span('4f9ed8');
+  const grey = span('aaa');
   const cursor = '<u id="cursor"></u>';
   const input = '<span id="input"></span>';
   const enter = 'Press ENTER to continue...';
 
   const ps1 = green + 'mark@terminus</span>:' + blue + '~</span>$ ';
   const ps2 = '<span style="font-weight:700">' + cyan + 'enmeshed</span>#</span> ';
-
-  const prompt = ps2;
+  let prompt = ps2;
 
   const terminal = document.getElementById('terminal');
   const screen = document.getElementById('screen');
@@ -1799,8 +1836,9 @@ function Enmeshed() {
 
   function parse(cmd, next) {
     if (state === 0 && cmd === '1') {
-      const msg = email.split(/\n/);
+      const msg = email.split('\n');
       lines.unshift(...msg);
+      prompt = ps1;
       next();
       return true;
     }
@@ -1839,8 +1877,17 @@ function Enmeshed() {
         replace(/&P/, ps1).
         replace(/&E/, ps2).
         replace(/&G(\d+)/, function(match, game) {
+          game = parseInt(game);
+          typing = true;
+          print();
+          print(prompt, true);
+          typing = 'gilgamesh --connect mesh://' + stages[game].meshId;
+          lines.unshift('&CMesh Visualizer Initialized, press ENTER to launch.', '&g' + game);
+          return '';
+        }).
+        replace(/&g(\d+)/, function(match, game) {
           play(game, next);
-          return true;
+          return '';
         }).
         replace(/&T(.*)$/, function(match, characters) {
           typing = characters;
@@ -1854,11 +1901,19 @@ function Enmeshed() {
           terminal.innerHTML = '';
           return '';
         }).
-        replace(/&C/, function() {
+        replace(/^&C(.*)$/, function(match, string) {
           pause = true;
-          return enter;
+          return string || enter;
         }).
-        replace(/^&B(.*)$/, cyan + '$1</span>');
+        replace(/&Y/, function() {
+          document.getElementById('email').innerHTML =
+            rot13(document.getElementById('email').textContent, true);
+          document.getElementById('attachment').innerHTML = 'enmeshed.zip (13 KB)';
+          return '';
+        }).
+        replace(/&B(.*?)&b/, '<span style="font-weight:700;color:#aaa">$1</span>').
+        replace(/^&U(.*)$/, cyan + '$1</span>').
+        replace(/^&V(.*)$/, grey + '$1</span>');
 
       if (kernel && line[0] !== '<') {
         line = line.replace(/^([^ :]+):/, cyan + '$1</span>:');
@@ -1964,7 +2019,7 @@ window.addEventListener('load', function() {
       <pre id="crash" class="crash hide"></pre>
       <div id="offline" class="offline hide">
         <div class="offline-banner">OFFLINE</div>
-        <div id="continue">Continue...</div>
+        <div id="continue">&#x21CE; Disconnect</div>
       </div>
       <div id="retry" class="hide" title="Restart">&#x21BB;</div><div id="retry-text">Restart!</div>
       <div class="brand">MarkBook Pro</div>
