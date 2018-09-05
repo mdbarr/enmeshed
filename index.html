@@ -492,15 +492,7 @@
 // | |___  | |\  | | |  | | | |___   ___) | |  _  | | |___  | |_| |
 // |_____| |_| \_| |_|  |_| |_____| |____/  |_| |_| |_____| |____/
 //
-// Attack type: offline, misroute, slow (MTU?), reconfigure,
-//  rewrite(header/flags)
-// Node auto-healing after attacks (especially offline)
-//  TTL inversely proprotionate to number of deployed attacks
-// Packet.speed: size / ticks
-// Packet.ttl (in ticks)
-// Interface reliability, tx_load, rx_load (queue strategy)
-// Text compression for game text
-// Dynamic prefix based className instead of classList
+//
 
 function MersenneTwister(seed) {
   seed = seed || Date.now();
@@ -584,6 +576,14 @@ Map.prototype.value = function(key) {
   }
   return value;
 };
+
+const domId = id => document.getElementById(id);
+
+const add = (element, className) => element.classList.add(className);
+const remove = (element, className) => element.classList.remove(className);
+
+const hide = element => add(element, 'hide');
+const show = element => remove(element, 'hide');
 
 let IPs = {};
 function generateIP() {
@@ -811,14 +811,14 @@ function Edge(mesh, edgeId, start, end) {
     if (!self.effect) {
       if (mesh.effect.type === 'cut' && mesh.tools.cut.decrement()) {
         self.online = false;
-        self.elements.empty.classList.add('edge-offline-empty');
-        self.elements.forward.classList.add('edge-cut');
-        self.elements.reverse.classList.add('edge-cut');
+        add(self.elements.empty, 'edge-offline-empty');
+        add(self.elements.forward, 'edge-cut');
+        add(self.elements.reverse, 'edge-cut');
       } else if (mesh.effect.type === 'slow' && mesh.tools.slow.decrement()) {
         self.speed = 0;
-        self.elements.empty.classList.add('edge-empty-slow');
-        self.elements.forward.classList.add('edge-slow');
-        self.elements.reverse.classList.add('edge-slow');
+        add(self.elements.empty, 'edge-empty-slow');
+        add(self.elements.forward, 'edge-slow');
+        add(self.elements.reverse, 'edge-slow');
       } else {
         return;
       }
@@ -885,21 +885,21 @@ function Edge(mesh, edgeId, start, end) {
           reverse = true;
         }
       });
-      self.elements.empty.classList.add('edge-packet-empty');
+      add(self.elements.empty, 'edge-packet-empty');
       if (forward) {
-        self.elements.forward.classList.add('edge-packet-forward');
+        add(self.elements.forward, 'edge-packet-forward');
       } else {
-        self.elements.forward.classList.remove('edge-packet-forward');
+        remove(self.elements.forward, 'edge-packet-forward');
       }
       if (reverse) {
-        self.elements.reverse.classList.add('edge-packet-reverse');
+        add(self.elements.reverse, 'edge-packet-reverse');
       } else {
-        self.elements.reverse.classList.remove('edge-packet-reverse');
+        remove(self.elements.reverse, 'edge-packet-reverse');
       }
     } else {
-      self.elements.empty.classList.remove('edge-packet-empty');
-      self.elements.forward.classList.remove('edge-packet-forward');
-      self.elements.reverse.classList.remove('edge-packet-reverse');
+      remove(self.elements.empty, 'edge-packet-empty');
+      remove(self.elements.forward, 'edge-packet-forward');
+      remove(self.elements.reverse, 'edge-packet-reverse');
     }
   };
 
@@ -975,19 +975,19 @@ function Node(mesh) {
       if (!self.effect) {
         if (mesh.effect.type === 'crash' && mesh.tools.crash.decrement()) {
           self.online = false;
-          self.element.classList.add('node-offline');
+          add(self.element, 'node-offline');
         } else if (mesh.effect.type === 'checksum' && mesh.tools.checksum.decrement()) {
-          self.outline.classList.add('node-effect-checksum');
+          add(self.outline, 'node-effect-checksum');
         } else if (mesh.effect.type === 'reroute' && mesh.tools.reroute.decrement()) {
-          self.outline.classList.add('node-effect-reroute');
+          add(self.outline, 'node-effect-reroute');
         } else if (mesh.effect.type === 'trace' && mesh.tools.trace.decrement()) {
-          self.outline.classList.add('node-effect-trace');
+          add(self.outline, 'node-effect-trace');
         } else if (mesh.effect.type === 'inspect' && mesh.tools.inspect.decrement()) {
-          self.outline.classList.add('node-effect-inspect');
+          add(self.outline, 'node-effect-inspect');
         } else if (mesh.effect.type === 'multiply' && mesh.tools.multiply.decrement()) {
-          self.outline.classList.add('node-effect-multiply');
+          add(self.outline, 'node-effect-multiply');
         } else if (mesh.effect.type === 'meshcoin' && mesh.tools.meshcoin.decrement()) {
-          self.outline.classList.add('node-effect-meshcoin');
+          add(self.outline, 'node-effect-meshcoin');
         } else {
           return;
         }
@@ -1028,8 +1028,8 @@ function Node(mesh) {
   self.packet = {};
   self.packet.add = function(packet) {
     packets.add(packet);
-    self.element.classList.add('node-packet');
-    self.outline.classList.add('node-effect-animate');
+    add(self.element, 'node-packet');
+    add(self.outline, 'node-effect-animate');
 
     if (self.effect && self.effect.type === 'checksum') {
       console.log('rewriting checksum');
@@ -1040,8 +1040,8 @@ function Node(mesh) {
   self.packet.delete = function(packet) {
     packets.delete(packet);
     if (!packets.size) {
-      self.element.classList.remove('node-packet');
-      self.outline.classList.remove('node-effect-animate');
+      remove(self.element, 'node-packet');
+      remove(self.outline, 'node-effect-animate');
     }
   };
 
@@ -1340,7 +1340,7 @@ function Mesh({
   }
 
   function initSvg() {
-    const svg = document.getElementById('mesh');
+    const svg = domId('mesh');
     const svgHeight = (self.height * self.scale) + 8;
 
     svg.style.width = ((self.width * self.scale) + 8) + 'px';
@@ -1383,19 +1383,19 @@ function Mesh({
   //////////
 
   self.elements = {
-    cont: document.getElementById('continue'),
-    crash: document.getElementById('crash'),
-    health: document.getElementById('health'),
-    info: document.getElementById('info'),
-    meshId: document.getElementById('mesh-id'),
-    offline: document.getElementById('offline'),
-    retry: document.getElementById('retry'),
-    spinner: document.getElementById('spinner'),
-    toolbar: document.getElementById('toolbar')
+    cont: domId('continue'),
+    crash: domId('crash'),
+    health: domId('health'),
+    info: domId('info'),
+    meshId: domId('mesh-id'),
+    offline: domId('offline'),
+    retry: domId('retry'),
+    spinner: domId('spinner'),
+    toolbar: domId('toolbar')
   };
 
   self.console = {
-    element: document.getElementById('console'),
+    element: domId('console'),
     buffer: '',
     log: function(string) {
       this.buffer += string;
@@ -1520,9 +1520,9 @@ function Mesh({
 
     self.svg = initSvg();
 
-    self.elements.toolbar.classList.remove('fade-out');
-    self.console.element.classList.remove('fade-out');
-    self.elements.spinner.classList.remove('hide');
+    remove(self.elements.toolbar, 'fade-out');
+    remove(self.console.element, 'fade-out');
+    show(self.elements.spinner);
 
     self.clear(self.elements.info);
     self.elements.meshId.innerHTML = meshId;
@@ -1543,9 +1543,9 @@ function Mesh({
       const tool = self.tools[type];
       tool.type = type;
       tool.element = element;
-      tool.use = document.getElementById(type + '-use');
+      tool.use = domId(type + '-use');
 
-      tool.element.classList.remove('selected');
+      remove(tool.element, 'selected');
       tool.decrement = function() {
         if (tool.uses === Infinity) {
           return true;
@@ -1561,20 +1561,20 @@ function Mesh({
       if (tool.uses < 0 || tool.uses === Infinity) {
         tool.uses = Infinity;
       } else if (tool.uses === 0) {
-        tool.element.classList.add('hide');
+        hide(tool.element);
         return;
       } else {
         tool.use.innerHTML = tool.uses;
       }
-      tool.element.classList.remove('hide');
+      show(tool.element);
 
       element.onclick = function() {
         for (const item in self.tools) {
           if (item === type) {
             self.effect = self.tools[type];
-            self.tools[item].element.classList.add('selected');
+            add(self.tools[item].element, 'selected');
           } else {
-            self.tools[item].element.classList.remove('selected');
+            remove(self.tools[item].element, 'selected');
           }
         }
       };
@@ -1590,7 +1590,7 @@ function Mesh({
       };
     });
 
-    self.tools.info.element.classList.add('selected');
+    add(self.tools.info.element, 'selected');
 
     self.count = Math.floor(self.width * self.height * self.factor);
     self.scope = Math.ceil(self.count % 10);
@@ -1648,10 +1648,10 @@ function Mesh({
         self.console.clear().log('&#x21B9; Connected!');
         self.console.log('\n&#x2605; Objective: ' + objective);
 
-        self.elements.retry.classList.remove('hide');
+        show(self.elements.retry);
         self.elements.retry.onclick = function() {
           self.crashed = true;
-          self.elements.retry.classList.add('hide');
+          hide(self.elements.retry);
           if (self.router) {
             clearInterval(self.router);
           }
@@ -1664,14 +1664,14 @@ function Mesh({
   //////////
 
   function crashNode(node) {
-    node.element.classList.remove('node-packet');
-    node.element.classList.add('node-offline');
+    remove(node.element, 'node-packet');
+    add(node.element, 'node-offline');
     for (const connection in node.connections) {
       const edge = node.connections[connection].edge;
-      edge.elements.empty.classList.remove('edge-packet-empty');
-      edge.elements.empty.classList.add('edge-offline-empty');
-      edge.elements.forward.classList.remove('edge-packet-forward');
-      edge.elements.reverse.classList.remove('edge-packet-reverse');
+      remove(edge.elements.empty, 'edge-packet-empty');
+      add(edge.elements.empty, 'edge-offline-empty');
+      remove(edge.elements.forward, 'edge-packet-forward');
+      remove(edge.elements.reverse, 'edge-packet-reverse');
     }
   }
 
@@ -1719,7 +1719,7 @@ function Mesh({
 
     const loop = setInterval(function() {
       if (state === 0) {
-        self.elements.retry.classList.add('hide');
+        hide(self.elements.retry);
         clearInterval(self.router);
 
         for (let i = 0; i < step1; i++) {
@@ -1735,26 +1735,26 @@ function Mesh({
         }
       } else if (state === 3) {
         self.elements.crash.innerHTML = crashText;
-        self.elements.crash.classList.remove('hide');
-        self.elements.toolbar.classList.add('fade-out');
-        self.console.element.classList.add('fade-out');
+        show(self.elements.crash);
+        add(self.elements.toolbar, 'fade-out');
+        add(self.console.element, 'fade-out');
       } else if (state === 4) {
         clearInterval(loop);
-        self.elements.offline.classList.remove('hide');
-        self.elements.spinner.classList.add('hide');
-        self.svg.classList.add('blink');
+        show(self.elements.offline);
+        hide(self.elements.spinner);
+        add(self.svg, 'blink');
         self.elements.health.innerHTML = 'OFFLINE';
         self.crashed = true;
         if (callback) {
-          self.elements.cont.classList.remove('hide');
+          show(self.elements.cont);
           self.elements.cont.onclick = function() {
-            self.elements.crash.classList.add('hide');
-            self.elements.offline.classList.add('hide');
-            self.svg.classList.remove('blink');
+            hide(self.elements.crash);
+            hide(self.elements.offline);
+            remove(self.svg, 'blink');
             return callback(self);
           };
         } else {
-          self.elements.cont.classList.add('hide');
+          hide(self.elements.cont);
         }
       }
       state++;
@@ -1810,8 +1810,8 @@ function Enmeshed() {
   const ps1 = green + 'mark@terminus</span>:' + blue + '~</span>$ ';
   const ps2 = '<span style="font-weight:700">' + cyan + 'enmeshed</span>#</span> ';
 
-  const terminal = document.getElementById('terminal');
-  const screen = document.getElementById('screen');
+  const terminal = domId('terminal');
+  const screen = domId('screen');
 
   function print(string, cont) {
     string = string || '';
@@ -1819,14 +1819,14 @@ function Enmeshed() {
     terminal.scrollTop = terminal.scrollHeight + terminal.clientHeight;
   }
 
-  function remove(id) {
-    const element = document.getElementById(id);
+  function removeElement(id) {
+    const element = domId(id);
     return (element) ? element.parentNode.removeChild(element) : true;
   }
 
   function nocursor() {
-    remove('input');
-    remove('cursor');
+    removeElement('input');
+    removeElement('cursor');
   }
 
   const lines = (boot + menu + rimraf).split('\n'); //.slice(0, 0); // HACK
@@ -1835,11 +1835,11 @@ function Enmeshed() {
   const bootTime = Date.now();
 
   function play(i, next) {
-    terminal.classList.add('hide');
-    screen.classList.remove('hide');
+    hide(terminal);
+    show(screen);
     const mesh = new Mesh(stages[i], function() {
-      terminal.classList.remove('hide');
-      screen.classList.add('hide');
+      show(terminal);
+      hide(screen);
       i++;
       storage.setItem('stage', i);
       console.log('playing', i);
@@ -1872,11 +1872,11 @@ function Enmeshed() {
   }
 
   function challenge(next) {
-    terminal.classList.add('hide');
-    screen.classList.remove('hide');
+    hide(terminal);
+    show(screen);
     const mesh = new Mesh(challengeMesh, function() {
-      terminal.classList.remove('hide');
-      screen.classList.add('hide');
+      show(terminal);
+      hide(screen);
       lines.unshift(...(menu.split(/\n/)));
       next();
     });
@@ -1974,24 +1974,24 @@ function Enmeshed() {
           return '';
         }).
         replace(/&Y/, function() {
-          const decryptElement = document.getElementById('decryptor');
-          const emailElement = document.getElementById('email');
-          const attachmentElement = document.getElementById('attachment');
+          const decryptElement = domId('decryptor');
+          const emailElement = domId('email');
+          const attachmentElement = domId('attachment');
 
-          decryptElement.classList.remove('spinner');
+          remove(decryptElement, 'spinner');
           decryptElement.innerHTML = 'done.';
 
           emailElement.innerHTML = rot13(emailElement.textContent, true).
             replace(/&/g, '<br>').replace(/\s/g, '&nbsp;');
-          emailElement.classList.add('decrypt');
+          add(emailElement, 'decrypt');
 
           attachmentElement.innerHTML = 'enmeshed.zip (13 KB)';
-          attachmentElement.classList.add('decrypt');
+          add(attachmentElement, 'decrypt');
           return '';
         }).
         replace(/&y/, function() {
-          document.getElementById('email').classList.remove('decrypt');
-          document.getElementById('attachment').classList.remove('decrypt');
+          remove(domId('email'), 'decrypt');
+          remove(domId('attachment'), 'decrypt');
           return '';
         }).
         replace(/&N/, function() {
@@ -2056,14 +2056,14 @@ function Enmeshed() {
           } else if (event.keyCode === 8 || event.keyCode === 127) {
             if (cmd.length) {
               cmd = cmd.substring(0, cmd.length - 1);
-              document.getElementById('input').innerHTML = cmd;
+              domId('input').innerHTML = cmd;
             }
           } else {
             console.log('char', event.key, event.keyCode);
             console.log(event);
             if (event.key.length === 1) {
               cmd += event.key;
-              document.getElementById('input').innerHTML = cmd;
+              domId('input').innerHTML = cmd;
             }
           }
         };
