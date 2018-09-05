@@ -62,4 +62,6 @@ typings/
 
 # temporary build and dist directories
 build
-dist
+dist/index.html
+dist/dev.html
+dist/enmeshed.zip

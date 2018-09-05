@@ -176,17 +176,16 @@
     }
     #continue {
       position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      bottom: 0px;
+      top: 410px;
+      left: 640px;
       color: white;
       font-size: 16px;
+      line-height: 20px;
       cursor: pointer;
-      padding: 4px 8px 2px 8px;
+      padding: 8px;
       background-color: #181818;
-      border-radius: 5px 5px 0 0;
+      border-radius: 5px;
       border: 4px solid rgba(255,0,0,0.5);
-      border-bottom: 0;
     }
     #continue:hover {
       color: #F00;
@@ -758,7 +757,7 @@ Good luck,
   -Deborah`.replace(/\n/g, '&');
 
 const email = `
-&P&Tmail --read 1
+&P&Tmail --unread
 &V&#x250C;&R67&#x2500;
   &BDate:&b &DE
   &BFrom:&b Unverified Sender &lt;unverified@gilgamesh.network&gt;
@@ -2022,7 +2021,7 @@ window.addEventListener('load', function() {
         <div class="health">Network Health: <span id="health">100%</span></div>
         <div class="toolbar" id="toolbar">
           <div class="hide" data-tool="info">&#x24D8;<div id="info-use"></div></div>
-          <div class="hide" data-tool="crash">&#x29B0;<div id="crash-use"></div></div>
+          <div class="hide" data-tool="crash">&#x2349;<div id="crash-use"></div></div>
           <div class="hide" data-tool="cut">&#x27DB;<div id="cut-use"></div></div>
           <div class="hide" data-tool="slow">&#x29D6;<div id="slow-use"></div></div>
           <div class="hide" data-tool="checksum">&#x2211;<div id="checksum-use"></div></div>
@@ -2040,7 +2039,7 @@ window.addEventListener('load', function() {
       <pre id="crash" class="crash hide"></pre>
       <div id="offline" class="offline hide">
         <div class="offline-banner">OFFLINE</div>
-        <div id="continue">&#x21CE; Disconnect</div>
+        <div id="continue">Disconnect &#x21CE;</div>
       </div>
       <div id="retry" class="hide" title="Restart">&#x21BB;</div><div id="retry-text">Restart!</div>
       <div class="brand">MarkBook Pro</div>
