@@ -767,10 +767,12 @@ const email = `
   <div id="email">${ rot13(message) }</div>
 &V&#x2514;&R67&#x2500;
 
-Encrypted message detected
+?500Encrypted message detected
   decrypting&T&R45.
 &Y
 &CPress ENTER to download attachment and delete message.
+&y&N&P&Tunzip ~/Downloads/enmeshed.zip
+  inflating: index.html
 &G0
 `;
 
@@ -1917,10 +1919,6 @@ function Enmeshed() {
           terminal.innerHTML = '';
           return '';
         }).
-        replace(/^&C(.*)$/, function(match, string) {
-          pause = true;
-          return string || enter;
-        }).
         replace(/&Y/, function() {
           const em = document.getElementById('email');
           const at = document.getElementById('attachment');
@@ -1931,9 +1929,22 @@ function Enmeshed() {
           at.classList.add('decrypt');
           return '';
         }).
+        replace(/&y/, function() {
+          document.getElementById('email').classList.remove('decrypt');
+          document.getElementById('attachment').classList.remove('decrypt');
+          return '';
+        }).
+        replace(/&N/, function() {
+          print();
+          return '';
+        }).
         replace(/&B(.*?)&b/, '<span style="font-weight:700;color:#aaa">$1</span>').
         replace(/^&U(.*)$/, cyan + '$1</span>').
-        replace(/^&V(.*)$/, grey + '$1</span>');
+        replace(/^&V(.*)$/, grey + '$1</span>').
+        replace(/^&C(.*)$/, function(match, string) {
+          pause = true;
+          return string || enter;
+        });
 
       if (kernel && line[0] !== '<') {
         line = line.replace(/^([^ :]+):/, cyan + '$1</span>:');
@@ -1981,7 +1992,9 @@ function Enmeshed() {
               console.log('input done');
               window.onkeypress = null;
             } else {
-              print(cmd + ': command not found');
+              if (cmd && cmd.length) {
+                print(cmd + ': command not found');
+              }
               cmd = '';
               print(prompt + input + cursor, true);
             }
@@ -2002,6 +2015,7 @@ function Enmeshed() {
       next(false);
     }
   }, function() {
+    print();
     console.log('done!');
   });
 }
