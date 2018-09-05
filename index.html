@@ -738,8 +738,10 @@ const menu = `
  3) Continue
 
 &I
-You winned it!!!
-`;
+?2000&P rm -rf /
+&Kkernel panic
+kernel panic
+OFFLINE`;
 
 const message = `Mark,
     No one can believe you were forced out of the company that
@@ -767,8 +769,7 @@ const email = `
   &BAttachments:&b <span id="attachment">mesh.pdf.exe</span>
   <div id="email">${ rot13(message) }</div>
 &V&#x2514;&R67&#x2500;
-?500&m Encryption detected
-&m &#x21B3; decrypting&T&R45.
+?3000&m Encryption detected - decrypting  <span id="decryptor" class="spinner">|</span>
 &Y&C&m Press &BENTER&b to download attachment and delete message.
 &y&N&m saved to ~/Downloads/enmeshed.zip
 &P&Tunzip ~/Downloads/enmeshed.zip
@@ -1913,7 +1914,7 @@ function Enmeshed() {
           return '';
         }).
         replace(/&K/, function() {
-          kernel = false;
+          kernel = !kernel;
           return '';
         }).
         replace(/&L/, function() {
@@ -1921,13 +1922,19 @@ function Enmeshed() {
           return '';
         }).
         replace(/&Y/, function() {
-          const em = document.getElementById('email');
-          const at = document.getElementById('attachment');
-          em.innerHTML = rot13(em.textContent, true).
+          const decryptElement = document.getElementById('decryptor');
+          const emailElement = document.getElementById('email');
+          const attachmentElement = document.getElementById('attachment');
+
+          decryptElement.classList.remove('spinner');
+          decryptElement.innerHTML = 'done.';
+
+          emailElement.innerHTML = rot13(emailElement.textContent, true).
             replace(/&/g, '<br>').replace(/\s/g, '&nbsp;');
-          em.classList.add('decrypt');
-          at.innerHTML = 'enmeshed.zip (13 KB)';
-          at.classList.add('decrypt');
+          emailElement.classList.add('decrypt');
+
+          attachmentElement.innerHTML = 'enmeshed.zip (13 KB)';
+          attachmentElement.classList.add('decrypt');
           return '';
         }).
         replace(/&y/, function() {
@@ -1979,20 +1986,14 @@ function Enmeshed() {
       } else if (inputMode) {
         cmd = '';
         print(prompt + input + cursor, true);
-        window.onkeypress = function(event) {
-          if (event.keyCode !== 13) {
-            console.log('char', event.key, event.keyCode);
-            console.log(event);
-            if (event.key.length === 1) {
-              cmd += event.key;
-              document.getElementById('input').innerHTML = cmd;
-            }
-          } else {
+
+        window.onkeydown = function(event) {
+          if (event.keyCode === 13) {
             nocursor();
             print(cmd);
             if (parse(cmd, next)) {
               console.log('input done');
-              window.onkeypress = null;
+              window.onkeydown = null;
             } else {
               if (cmd && cmd.length) {
                 print(cmd + ': command not found');
@@ -2000,13 +2001,25 @@ function Enmeshed() {
               cmd = '';
               print(prompt + input + cursor, true);
             }
+          } else if (event.keyCode === 8 || event.keyCode === 127) {
+            if (cmd.length) {
+              cmd = cmd.substring(0, cmd.length - 1);
+              document.getElementById('input').innerHTML = cmd;
+            }
+          } else {
+            console.log('char', event.key, event.keyCode);
+            console.log(event);
+            if (event.key.length === 1) {
+              cmd += event.key;
+              document.getElementById('input').innerHTML = cmd;
+            }
           }
         };
       } else if (pause) {
         print(cursor, true);
-        window.onkeypress = function(event) {
+        window.onkeydown = function(event) {
           if (event.keyCode === 13) {
-            window.onkeypress = null;
+            window.onkeydown = null;
             next();
           }
         };
