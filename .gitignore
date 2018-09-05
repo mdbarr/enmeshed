@@ -65,3 +65,4 @@ build
 dist/index.html
 dist/dev.html
 dist/enmeshed.zip
+copy.sh

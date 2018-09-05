@@ -43,7 +43,7 @@
       border: 4px solid #2C2C2C;
       border-radius: 10px;
     }
-    .screen {
+    #screen {
       position: absolute;
       top: 10px;
       left: 10px;
@@ -54,7 +54,7 @@
       font-size: 8px;
       color: white;
     }
-    .terminal {
+    #terminal {
       position: absolute;
       top: 0px;
       left: 10px;
@@ -117,7 +117,7 @@
         pointer-events: none;
       }
     }
-    .crash {
+    #crash {
       position: absolute;
       top: 14px;
       left: 10px;
@@ -141,7 +141,7 @@
         height: 95%;
       }
     }
-    .offline {
+    #offline {
       position: absolute;
       top: -2px;
       left: 10px;
@@ -315,7 +315,7 @@
       top: 12px;
       right: 12px;
     }
-    .toolbar {
+    #toolbar {
       position: absolute;
       top: 30px;
       left: 0px;
@@ -729,7 +729,7 @@ const menu = `&P&T./enmeshed
 
 &U&R68&#x2500;
 
- 1) Story Mode
+ 1) Story
 
  2) Challenge
 &O
@@ -2096,11 +2096,11 @@ window.addEventListener('load', function() {
   </head>
   <body>
     <div class="display">
-      <div id="screen" class="screen hide">
+      <div id="screen" class="hide">
         <div class="title">GILGAMESH NETWORK VISUALIZER</div>
         <div class="mesh-id"><div id="spinner" class="spinner">&#x169b;</div> mesh://<span id="mesh-id"></span></div>
         <div class="health">Network Health: <span id="health">100%</span></div>
-        <div class="toolbar" id="toolbar">
+        <div id="toolbar">
           <div class="hide" data-tool="info">&#x24D8;<div id="info-use"></div></div>
           <div class="hide" data-tool="crash">&#x2349;<div id="crash-use"></div></div>
           <div class="hide" data-tool="cut">&#x27DB;<div id="cut-use"></div></div>
@@ -2116,9 +2116,9 @@ window.addEventListener('load', function() {
         <svg id="mesh" class="mesh"></svg>
         <pre id="console"></pre>
       </div>
-      <pre id="terminal" class="terminal"></pre>
-      <pre id="crash" class="crash hide"></pre>
-      <div id="offline" class="offline hide">
+      <pre id="terminal"></pre>
+      <pre id="crash" class="hide"></pre>
+      <div id="offline" class="hide">
         <div class="offline-banner">OFFLINE</div>
         <div id="continue">Disconnect &#x21CE;</div>
       </div>
