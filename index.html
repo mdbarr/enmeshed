@@ -1855,10 +1855,9 @@ function Enmeshed() {
   function generateChallenge() {
     const seed = rand(234, 35746);
     challengeMesh = {
-      meshId: '[::1]/challenge/' + seed,
+      meshId: '[::1]/challenge/' + seed.toString(16),
       width: rand(10, 80),
       height: rand(10, 50),
-      scale: 10,
       seed: seed,
       objective: 'Offline the mesh',
       uses: {
@@ -1869,6 +1868,7 @@ function Enmeshed() {
         reroute: rand(4, 10)
       }
     };
+    challengeMesh.scale = Math.max(10, Math.ceil(Math.min(800 / challengeMesh.width, 500 / challengeMesh.height)));
   }
 
   function challenge(next) {
