@@ -209,7 +209,7 @@
     }
     #retry {
       position: absolute;
-      top: 580px;
+      top: 560px;
       right: 20px;
       color: white;
       font-size: 20px;
@@ -220,7 +220,7 @@
     }
     #retry-text {
       position: absolute;
-      top: 584px;
+      top: 564px;
       right: 42px;
       font-size: 12px;
       line-height: 20px;
@@ -228,6 +228,26 @@
       opacity: 0;
     }
     #retry:hover + #retry-text {
+      opacity: 1;
+    }
+    #quit {
+      position: absolute;
+      top: 580px;
+      right: 20px;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+    }
+    #quit-text {
+      position: absolute;
+      top: 584px;
+      right: 42px;
+      font-size: 12px;
+      line-height: 20px;
+      color: white;
+      opacity: 0;
+    }
+    #quit:hover + #quit-text {
       opacity: 1;
     }
     .brand {
@@ -1389,6 +1409,7 @@ function Mesh({
     info: domId('info'),
     meshId: domId('mesh-id'),
     offline: domId('offline'),
+    quit: domId('quit'),
     retry: domId('retry'),
     spinner: domId('spinner'),
     toolbar: domId('toolbar')
@@ -1648,10 +1669,22 @@ function Mesh({
         self.console.clear().log('&#x21B9; Connected!');
         self.console.log('\n&#x2605; Objective: ' + objective);
 
+        show(self.elements.quit);
+        self.elements.quit.onclick = function() {
+          self.quit = true;
+          hide(self.elements.retry);
+          hide(self.elements.quit);
+          if (self.router) {
+            clearInterval(self.router);
+          }
+          return callback(self);
+        };
+
         show(self.elements.retry);
         self.elements.retry.onclick = function() {
           self.crashed = true;
           hide(self.elements.retry);
+          hide(self.elements.quit);
           if (self.router) {
             clearInterval(self.router);
           }
@@ -1840,11 +1873,15 @@ function Enmeshed() {
     const mesh = new Mesh(stages[i], function() {
       show(terminal);
       hide(screen);
-      i++;
-      storage.setItem('stage', i);
-      console.log('playing', i);
-      if (i < stages.length) {
-        lines.unshift('&G' + i);
+      if (mesh.quit) {
+        lines.unshift(...(menu.split(/\n/)));
+      } else {
+        i++;
+        storage.setItem('stage', i);
+        console.log('playing', i);
+        if (i < stages.length) {
+          lines.unshift('&G' + i);
+        }
       }
       next();
     });
@@ -2123,6 +2160,7 @@ window.addEventListener('load', function() {
         <div id="continue">Disconnect &#x21CE;</div>
       </div>
       <div id="retry" class="hide" title="Restart">&#x21BB;</div><div id="retry-text">Restart!</div>
+      <div id="quit" class="hide" title="Quit">&#x21F0;</div><div id="quit-text">Quit</div>
       <div class="brand">MarkBook Pro</div>
     </div>
     <div class="base"></div>
