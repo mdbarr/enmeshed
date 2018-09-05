@@ -758,7 +758,7 @@ Good luck,
 
 const email = `
 &P&Tmail --unread
-&m One unread message:
+&m one unread message:
 &V&#x250C;&R67&#x2500;
   &BDate:&b &DE
   &BFrom:&b Unverified Sender &lt;unverified@gilgamesh.network&gt;
@@ -767,10 +767,11 @@ const email = `
   &BAttachments:&b <span id="attachment">mesh.pdf.exe</span>
   <div id="email">${ rot13(message) }</div>
 &V&#x2514;&R67&#x2500;
-?500&m Encrypted message detected
-&m  Decrypting&T&R45.
+?500&m Encryption detected
+&m &#x21B3; decrypting&T&R45.
 &Y&C&m Press &BENTER&b to download attachment and delete message.
-&y&N&P&Tunzip ~/Downloads/enmeshed.zip
+&y&N&m saved to ~/Downloads/enmeshed.zip
+&P&Tunzip ~/Downloads/enmeshed.zip
   inflating: index.html
 &G0
 `;
@@ -1843,10 +1844,9 @@ function Enmeshed() {
       i++;
       console.log('playing', i);
       if (i < stages.length) {
-        play(i, next);
-      } else {
-        next();
+        lines.unshift('&G' + i);
       }
+      next();
     });
     window.mesh = mesh;
   }
@@ -1872,6 +1872,7 @@ function Enmeshed() {
 
       let typing = false;
       let pause = false;
+      let playing = false;
 
       nocursor();
 
@@ -1903,6 +1904,7 @@ function Enmeshed() {
           return '';
         }).
         replace(/&g(\d+)/, function(match, game) {
+          playing = true;
           play(game, next);
           return '';
         }).
@@ -2008,7 +2010,7 @@ function Enmeshed() {
             next();
           }
         };
-      } else {
+      } else if (!playing) {
         next(timeout);
       }
     } else {
