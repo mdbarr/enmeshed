@@ -758,6 +758,7 @@ Good luck,
 
 const email = `
 &P&Tmail --unread
+&m One unread message:
 &V&#x250C;&R67&#x2500;
   &BDate:&b &DE
   &BFrom:&b Unverified Sender &lt;unverified@gilgamesh.network&gt;
@@ -766,11 +767,9 @@ const email = `
   &BAttachments:&b <span id="attachment">mesh.pdf.exe</span>
   <div id="email">${ rot13(message) }</div>
 &V&#x2514;&R67&#x2500;
-
-?500Encrypted message detected
-  decrypting&T&R45.
-&Y
-&CPress ENTER to download attachment and delete message.
+?500&m Encrypted message detected
+&m  Decrypting&T&R45.
+&Y&C&m Press &BENTER&b to download attachment and delete message.
 &y&N&P&Tunzip ~/Downloads/enmeshed.zip
   inflating: index.html
 &G0
@@ -1803,7 +1802,7 @@ function Enmeshed() {
   const grey = span('aaa');
   const cursor = '<u id="cursor"></u>';
   const input = '<span id="input"></span>';
-  const enter = 'Press ENTER to continue...';
+  const enter = 'Press &BENTER&b to continue...';
 
   const ps1 = green + 'mark@terminus</span>:' + blue + '~</span>$ ';
   const ps2 = '<span style="font-weight:700">' + cyan + 'enmeshed</span>#</span> ';
@@ -1900,7 +1899,7 @@ function Enmeshed() {
           print();
           print(prompt, true);
           typing = 'gilgamesh --connect mesh://' + stages[game].meshId;
-          lines.unshift('&CMesh Visualizer Initialized, press ENTER to launch.', '&g' + game);
+          lines.unshift('&CMesh Visualizer Initialized, press &BENTER&b to launch.', '&g' + game);
           return '';
         }).
         replace(/&g(\d+)/, function(match, game) {
@@ -1938,6 +1937,7 @@ function Enmeshed() {
           print();
           return '';
         }).
+        replace(/&m/, span('d896ff') + '[mail]</span>').
         replace(/&B(.*?)&b/, '<span style="font-weight:700;color:#aaa">$1</span>').
         replace(/^&U(.*)$/, cyan + '$1</span>').
         replace(/^&V(.*)$/, grey + '$1</span>').
