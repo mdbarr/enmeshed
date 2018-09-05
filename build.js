@@ -95,7 +95,11 @@ substitutions.forEach(function(key) {
 });
 
 function bytes(number) {
-  return String(number).replace(/(\d\d\d)$/, ',$1 bytes');
+  if (number >= 1000) {
+    return String(number).replace(/(\d\d\d)$/, ',$1 bytes');
+  } else {
+    return number + ' bytes';
+  }
 }
 
 let html = fs.readFileSync(INDEX_HTML).toString();

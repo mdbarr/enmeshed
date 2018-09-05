@@ -439,7 +439,7 @@
     }
     .edge-interact {
       stroke: transparent;
-      stroke-width: 3px;
+      stroke-width: 4px;
     }
     .edge-interact:hover {
       stroke: rgba(153,153,153,0.3);
@@ -642,7 +642,6 @@ total RAM covered: 16288M
 Initmem setup node 0 [mem 0x0000000000001000-0x0000000456ffffff]
 On node 0 totalpages: 4164976
   DMA zone: 64 pages used for memmap
-  DMA zone: 26 pages reserved
   DMA zone: 3997 pages, LIFO batch:0
   Normal zone: 54720 pages used for memmap
   Normal zone: 3502080 pages, LIFO batch:31
@@ -650,7 +649,6 @@ Reserved but unavailable: 98 pages
 ACPI: PM-Timer IO Port: 0x1808
 ACPI: Local APIC address 0xfee00000
 ACPI: LAPIC_NMI (acpi_id[0x01] dfl dfl lint[0x0])
-ACPI: IRQ9 used by override.
 Using ACPI (MADT) for SMP configuration information
 ACPI: HPET id: 0x8086a701 base: 0xfed00000
 smpboot: Allowing 4 CPUs, 0 hotplug CPUs
@@ -720,9 +718,9 @@ Welcome to Gilgamesh 47.04.3 LTS (Gilgamesh OS 4.73.0-22 m47_64)
 Last login: &DP
 
 You have new mail.
-&P&T./enmeshed`;
+`;
 
-const menu = `
+const menu = `&P&T./enmeshed
 &U   _____   _   _   __  __   _____   ____    _   _   _____   ____
 &U  | ____| | \\ | | |  \\/  | | ____| / ___|  | | | | | ____| |  _ \\
 &U  |  _|   |  \\| | | |\\/| | |  _|   \\___ \\  | |_| | |  _|   | | | |
@@ -731,16 +729,16 @@ const menu = `
 
 &U&R68&#x2500;
 
- 1) New Game
+ 1) Story Mode
 
- 2) Random Mesh
+ 2) Challenge
+&O
+&I`;
 
- 3) Continue
-
-&I
-?2000&P rm -rf /
-&Kkernel panic
-kernel panic
+const rimraf = `
+?2000&Prm -rf /
+&KKernel Panic
+Kernel Panic
 OFFLINE`;
 
 const message = `Mark,
@@ -769,7 +767,7 @@ const email = `
   &BAttachments:&b <span id="attachment">mesh.pdf.exe</span>
   <div id="email">${ rot13(message) }</div>
 &V&#x2514;&R67&#x2500;
-?3000&m Encryption detected - decrypting  <span id="decryptor" class="spinner">|</span>
+?3000&m Encryption detected - decrypting... <span id="decryptor" class="spinner">|</span>
 &Y&C&m Press &BENTER&b to download attachment and delete message.
 &y&N&m saved to ~/Downloads/enmeshed.zip
 &P&Tunzip ~/Downloads/enmeshed.zip
@@ -1797,6 +1795,9 @@ function Enmeshed() {
     }
   } ];
 
+  const storage = window.localStorage;
+  const resume = parseInt(storage.getItem('stage') || 0);
+
   const span = (hex) => '<span style="color:#' + hex + '">';
   const green = span('7fDB6A');
   const cyan = span('4b86B4');
@@ -1808,7 +1809,6 @@ function Enmeshed() {
 
   const ps1 = green + 'mark@terminus</span>:' + blue + '~</span>$ ';
   const ps2 = '<span style="font-weight:700">' + cyan + 'enmeshed</span>#</span> ';
-  let prompt = ps2;
 
   const terminal = document.getElementById('terminal');
   const screen = document.getElementById('screen');
@@ -1829,12 +1829,10 @@ function Enmeshed() {
     remove('cursor');
   }
 
-  const lines = (boot + menu).split('\n'); //.slice(0, 0); // HACK
+  const lines = (boot + menu + rimraf).split('\n'); //.slice(0, 0); // HACK
 
   let kernel = true;
   const bootTime = Date.now();
-
-  const state = 0;
 
   function play(i, next) {
     terminal.classList.add('hide');
@@ -1843,6 +1841,7 @@ function Enmeshed() {
       terminal.classList.remove('hide');
       screen.classList.add('hide');
       i++;
+      storage.setItem('stage', i);
       console.log('playing', i);
       if (i < stages.length) {
         lines.unshift('&G' + i);
@@ -1852,15 +1851,52 @@ function Enmeshed() {
     window.mesh = mesh;
   }
 
+  let challengeMesh;
+  function generateChallenge() {
+    const seed = rand(234, 35746);
+    challengeMesh = {
+      meshId: '[::1]/challenge/' + seed,
+      width: rand(10, 80),
+      height: rand(10, 50),
+      scale: 10,
+      seed: seed,
+      objective: 'Offline the mesh',
+      uses: {
+        crash: rand(4, 10),
+        cut: rand(4, 10),
+        slow: rand(4, 10),
+        checksum: rand(4, 10),
+        reroute: rand(4, 10)
+      }
+    };
+  }
+
+  function challenge(next) {
+    terminal.classList.add('hide');
+    screen.classList.remove('hide');
+    const mesh = new Mesh(challengeMesh, function() {
+      terminal.classList.remove('hide');
+      screen.classList.add('hide');
+      lines.unshift(...(menu.split(/\n/)));
+      next();
+    });
+    window.mesh = mesh;
+  }
+
   function parse(cmd, next) {
-    if (state === 0 && cmd === '1') {
+    if (cmd === '1') {
       const msg = email.split('\n');
       lines.unshift(...msg);
-      prompt = ps1;
-      next();
-      return true;
+    } else if (cmd === '2') {
+      generateChallenge();
+      lines.unshift('&H');
+    } else if (cmd === '3' && resume) {
+      lines.unshift('&G' + resume);
+    } else {
+      return false;
     }
-    return false;
+    next();
+    return true;
   }
 
   sequence(function(next) {
@@ -1894,12 +1930,10 @@ function Enmeshed() {
         }).
         replace(/!!/, cursor).
         replace(/&P/, ps1).
-        replace(/&E/, ps2).
         replace(/&G(\d+)/, function(match, game) {
           game = parseInt(game);
-          typing = true;
           print();
-          print(prompt, true);
+          print(ps1, true);
           typing = 'gilgamesh --connect mesh://' + stages[game].meshId;
           lines.unshift('&CMesh Visualizer Initialized, press &BENTER&b to launch.', '&g' + game);
           return '';
@@ -1907,6 +1941,18 @@ function Enmeshed() {
         replace(/&g(\d+)/, function(match, game) {
           playing = true;
           play(game, next);
+          return '';
+        }).
+        replace(/&H/, function() {
+          print();
+          print(ps1, true);
+          typing = 'gilgamesh --connect mesh://' + challengeMesh.meshId;
+          lines.unshift('&CMesh Visualizer Initialized, press &BENTER&b to launch.', '&h');
+          return '';
+        }).
+        replace(/&h/, function() {
+          playing = true;
+          challenge(next);
           return '';
         }).
         replace(/&T(.*)$/, function(match, characters) {
@@ -1919,6 +1965,12 @@ function Enmeshed() {
         }).
         replace(/&L/, function() {
           terminal.innerHTML = '';
+          return '';
+        }).
+        replace(/&O/, function() {
+          if (resume && resume < stages.length) {
+            lines.unshift(' 3) Continue', '');
+          }
           return '';
         }).
         replace(/&Y/, function() {
@@ -1985,7 +2037,7 @@ function Enmeshed() {
         });
       } else if (inputMode) {
         cmd = '';
-        print(prompt + input + cursor, true);
+        print(ps2 + input + cursor, true);
 
         window.onkeydown = function(event) {
           if (event.keyCode === 13) {
@@ -1999,7 +2051,7 @@ function Enmeshed() {
                 print(cmd + ': command not found');
               }
               cmd = '';
-              print(prompt + input + cursor, true);
+              print(ps2 + input + cursor, true);
             }
           } else if (event.keyCode === 8 || event.keyCode === 127) {
             if (cmd.length) {
