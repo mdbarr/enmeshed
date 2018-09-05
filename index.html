@@ -397,6 +397,15 @@
     [data-tool="multiply"]:hover, [data-tool="multiply"].selected {
       border-left: 2px solid #005B96;
     }
+    [data-tool="multiply"]:hover, [data-tool="multiply"].selected {
+      border-left: 2px solid #005B96;
+    }
+    [data-tool="meshcoin"] {
+      font-size: 20px;
+    }
+    [data-tool="meshcoin"]:hover, [data-tool="meshcoin"].selected {
+      border-left: 2px solid #060;
+    }
     .flip {
       display: inline-block;
       font-style: normal;
@@ -440,7 +449,7 @@
       stroke: #005B96;
     }
     .node-effect-meshcoin {
-      stroke: #FFF;
+      stroke: #060;
     }
     .node-effect-immutable {
       stroke: #FFC100;
@@ -1903,7 +1912,8 @@ function Enmeshed() {
         cut: rand(4, 10),
         slow: rand(4, 10),
         checksum: rand(4, 10),
-        reroute: rand(4, 10)
+        reroute: rand(4, 10),
+        meshcoin: rand(0, 1)
       }
     };
     challengeMesh.scale = Math.max(10, Math.ceil(Math.min(700 / challengeMesh.width, 450 / challengeMesh.height)));
