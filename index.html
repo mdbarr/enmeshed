@@ -209,7 +209,7 @@
     }
     #retry {
       position: absolute;
-      top: 560px;
+      top: 550px;
       right: 20px;
       color: white;
       font-size: 20px;
@@ -220,7 +220,7 @@
     }
     #retry-text {
       position: absolute;
-      top: 564px;
+      top: 554px;
       right: 42px;
       font-size: 12px;
       line-height: 20px;
@@ -240,8 +240,8 @@
     }
     #quit-text {
       position: absolute;
-      top: 584px;
-      right: 42px;
+      top: 581px;
+      right: 44px;
       font-size: 12px;
       line-height: 20px;
       color: white;
@@ -741,13 +741,8 @@ You have new mail.
 `;
 
 const menu = `&P&T./enmeshed
-&U   _____   _   _   __  __   _____   ____    _   _   _____   ____
-&U  | ____| | \\ | | |  \\/  | | ____| / ___|  | | | | | ____| |  _ \\
-&U  |  _|   |  \\| | | |\\/| | |  _|   \\___ \\  | |_| | |  _|   | | | |
-&U  | |___  | |\\  | | |  | | | |___   ___) | |  _  | | |___  | |_| |
-&U  |_____| |_| \\_| |_|  |_| |_____| |____/  |_| |_| |_____| |____/
 
-&U&R68&#x2500;
+<div style="color:#005b96;line-height:6px;letter-spacing:-1px">  ███████╗███╗   ██╗███╗   ███╗███████╗███████╗██╗  ██╗███████╗██████╗<br>  ██╔════╝████╗  ██║████╗ ████║██╔════╝██╔════╝██║  ██║██╔════╝██╔══██╗<br>  █████╗  ██╔██╗ ██║██╔████╔██║█████╗  ███████╗███████║█████╗  ██║  ██║<br>  ██╔══╝  ██║╚██╗██║██║╚██╔╝██║██╔══╝  ╚════██║██╔══██║██╔══╝  ██║  ██║<br>  ███████╗██║ ╚████║██║ ╚═╝ ██║███████╗███████║██║  ██║███████╗██████╔╝<br>  ╚══════╝╚═╝  ╚═══╝╚═╝     ╚═╝╚══════╝╚══════╝╚═╝  ╚═╝╚══════╝╚═════╝<br><br>&R73&#x2500;
 
  1) Story
 
@@ -1367,6 +1362,8 @@ function Mesh({
     svg.style.height = svgHeight + 'px';
     if ((510 - svgHeight) / 2 > 0) {
       svg.style.marginTop = ((510 - svgHeight) / 2) + 'px';
+    } else {
+      svg.style.marginTop = null;
     }
 
     self.clear(svg);
@@ -1456,19 +1453,20 @@ function Mesh({
     info: {
       name: 'Information',
       color: 'white',
-      description: 'Scan nodes and connections.',
+      description: 'Display information about nodes and connections.',
       uses: -1
     },
     crash: {
-      name: 'Segfault',
+      name: 'Crash',
       color: '#D34E53',
-      description: 'Segfault a <u>node</u> making it completely unavailable and offline.',
+      description: 'Crash a <u>node</u> with a malformed packet leading to memory corruption.',
+      cve: 'CVE.2018.Gilg.MemCorrupt',
       uses: 0
     },
     cut: {
       name: 'Cut',
       color: '#666',
-      description: 'Cut the <u>connection</u> between nodes.',
+      description: 'Bring the <u>connection</u> between nodes offline by sending spoofed reset packets.',
       uses: 0
     },
     slow: {
@@ -1478,37 +1476,37 @@ function Mesh({
       uses: 0
     },
     checksum: {
-      name: 'Checksum Rewrite',
+      name: 'Corrupt',
       color: '#535C8E',
       description: 'Rewrite the checksum of every packet passing through <u>node</u> so that it is dropped at its destination.',
       uses: 0
     },
     reroute: {
-      name: 'Random Route',
+      name: 'Reroute',
       color: '#9E379F',
       description: 'Corrupt the route table of a <u>node</u> so that packets are randomly routed to different nodes.',
       uses: 0
     },
     trace: {
-      name: 'Packet Trace',
+      name: 'Trace',
       color: '#AE6126',
       description: 'Trace the path of packets originating at the given <u>node</u>.',
       uses: 0
     },
     inspect: {
-      name: 'Stateful Inspection',
+      name: 'Inspect',
       color: '#94C5CC',
       description: 'Inspect the packets passing through the given <u>node</u>, extracting any useful data.',
       uses: 0
     },
     multiply: {
-      name: 'Traffic Multiply',
+      name: 'Multiply',
       color: '#005B96',
       description: 'Duplicate every packet that passes through the <u>node</u>.',
       uses: 0
     },
     meshcoin: {
-      name: 'MeshCoin Miner',
+      name: 'Mine',
       color: '#0073B1',
       description: 'Mine MeshCoins using a portion of a <u>node</u>&apos;s CPU as packets pass through.',
       uses: 0
@@ -1753,6 +1751,7 @@ function Mesh({
     const loop = setInterval(function() {
       if (state === 0) {
         hide(self.elements.retry);
+        hide(self.elements.quit);
         clearInterval(self.router);
 
         for (let i = 0; i < step1; i++) {
@@ -1893,8 +1892,8 @@ function Enmeshed() {
     const seed = rand(234, 35746);
     challengeMesh = {
       meshId: '[::1]/challenge/' + seed.toString(16),
-      width: rand(10, 80),
-      height: rand(10, 50),
+      width: rand(10, 60),
+      height: rand(10, 35),
       seed: seed,
       objective: 'Offline the mesh',
       uses: {
@@ -1905,7 +1904,7 @@ function Enmeshed() {
         reroute: rand(4, 10)
       }
     };
-    challengeMesh.scale = Math.max(10, Math.ceil(Math.min(800 / challengeMesh.width, 500 / challengeMesh.height)));
+    challengeMesh.scale = Math.max(10, Math.ceil(Math.min(700 / challengeMesh.width, 450 / challengeMesh.height)));
   }
 
   function challenge(next) {
@@ -2037,7 +2036,6 @@ function Enmeshed() {
         }).
         replace(/&m/, span('d896ff') + '[mail]</span>').
         replace(/&B(.*?)&b/, '<span style="font-weight:700;color:#aaa">$1</span>').
-        replace(/^&U(.*)$/, cyan + '$1</span>').
         replace(/^&V(.*)$/, grey + '$1</span>').
         replace(/^&C(.*)$/, function(match, string) {
           pause = true;
@@ -2055,18 +2053,18 @@ function Enmeshed() {
       if (typing) {
         print(cursor, true);
         typing = typing.split('');
-        sequence(function(cont, i) {
+        sequence(function(tick, i) {
           if (i === 0) {
-            return cont(500);
+            return tick(500);
           }
           nocursor();
           if (typing.length) {
-            const l = typing.shift();
-            const d = Math.max(l.charCodeAt(0) - 20, 50);
-            print(l + cursor, true);
-            cont(d);
+            const letter = typing.shift();
+            const delay = Math.max(letter.charCodeAt(0) - 20, 35);
+            print(letter + cursor, true);
+            tick(delay);
           } else {
-            cont(false);
+            tick(false);
           }
         }, function() {
           print();
@@ -2077,7 +2075,10 @@ function Enmeshed() {
         print(ps2 + input + cursor, true);
 
         window.onkeydown = function(event) {
-          if (event.keyCode === 13) {
+          if (event.key === 'l' && event.ctrlKey) {
+            terminal.innerHTML = '';
+            print(ps2 + input + cursor, true);
+          } else if (event.keyCode === 13) {
             nocursor();
             print(cmd);
             if (parse(cmd, next)) {
@@ -2149,8 +2150,8 @@ window.addEventListener('load', function() {
           <div class="hide" data-tool="multiply">&#x29C9;<div id="multiply-use"></div></div>
           <div class="hide" data-tool="meshcoin">&#x1D6F;<div id="meshcoin-use"></div></div>
         </div>
-        <pre id="info"></pre>
         <svg id="mesh" class="mesh"></svg>
+        <pre id="info"></pre>
         <pre id="console"></pre>
       </div>
       <pre id="terminal"></pre>
@@ -2160,7 +2161,7 @@ window.addEventListener('load', function() {
         <div id="continue">Disconnect &#x21CE;</div>
       </div>
       <div id="retry" class="hide" title="Restart">&#x21BB;</div><div id="retry-text">Restart!</div>
-      <div id="quit" class="hide" title="Quit">&#x21F0;</div><div id="quit-text">Quit</div>
+      <div id="quit" class="hide" title="Quit">&#x21CF;</div><div id="quit-text">Quit</div>
       <div class="brand">MarkBook Pro</div>
     </div>
     <div class="base"></div>
