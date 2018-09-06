@@ -372,10 +372,10 @@
     [data-tool="slow"]:hover, [data-tool="slow"].selected {
       border-left: 2px solid #D9AF3C;
     }
-    [data-tool="checksum"] {
+    [data-tool="corrupt"] {
       font-size: 20px;
     }
-    [data-tool="checksum"]:hover, [data-tool="checksum"].selected {
+    [data-tool="corrupt"]:hover, [data-tool="corrupt"].selected {
       border-left: 2px solid #535C8E;
     }
     [data-tool="reroute"]:hover, [data-tool="reroute"].selected {
@@ -433,7 +433,7 @@
       stroke-dasharray: 5 2;
       animation: progress 3s linear infinite reverse;
     }
-    .node-effect-checksum {
+    .node-effect-corrupt {
       stroke: #535C8E;
     }
     .node-effect-reroute {
@@ -1002,8 +1002,8 @@ function Node(mesh) {
         if (mesh.effect.type === 'crash' && mesh.tools.crash.decrement()) {
           self.online = false;
           add(self.element, 'node-offline');
-        } else if (mesh.effect.type === 'checksum' && mesh.tools.checksum.decrement()) {
-          add(self.outline, 'node-effect-checksum');
+        } else if (mesh.effect.type === 'corrupt' && mesh.tools.corrupt.decrement()) {
+          add(self.outline, 'node-effect-corrupt');
         } else if (mesh.effect.type === 'reroute' && mesh.tools.reroute.decrement()) {
           add(self.outline, 'node-effect-reroute');
         } else if (mesh.effect.type === 'trace' && mesh.tools.trace.decrement()) {
@@ -1057,9 +1057,9 @@ function Node(mesh) {
     add(self.element, 'node-packet');
     add(self.outline, 'node-effect-animate');
 
-    if (self.effect && self.effect.type === 'checksum') {
-      console.log('rewriting checksum');
-      packet.checksum = 0;
+    if (self.effect && self.effect.type === 'corrupt') {
+      console.log('corrupting packet');
+      packet.corrupt = true;
     }
   };
 
@@ -1089,11 +1089,7 @@ function Packet(mesh, source, destination) {
 
   self.size = mesh.rand(1, mesh.speeds.length - 1);
 
-  self.calculateChecksum = function() {
-    return (self.size + size(self.source.connections) +
-              size(self.destination.connections)).toString(16).padStart(4, '0');
-  };
-  self.checksum = self.calculateChecksum();
+  self.corrupt = false;
 
   self.path = [];
   self.ticks = 0;
@@ -1225,8 +1221,8 @@ function Packet(mesh, source, destination) {
     }
 
     if (self.current === self.destination) {
-      if (self.checksum !== self.calculateChecksum()) {
-        console.log('dropped - invalid checksum');
+      if (self.corrupt) {
+        console.log('dropped - corrupt packet');
         self.dropped = true;
         self.current.packet.delete(self);
         if (self.cameFrom) {
@@ -1486,7 +1482,7 @@ function Mesh({
       description: 'Slow all traffic through a <u>connection</u> by reducing its bandwidth to ' + self.speeds[0].name + '.',
       uses: 0
     },
-    checksum: {
+    corrupt: {
       name: 'Corrupt',
       color: '#535C8E',
       description: 'Rewrite the checksum of every packet passing through <u>node</u> so that it is dropped at its destination.',
@@ -1911,7 +1907,7 @@ function Enmeshed() {
         crash: rand(4, 10),
         cut: rand(4, 10),
         slow: rand(4, 10),
-        checksum: rand(4, 10),
+        corrupt: rand(4, 10),
         reroute: rand(4, 10),
         meshcoin: rand(0, 1)
       }
@@ -1954,7 +1950,7 @@ function Enmeshed() {
           crash: -1,
           cut: -1,
           slow: -1,
-          checksum: -1,
+          corrupt: -1,
           reroute: -1,
           meshcoin: -1
         }
@@ -2183,7 +2179,7 @@ window.addEventListener('load', function() {
           <div class="hide" data-tool="crash">&#x2349;<div id="crash-use"></div></div>
           <div class="hide" data-tool="cut">&#x27DB;<div id="cut-use"></div></div>
           <div class="hide" data-tool="slow">&#x29D6;<div id="slow-use"></div></div>
-          <div class="hide" data-tool="checksum">&#x2211;<div id="checksum-use"></div></div>
+          <div class="hide" data-tool="corrupt">&#x2A02;<div id="corrupt-use"></div></div>
           <div class="hide" data-tool="reroute">&#x21AC;<div id="reroute-use"></div></div>
           <div class="hide" data-tool="trace">&#x27D0;<div id="trace-use"></div></div>
           <div class="hide" data-tool="inspect"><i class="flip">&#x260C;</i><div id="inspect-use"></div></div>
