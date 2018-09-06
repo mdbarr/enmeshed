@@ -335,6 +335,13 @@
       top: 12px;
       right: 12px;
     }
+    #coins {
+      position: absolute;
+      top: 22px;
+      right: 250px;
+      color: white;
+      font-size: 8px;
+    }
     #toolbar {
       position: absolute;
       top: 30px;
@@ -1054,9 +1061,15 @@ function Node(mesh) {
     add(self.element, 'node-packet');
     add(self.outline, 'node-effect-animate');
 
-    if (self.effect && self.effect.type === 'corrupt') {
-      console.log('corrupting packet');
-      packet.corrupt = true;
+    if (self.effect) {
+      if (self.effect.type === 'corrupt') {
+        console.log('corrupting packet');
+        packet.corrupt = true;
+      } else if (self.effect.type === 'mine') {
+        console.log('mining from a packet');
+        mesh.coins += 1;
+        packet.ticks++;
+      }
     }
   };
 
@@ -1522,6 +1535,8 @@ function Mesh({
   self.init = function() {
     self.connected = false;
 
+    self.coins = 0;
+
     IPs = {};
 
     self.prng = new MersenneTwister(seed);
@@ -1840,6 +1855,8 @@ function Enmeshed() {
 
   const log = [];
 
+  let coins = 0;
+
   const span = (hex) => '<span style="color:#' + hex + '">';
   const green = span('7fDB6A');
   const cyan = span('4b86B4');
@@ -1854,6 +1871,7 @@ function Enmeshed() {
 
   const terminal = domId('terminal');
   const screen = domId('screen');
+  const balance = domId('coins');
 
   function print(string, cont) {
     string = string || '';
@@ -1891,6 +1909,7 @@ function Enmeshed() {
       if (mesh.quit) {
         showMenu();
       } else {
+        coins += mesh.coins;
         i++;
         storage.setItem('stage', i);
         console.log('playing', i);
@@ -1935,11 +1954,16 @@ function Enmeshed() {
     const mesh = new Mesh(challengeMesh, function() {
       show(terminal);
       hide(screen);
+      if (!mesh.quit) {
+        coins += mesh.coins;
+      }
+
       if (challengeMesh.meshId.includes('try')) {
         lines.unshift('&I');
       } else {
         showMenu();
       }
+
       next();
     });
     window.mesh = mesh;
@@ -1994,6 +2018,12 @@ function Enmeshed() {
       let pause = false;
       let playing = false;
 
+      if (coins) {
+        const amount = '$ ' + coins.toFixed(3);
+        balance.innerHTML = amount;
+        balance.title = amount + ' meshcoins';
+      }
+
       nocursor();
 
       line = line.replace(/&DT/g, new Date()).
@@ -2029,7 +2059,7 @@ function Enmeshed() {
         replace(/&H/, function() {
           print();
           print(ps1, true);
-          typing = 'gilgamesh --connect mesh://' + challengeMesh.meshId;
+          typing = 'gilgamesh --challenge';
           lines.unshift('&CMesh Visualizer Initialized, press &BENTER&b to connect.', '&h');
           return '';
         }).
@@ -2231,6 +2261,7 @@ window.addEventListener('load', function() {
         <pre id="console"></pre>
       </div>
       <pre id="terminal"></pre>
+      <div id="coins"></div>
       <pre id="crash" class="hide"></pre>
       <div id="offline" class="hide">
         <div class="offline-banner">OFFLINE</div>
