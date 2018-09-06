@@ -757,6 +757,9 @@ const rimraf = `
 ?2000&Prm -rf /
 &KKernel Panic
 Kernel Panic
+Kernel Panic
+Kernel Panic
+Kernel Panic
 OFFLINE`;
 
 const message = `Mark,
@@ -1832,6 +1835,11 @@ function Enmeshed() {
   const storage = window.localStorage;
   const resume = parseInt(storage.getItem('stage') || 0);
 
+  const history = [];
+  let index = 0;
+
+  const log = [];
+
   const span = (hex) => '<span style="color:#' + hex + '">';
   const green = span('7fDB6A');
   const cyan = span('4b86B4');
@@ -1849,7 +1857,9 @@ function Enmeshed() {
 
   function print(string, cont) {
     string = string || '';
-    terminal.innerHTML += string + (!cont ? '\n' : '');
+    string += !cont ? '\n' : '';
+    log.push(string);
+    terminal.innerHTML += string;
     terminal.scrollTop = terminal.scrollHeight + terminal.clientHeight;
   }
 
@@ -1868,6 +1878,10 @@ function Enmeshed() {
   let kernel = true;
   const bootTime = Date.now();
 
+  function showMenu() {
+    lines.unshift( ...menu.split('\n'));
+  }
+
   function play(i, next) {
     hide(terminal);
     show(screen);
@@ -1875,7 +1889,7 @@ function Enmeshed() {
       show(terminal);
       hide(screen);
       if (mesh.quit) {
-        lines.unshift(...(menu.split(/\n/)));
+        showMenu();
       } else {
         i++;
         storage.setItem('stage', i);
@@ -1921,7 +1935,11 @@ function Enmeshed() {
     const mesh = new Mesh(challengeMesh, function() {
       show(terminal);
       hide(screen);
-      lines.unshift(...(menu.split(/\n/)));
+      if (challengeMesh.meshId.includes('try')) {
+        lines.unshift('&I');
+      } else {
+        showMenu();
+      }
       next();
     });
     window.mesh = mesh;
@@ -1941,7 +1959,7 @@ function Enmeshed() {
     } else if (tryRegExp.test(cmd)) { // testing only
       const [ , width, height, seed ] = cmd.match(tryRegExp);
       challengeMesh = {
-        meshId: '[::1]/challenge/' + seed.toString(16),
+        meshId: '[::1]/try/' + seed.toString(16),
         width: width,
         height: height,
         seed: seed,
@@ -1971,7 +1989,6 @@ function Enmeshed() {
 
       let timeout = 25 + rand(0, 35);
       let inputMode = false;
-      let cmd = '';
 
       let typing = false;
       let pause = false;
@@ -2109,37 +2126,58 @@ function Enmeshed() {
           next(25);
         });
       } else if (inputMode) {
-        cmd = '';
+        if (!history.length || (history.length && history[0].length)) {
+          history.unshift('');
+        }
         print(ps2 + input + cursor, true);
 
         window.onkeydown = function(event) {
-          if (event.key === 'l' && event.ctrlKey) {
+          if (event.key === 'l' && event.ctrlKey) { // CTRL-C
             terminal.innerHTML = '';
             print(ps2 + input + cursor, true);
-          } else if (event.keyCode === 13) {
+          } else if (event.keyCode === 38) { // Up Arrow
+            if (history.length) {
+              index++;
+              if (index >= history.length) {
+                index = 0;
+              }
+              domId('input').innerHTML = history[index];
+            }
+          } else if (event.keyCode === 40) { // Down Arrow
+            if (history.length) {
+              index--;
+              if (index < 0) {
+                index = history.length - 1;
+              }
+              domId('input').innerHTML = history[index];
+            }
+          } else if (event.keyCode === 13) { // Enter
             nocursor();
-            print(cmd);
-            if (parse(cmd, next)) {
+            print(history[index]);
+            if (parse(history[index], next)) {
               console.log('input done');
               window.onkeydown = null;
             } else {
-              if (cmd && cmd.length) {
-                print(cmd + ': command not found');
+              if (history[index] && history[index].length) {
+                print(history[index] + ': command not found');
               }
-              cmd = '';
               print(ps2 + input + cursor, true);
             }
-          } else if (event.keyCode === 8 || event.keyCode === 127) {
-            if (cmd.length) {
-              cmd = cmd.substring(0, cmd.length - 1);
-              domId('input').innerHTML = cmd;
+            if (history.length && history[0].length) {
+              history.unshift('');
             }
-          } else {
+            index = 0;
+          } else if (event.keyCode === 8 || event.keyCode === 127) { // Backspace / Delete
+            if (history[index].length) {
+              history[index] = history[index].substring(0, history[index].length - 1);
+              domId('input').innerHTML = history[index];
+            }
+          } else if (!event.ctrlKey && !event.altKey) { // Any plain key
             console.log('char', event.key, event.keyCode);
             console.log(event);
-            if (event.key.length === 1) {
-              cmd += event.key;
-              domId('input').innerHTML = cmd;
+            if (event.key.length === 1) { // Simple character
+              history[index] += event.key;
+              domId('input').innerHTML = history[index];
             }
           }
         };
