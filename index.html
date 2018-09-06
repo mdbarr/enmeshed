@@ -1931,6 +1931,8 @@ function Enmeshed() {
     window.mesh = mesh;
   }
 
+  const tryRegExp = /try\s+(\d+)\s+(\d+)\s+(\d+)/;
+
   function parse(cmd, next) {
     if (cmd === '1') {
       const msg = email.split('\n');
@@ -1940,6 +1942,24 @@ function Enmeshed() {
       lines.unshift('&H');
     } else if (cmd === '3' && resume) {
       lines.unshift('&G' + resume);
+    } else if (tryRegExp.test(cmd)) { // testing only
+      const [ , width, height, seed ] = tryRegExp.match(cmd);
+      challengeMesh = {
+        meshId: '[::1]/challenge/' + seed.toString(16),
+        width: width,
+        height: height,
+        seed: seed,
+        objective: 'Trial',
+        uses: {
+          crash: -1,
+          cut: -1,
+          slow: -1,
+          checksum: -1,
+          reroute: -1,
+          meshcoin: -1
+        }
+      };
+      lines.unshift('&H');
     } else {
       return false;
     }
