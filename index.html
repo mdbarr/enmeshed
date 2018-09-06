@@ -787,6 +787,8 @@ const email = `
 &y&N&m saved to ~/Downloads/enmeshed.zip
 &P&Tunzip ~/Downloads/enmeshed.zip
   inflating: index.html
+&P&Tcat index.html
+&F
 &G0
 `;
 
@@ -1805,23 +1807,23 @@ function Mesh({
 function Enmeshed() {
   const stages = [ {
     //meshId: 'fe42::92ff::57c4',
-    meshId: '[::1]/tutorial/1',
+    meshId: '[::1]/practice/1',
     width: 10,
     height: 10,
     scale: 35,
     seed: 4839,
-    objective: 'Use Segfaults to take the mesh offline.',
+    objective: 'Practice using crashes to take a mesh offline.',
     uses: {
       crash: 4
     }
   }, {
-    meshId: '[::1]/tutorial/2',
+    meshId: '[::1]/practice/2',
     width: 10,
     height: 10,
     scale: 35,
     factor: 0.05,
     seed: 42536,
-    objective: 'Use cuts to take the mesh offline.',
+    objective: 'Practice using cuts to take a mesh offline.',
     uses: {
       cut: 5
     }
@@ -1971,7 +1973,7 @@ function Enmeshed() {
           print();
           print(ps1, true);
           typing = 'gilgamesh --connect mesh://' + stages[game].meshId;
-          lines.unshift('&CMesh Visualizer Initialized, press &BENTER&b to launch.', '&g' + game);
+          lines.unshift('&CMesh Visualizer Initialized, press &BENTER&b to connect.', '&g' + game);
           return '';
         }).
         replace(/&g(\d+)/, function(match, game) {
@@ -1983,7 +1985,7 @@ function Enmeshed() {
           print();
           print(ps1, true);
           typing = 'gilgamesh --connect mesh://' + challengeMesh.meshId;
-          lines.unshift('&CMesh Visualizer Initialized, press &BENTER&b to launch.', '&h');
+          lines.unshift('&CMesh Visualizer Initialized, press &BENTER&b to connect.', '&h');
           return '';
         }).
         replace(/&h/, function() {
@@ -2029,6 +2031,14 @@ function Enmeshed() {
           remove(domId('email'), 'decrypt');
           remove(domId('attachment'), 'decrypt');
           return '';
+        }).
+        replace(/&F/, function() {
+          const descriptions = stages.map(function(stage) {
+            return '  mesh://' + stage.meshId + ' - ' + stage.objective;
+          });
+          const first = descriptions.shift();
+          lines.unshift(...descriptions);
+          return first;
         }).
         replace(/&N/, function() {
           print();
