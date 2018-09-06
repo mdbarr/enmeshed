@@ -387,11 +387,10 @@
     [data-tool="trace"]:hover, [data-tool="trace"].selected {
       border-left: 2px solid #AE6126;
     }
-    [data-tool="inspect"] {
+    [data-tool="intercept"] {
       font-size: 32px;
-      font-weight: 700;
     }
-    [data-tool="inspect"]:hover, [data-tool="inspect"].selected {
+    [data-tool="intercept"]:hover, [data-tool="intercept"].selected {
       border-left: 2px solid #94C5CC;
     }
     [data-tool="multiply"]:hover, [data-tool="multiply"].selected {
@@ -400,16 +399,11 @@
     [data-tool="multiply"]:hover, [data-tool="multiply"].selected {
       border-left: 2px solid #005B96;
     }
-    [data-tool="meshcoin"] {
+    [data-tool="mine"] {
       font-size: 20px;
     }
-    [data-tool="meshcoin"]:hover, [data-tool="meshcoin"].selected {
+    [data-tool="mine"]:hover, [data-tool="mine"].selected {
       border-left: 2px solid #060;
-    }
-    .flip {
-      display: inline-block;
-      font-style: normal;
-      transform: scale(1, -1);
     }
     .node {
       fill: #5691DC;
@@ -442,13 +436,13 @@
     .node-effect-trace {
       stroke: #AE6126;
     }
-    .node-effect-inspect {
+    .node-effect-intercept {
       stroke: #94C5CC;
     }
     .node-effect-multiply {
       stroke: #005B96;
     }
-    .node-effect-meshcoin {
+    .node-effect-mine {
       stroke: #060;
     }
     .node-effect-immutable {
@@ -1008,12 +1002,12 @@ function Node(mesh) {
           add(self.outline, 'node-effect-reroute');
         } else if (mesh.effect.type === 'trace' && mesh.tools.trace.decrement()) {
           add(self.outline, 'node-effect-trace');
-        } else if (mesh.effect.type === 'inspect' && mesh.tools.inspect.decrement()) {
-          add(self.outline, 'node-effect-inspect');
+        } else if (mesh.effect.type === 'intercept' && mesh.tools.intercept.decrement()) {
+          add(self.outline, 'node-effect-intercept');
         } else if (mesh.effect.type === 'multiply' && mesh.tools.multiply.decrement()) {
           add(self.outline, 'node-effect-multiply');
-        } else if (mesh.effect.type === 'meshcoin' && mesh.tools.meshcoin.decrement()) {
-          add(self.outline, 'node-effect-meshcoin');
+        } else if (mesh.effect.type === 'mine' && mesh.tools.mine.decrement()) {
+          add(self.outline, 'node-effect-mine');
         } else {
           return;
         }
@@ -1500,10 +1494,10 @@ function Mesh({
       description: 'Trace the path of packets originating at the given <u>node</u>.',
       uses: 0
     },
-    inspect: {
-      name: 'Inspect',
+    intercept: {
+      name: 'Intercept',
       color: '#94C5CC',
-      description: 'Inspect the packets passing through the given <u>node</u>, extracting any useful data.',
+      description: 'Intercept the packets passing through the given <u>node</u>, extracting any useful data.',
       uses: 0
     },
     multiply: {
@@ -1512,7 +1506,7 @@ function Mesh({
       description: 'Duplicate every packet that passes through the <u>node</u>.',
       uses: 0
     },
-    meshcoin: {
+    mine: {
       name: 'Mine',
       color: '#0073B1',
       description: 'Mine MeshCoins using a portion of a <u>node</u>&apos;s CPU as packets pass through.',
@@ -1586,6 +1580,7 @@ function Mesh({
 
       if (tool.uses < 0 || tool.uses === Infinity) {
         tool.uses = Infinity;
+        tool.use.innerHTML = '';
       } else if (tool.uses === 0) {
         hide(tool.element);
         return;
@@ -1894,6 +1889,10 @@ function Enmeshed() {
     window.mesh = mesh;
   }
 
+  function meshScale(mesh) {
+    mesh.scale = Math.max(10, Math.ceil(Math.min(700 / mesh.width, 450 / mesh.height)));
+  }
+
   let challengeMesh;
   function generateChallenge() {
     const seed = rand(234, 35746);
@@ -1909,10 +1908,11 @@ function Enmeshed() {
         slow: rand(4, 10),
         corrupt: rand(4, 10),
         reroute: rand(4, 10),
-        meshcoin: rand(0, 1)
+        intercept: rand(0, 1),
+        mine: rand(0, 1)
       }
     };
-    challengeMesh.scale = Math.max(10, Math.ceil(Math.min(700 / challengeMesh.width, 450 / challengeMesh.height)));
+    meshScale(challengeMesh);
   }
 
   function challenge(next) {
@@ -1939,23 +1939,25 @@ function Enmeshed() {
     } else if (cmd === '3' && resume) {
       lines.unshift('&G' + resume);
     } else if (tryRegExp.test(cmd)) { // testing only
-      const [ , width, height, seed ] = tryRegExp.match(cmd);
+      const [ , width, height, seed ] = cmd.match(tryRegExp);
       challengeMesh = {
         meshId: '[::1]/challenge/' + seed.toString(16),
         width: width,
         height: height,
         seed: seed,
-        objective: 'Trial',
         uses: {
           crash: -1,
           cut: -1,
           slow: -1,
           corrupt: -1,
           reroute: -1,
-          meshcoin: -1
+          intercept: -1,
+          mine: -1
         }
       };
-      lines.unshift('&H');
+      meshScale(challengeMesh);
+      challengeMesh.objective = [ 'Mesh - seed:', seed, 'width:', width, 'height:', height, 'scale:', challengeMesh.scale ].join(' ');
+      lines.unshift('&h');
     } else {
       return false;
     }
@@ -2172,19 +2174,19 @@ window.addEventListener('load', function() {
     <div class="display">
       <div id="screen" class="hide">
         <div class="title">GILGAMESH NETWORK VISUALIZER</div>
-        <div class="mesh-id"><div id="spinner" class="spinner">&#x169b;</div> mesh://<span id="mesh-id"></span></div>
+        <div class="mesh-id"><div id="spinner" class="spinner">&#x169b</div> mesh://<span id="mesh-id"></span></div>
         <div class="health">Network Health: <span id="health">100%</span></div>
         <div id="toolbar">
-          <div class="hide" data-tool="info">&#x24D8;<div id="info-use"></div></div>
-          <div class="hide" data-tool="crash">&#x2349;<div id="crash-use"></div></div>
-          <div class="hide" data-tool="cut">&#x27DB;<div id="cut-use"></div></div>
-          <div class="hide" data-tool="slow">&#x29D6;<div id="slow-use"></div></div>
-          <div class="hide" data-tool="corrupt">&#x2A02;<div id="corrupt-use"></div></div>
-          <div class="hide" data-tool="reroute">&#x21AC;<div id="reroute-use"></div></div>
-          <div class="hide" data-tool="trace">&#x27D0;<div id="trace-use"></div></div>
-          <div class="hide" data-tool="inspect"><i class="flip">&#x260C;</i><div id="inspect-use"></div></div>
-          <div class="hide" data-tool="multiply">&#x29C9;<div id="multiply-use"></div></div>
-          <div class="hide" data-tool="meshcoin">&#x1D6F;<div id="meshcoin-use"></div></div>
+          <div class="hide" data-tool="info">&#x24D8<div id="info-use"></div></div>
+          <div class="hide" data-tool="crash">&#x2349<div id="crash-use"></div></div>
+          <div class="hide" data-tool="cut">&#x27DB<div id="cut-use"></div></div>
+          <div class="hide" data-tool="slow">&#x21DD<div id="slow-use"></div></div>
+          <div class="hide" data-tool="corrupt">&#x2A02<div id="corrupt-use"></div></div>
+          <div class="hide" data-tool="reroute">&#x21AF<div id="reroute-use"></div></div>
+          <div class="hide" data-tool="trace">&#x27D0<div id="trace-use"></div></div>
+          <div class="hide" data-tool="intercept">&#x291E<div id="intercept-use"></div></div>
+          <div class="hide" data-tool="multiply">&#x29C9<div id="multiply-use"></div></div>
+          <div class="hide" data-tool="mine">&#x22C7<div id="mine-use"></div></div>
         </div>
         <svg id="mesh" class="mesh"></svg>
         <pre id="info"></pre>
@@ -2194,10 +2196,10 @@ window.addEventListener('load', function() {
       <pre id="crash" class="hide"></pre>
       <div id="offline" class="hide">
         <div class="offline-banner">OFFLINE</div>
-        <div id="continue">Disconnect &#x21CE;</div>
+        <div id="continue">Disconnect &#x21CE</div>
       </div>
-      <div id="retry" class="hide" title="Restart">&#x21BB;</div><div id="retry-text">Restart!</div>
-      <div id="quit" class="hide" title="Quit">&#x21CF;</div><div id="quit-text">Quit</div>
+      <div id="retry" class="hide" title="Restart">&#x21BB</div><div id="retry-text">Restart!</div>
+      <div id="quit" class="hide" title="Quit">&#x21CF</div><div id="quit-text">Quit</div>
       <div class="brand">MarkBook Pro</div>
     </div>
     <div class="base"></div>
