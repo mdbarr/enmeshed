@@ -369,23 +369,11 @@
     [data-tool="reroute"]:hover, [data-tool="reroute"].selected {
       border-left: 2px solid #9E379F;
     }
-    [data-tool="trace"] {
-      font-size: 32px;
-    }
-    [data-tool="trace"]:hover, [data-tool="trace"].selected {
-      border-left: 2px solid #AE6126;
-    }
     [data-tool="intercept"] {
       font-size: 26px;
     }
     [data-tool="intercept"]:hover, [data-tool="intercept"].selected {
       border-left: 2px solid #94C5CC;
-    }
-    [data-tool="multiply"]:hover, [data-tool="multiply"].selected {
-      border-left: 2px solid #005B96;
-    }
-    [data-tool="multiply"]:hover, [data-tool="multiply"].selected {
-      border-left: 2px solid #005B96;
     }
     [data-tool="mine"] {
       font-size: 26px;
@@ -421,14 +409,8 @@
     .node-effect-reroute {
       stroke: #9E379F;
     }
-    .node-effect-trace {
-      stroke: #AE6126;
-    }
     .node-effect-intercept {
       stroke: #94C5CC;
-    }
-    .node-effect-multiply {
-      stroke: #005B96;
     }
     .node-effect-mine {
       stroke: #060;
@@ -991,12 +973,8 @@ function Node(mesh) {
           add(self.outline, 'node-effect-corrupt');
         } else if (mesh.effect.type === 'reroute' && mesh.tools.reroute.decrement()) {
           add(self.outline, 'node-effect-reroute');
-        } else if (mesh.effect.type === 'trace' && mesh.tools.trace.decrement()) {
-          add(self.outline, 'node-effect-trace');
         } else if (mesh.effect.type === 'intercept' && mesh.tools.intercept.decrement()) {
           add(self.outline, 'node-effect-intercept');
-        } else if (mesh.effect.type === 'multiply' && mesh.tools.multiply.decrement()) {
-          add(self.outline, 'node-effect-multiply');
         } else if (mesh.effect.type === 'mine' && mesh.tools.mine.decrement()) {
           add(self.outline, 'node-effect-mine');
         } else {
@@ -1487,22 +1465,10 @@ function Mesh({
       description: 'Corrupt the route table of a <u>node</u> so that packets are randomly routed to different nodes.',
       uses: 0
     },
-    trace: {
-      name: 'Trace',
-      color: '#AE6126',
-      description: 'Trace the path of packets originating at the given <u>node</u>.',
-      uses: 0
-    },
     intercept: {
       name: 'Intercept',
       color: '#94C5CC',
       description: 'Intercept the packets passing through the given <u>node</u>, extracting any useful data.',
-      uses: 0
-    },
-    multiply: {
-      name: 'Multiply',
-      color: '#005B96',
-      description: 'Duplicate every packet that passes through the <u>node</u>.',
       uses: 0
     },
     mine: {
@@ -2271,9 +2237,7 @@ window.addEventListener('load', function() {
           <div data-tool="slow">&#x21DD<div id="slow-use"></div></div>
           <div data-tool="corrupt">&#x2A02<div id="corrupt-use"></div></div>
           <div data-tool="reroute">&#x21AC<div id="reroute-use"></div></div>
-          <div data-tool="trace">&#x27D0<div id="trace-use"></div></div>
           <div data-tool="intercept">&#x291E<div id="intercept-use"></div></div>
-          <div data-tool="multiply">&#x29C9<div id="multiply-use"></div></div>
           <div data-tool="mine">&#x22C7<div id="mine-use"></div></div>
         </div>
         <svg id="mesh" class="mesh"></svg>
