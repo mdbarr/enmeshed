@@ -209,8 +209,8 @@
     }
     #retry {
       position: absolute;
-      top: 550px;
-      right: 20px;
+      top: 540px;
+      right: 10px;
       color: white;
       font-size: 20px;
       cursor: pointer;
@@ -220,8 +220,8 @@
     }
     #retry-text {
       position: absolute;
-      top: 554px;
-      right: 42px;
+      top: 544px;
+      right: 32px;
       font-size: 12px;
       line-height: 20px;
       color: white;
@@ -232,16 +232,16 @@
     }
     #quit {
       position: absolute;
-      top: 580px;
-      right: 20px;
+      top: 570px;
+      right: 10px;
       color: white;
       font-size: 20px;
       cursor: pointer;
     }
     #quit-text {
       position: absolute;
-      top: 581px;
-      right: 44px;
+      top: 571px;
+      right: 34px;
       font-size: 12px;
       line-height: 20px;
       color: white;
@@ -778,7 +778,7 @@ a framework for surveillance and censorship.
 pre-sale demo today. It would be a shame if, somehow, those
 meshes went offline and the demo was a disaster... Hypothetically
 speaking, I bet the entire deal would fall through! Anyway,
-I've attached a list of completely unrelated mesh addresses which
+attached is a list of completely unrelated mesh addresses which
 you can totally just ignore...
 
 Good luck,
@@ -1687,22 +1687,16 @@ function Mesh({
         self.console.clear().log('&#x21B9; Connected!');
         self.console.log('\n&#x2605; Objective: ' + objective);
 
-        show(self.elements.quit);
         self.elements.quit.onclick = function() {
           self.quit = true;
-          hide(self.elements.retry);
-          hide(self.elements.quit);
           if (self.router) {
             clearInterval(self.router);
           }
           return callback(self);
         };
 
-        show(self.elements.retry);
         self.elements.retry.onclick = function() {
           self.crashed = true;
-          hide(self.elements.retry);
-          hide(self.elements.quit);
           if (self.router) {
             clearInterval(self.router);
           }
@@ -2259,6 +2253,8 @@ window.addEventListener('load', function() {
         <svg id="mesh" class="mesh"></svg>
         <pre id="info"></pre>
         <pre id="console"></pre>
+        <div id="retry" title="Restart">&#x21BB</div><div id="retry-text">Restart!</div>
+        <div id="quit" title="Quit">&#x21CF</div><div id="quit-text">Quit</div>
       </div>
       <pre id="terminal"></pre>
       <div id="coins"></div>
@@ -2267,8 +2263,6 @@ window.addEventListener('load', function() {
         <div class="offline-banner">OFFLINE</div>
         <div id="continue">Disconnect &#x21CE</div>
       </div>
-      <div id="retry" class="hide" title="Restart">&#x21BB</div><div id="retry-text">Restart!</div>
-      <div id="quit" class="hide" title="Quit">&#x21CF</div><div id="quit-text">Quit</div>
       <div class="brand">MarkBook Pro</div>
     </div>
     <div class="base"></div>
