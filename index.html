@@ -215,20 +215,9 @@
       font-size: 20px;
       cursor: pointer;
     }
-    #retry:hover {
-      animation: spinner .8s ease infinite;
-    }
     #retry-text {
-      position: absolute;
-      top: 544px;
-      right: 32px;
       font-size: 12px;
       line-height: 20px;
-      color: white;
-      opacity: 0;
-    }
-    #retry:hover + #retry-text {
-      opacity: 1;
     }
     #quit {
       position: absolute;
@@ -239,16 +228,8 @@
       cursor: pointer;
     }
     #quit-text {
-      position: absolute;
-      top: 571px;
-      right: 34px;
       font-size: 12px;
       line-height: 20px;
-      color: white;
-      opacity: 0;
-    }
-    #quit:hover + #quit-text {
-      opacity: 1;
     }
     .brand {
       position: absolute;
@@ -1424,7 +1405,9 @@ function Mesh({
     meshId: domId('mesh-id'),
     offline: domId('offline'),
     quit: domId('quit'),
+    quitText: domId('quit-text'),
     retry: domId('retry'),
+    retryText: domId('retry-text'),
     spinner: domId('spinner'),
     toolbar: domId('toolbar')
   };
@@ -1687,20 +1670,63 @@ function Mesh({
         self.console.clear().log('&#x21B9; Connected!');
         self.console.log('\n&#x2605; Objective: ' + objective);
 
-        self.elements.quit.onclick = function() {
-          self.quit = true;
-          if (self.router) {
-            clearInterval(self.router);
+        const quit = 'Quit? ';
+        const retry = 'Restart? ';
+        const sure = 'You sure? ';
+
+        let quitState = 0;
+        self.elements.quit.onmouseover = function() {
+          if (quitState) {
+            self.elements.quitText.innerHTML = sure;
+          } else {
+            self.elements.quitText.innerHTML = quit;
           }
-          return callback(self);
+        };
+
+        self.elements.quit.onmouseout = function() {
+          quitState = 0;
+          self.elements.quitText.innerHTML = '';
+        };
+
+        self.elements.quit.onclick = function() {
+          if (quitState) {
+            self.quit = true;
+            if (self.router) {
+              clearInterval(self.router);
+            }
+            return callback(self);
+          } else {
+            quitState = 1;
+            self.elements.quitText.innerHTML = sure;
+          }
+        };
+
+        let retryState = 0;
+        self.elements.retry.onmouseover = function() {
+          if (quitState) {
+            self.elements.retryText.innerHTML = sure;
+          } else {
+            self.elements.retryText.innerHTML = retry;
+          }
+        };
+
+        self.elements.retry.onmouseout = function() {
+          retryState = 0;
+          self.elements.retryText.innerHTML = '';
         };
 
         self.elements.retry.onclick = function() {
-          self.crashed = true;
-          if (self.router) {
-            clearInterval(self.router);
+          if (retryState) {
+            self.elements.retry.onmouseout();
+            self.crashed = true;
+            if (self.router) {
+              clearInterval(self.router);
+            }
+            self.init();
+          } else {
+            retryState = 1;
+            self.elements.retryText.innerHTML = sure;
           }
-          self.init();
         };
       }
     }, self.interval);
@@ -2054,7 +2080,7 @@ function Enmeshed() {
           print();
           print(ps1, true);
           typing = 'gilgamesh --challenge';
-          lines.unshift('&CMesh Visualizer Initialized, press &BENTER&b to connect.', '&h');
+          lines.unshift('&h');
           return '';
         }).
         replace(/&h/, function() {
@@ -2253,8 +2279,8 @@ window.addEventListener('load', function() {
         <svg id="mesh" class="mesh"></svg>
         <pre id="info"></pre>
         <pre id="console"></pre>
-        <div id="retry" title="Restart">&#x21BB</div><div id="retry-text">Restart!</div>
-        <div id="quit" title="Quit">&#x21CF</div><div id="quit-text">Quit</div>
+        <div id="retry" title="Restart"><span id="retry-text"></span>&#x21BB</div>
+        <div id="quit" title="Quit"><span id="quit-text"></span>&#x21CF</div>
       </div>
       <pre id="terminal"></pre>
       <div id="coins"></div>
