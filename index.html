@@ -825,10 +825,22 @@ function Edge(mesh, edgeId, start, end) {
 
   self.elements.interact.onmouseover = function() {
     const len = Math.max(start.address.length, end.address.length);
-    mesh.elements.info.innerHTML = 'Connection #' + self.name + mesh.dotColor(self) + '\n\n' +
+    let info = 'Connection #' + self.name + mesh.dotColor(self) + '\n\n' +
          mesh.dotColor(start) + '  &#x21B1; ' + start.address.padStart(len, ' ') + ' \n' +
-      mesh.dotColor(end) + '  ' + end.address.padEnd(len, ' ') + ' &#x21B2; ' +
-      '\n\n' + 'Bandwidth:'.padEnd(len + 3, ' ') + '\n' + mesh.speeds[self.speed].name + '  ';
+        mesh.dotColor(end) + '  ' + end.address.padEnd(len, ' ') + ' &#x21B2; ' +
+        '\n\n' + 'Bandwidth:'.padEnd(len + 3, ' ') + '\n';
+
+    if (self.speed === 0) {
+      info += '<span style="color:#D9AF3C">' + mesh.speeds[self.speed].name + '  </span>';
+    } else {
+      info += mesh.speeds[self.speed].name + '  ';
+    }
+
+    if (self.effect) {
+      info += '\n\n<span style="color:red">' + 'Anomaly detected:'.padEnd(25, ' ') +
+        '</span>\n' + self.effect.name + '/' + self.effect.cve;
+    }
+    mesh.elements.info.innerHTML = info;
   };
 
   self.elements.interact.onmouseout = function() {
@@ -999,9 +1011,9 @@ function Node(mesh) {
       }
       info += '\nRX &#x2944;, TX &#x2942;, DROPPED &#x21E3;';
 
-      if (self.online && self.effect) {
+      if (self.effect) {
         info += '\n\n<span style="color:red">' + 'Malware detected:'.padEnd(25, ' ') +
-          '</span>\n' + self.effect.type;
+          '</span>\n' + self.effect.name + '/' + self.effect.cve;
       }
 
       mesh.elements.info.innerHTML = info;
@@ -1438,43 +1450,49 @@ function Mesh({
       name: 'Crash',
       color: '#D34E53',
       description: 'Crash a <u>node</u> with a malformed packet leading to memory corruption.',
-      cve: 'CVE.2018.Gilg.MemCorrupt',
+      cve: 'MemCorrupt',
       uses: 0
     },
     cut: {
       name: 'Cut',
       color: '#666',
       description: 'Bring the <u>connection</u> between nodes offline by sending spoofed reset packets.',
+      cve: 'DoS.RST',
       uses: 0
     },
     slow: {
       name: 'Slow',
       color: '#D9AF3C',
       description: 'Slow all traffic through a <u>connection</u> by reducing its bandwidth to ' + self.speeds[0].name + '.',
+      cve: 'Rate.Limit',
       uses: 0
     },
     corrupt: {
       name: 'Corrupt',
       color: '#535C8E',
       description: 'Rewrite the checksum of every packet passing through <u>node</u> so that it is dropped at its destination.',
+      cve: 'Buf.Overflow',
       uses: 0
     },
     reroute: {
       name: 'Reroute',
       color: '#9E379F',
       description: 'Corrupt the route table of a <u>node</u> so that packets are randomly routed to different nodes.',
+      cve: 'Config.Corrupt',
       uses: 0
     },
     intercept: {
       name: 'Intercept',
       color: '#94C5CC',
       description: 'Intercept the packets passing through the given <u>node</u>, extracting any useful data.',
+      cve: 'MiTM.Proxy',
       uses: 0
     },
     mine: {
       name: 'Mine',
-      color: '#0073B1',
+      color: '#060',
       description: 'Mine MeshCoins using a portion of a <u>node</u>&apos;s CPU as packets pass through.',
+      cve: 'Code.Inject',
       uses: 0
     }
   };
