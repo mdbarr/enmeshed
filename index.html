@@ -628,8 +628,7 @@ function sequence(worker, done) {
 const boot = `<div class="banner">Gilgamesh OS version 4.15.0-33-generic (build 2436)</div>
 Command line: BOOT_IMAGE=/gilgamesh-4.15.0-33-generic root=/dev/sda2:ro
 KERNEL supported cpus:
-  Meshtel GenuineMeshtel
-  MDB AuthenticMDB
+  MaasNeotek M47/2
 m47/fpu: Supporting XSAVE feature 0x001: 'm87 floating point registers'
 m47/fpu: Supporting XSAVE feature 0x002: 'SSE registers'
 m47/fpu: xstate_offset[2]:  576, xstate_sizes[2]:  256
@@ -659,43 +658,38 @@ Hierarchical RCU implementation.
 	Tasks RCU enabled.
 RCU: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=4
 NR_IRQS: 524544, nr_irqs: 728, preallocated irqs: 16
-Console: colour dummy device 80x25
-console [tty0] enabled
+console color smart device [tty0] enabled
 ACPI: Core revision 20180813
-ACPI: 6 ACPI AML tables successfully acquired and loaded
 Security Framework initialized
 mce: CPU supports 7 MCE banks
 CPU0: Thermal monitoring enabled (TM1)
-process: using mwait in idle threads
 smp: Bringing up secondary CPUs ...
 m47: Booting SMP configuration:
     node  #0, CPUs:      #1 #2 #3
 smp: Brought up 1 node, 4 CPUs
 NET: Registered protocol family 16
 PCI host bridge to bus 0000:00
-pci_bus 0000:00: root bus resource [io  0x0000-0x0cf7 window]
-pci_bus 0000:00: root bus resource [mem 0xfe000000-0xfe113fff window]
+pci_bus 0000:00: root bus resource [io  0x0000-0x0cf7]
+pci_bus 0000:00: root bus resource [mem 0xfe000000-0xfe113fff]
 pci_bus 0000:00: root bus resource [bus 00-3e]
-    usbcore: registered new interface drivers: usbfs, hub, usb, mesh
+usbcore: registered new interface drivers: usbfs, hub, usb, mesh
 NET: Registered protocol family 2
 TCP established hash table entries: 131072 (order: 8, 1048576 bytes)
 TCP bind hash table entries: 65536 (order: 8, 1048576 bytes)
 TCP: Hash tables configured (established 131072 bind 65536)
-UDP hash table entries: 8192 (order: 6, 262144 bytes)
-UDP-Lite hash table entries: 8192 (order: 6, 262144 bytes)
+MDP hash table entries: 8192 (order: 6, 262144 bytes)
 NET: Registered protocol family 1
-Bluetooth: Core ver 2.22
-NET: Registered protocol family 31
-Bluetooth: HCI device and connection manager initialized
-Bluetooth: HCI socket layer initialized
-Bluetooth: L2CAP socket layer initialized
+NET: Registered protocol family 47
+Meshtooth: Core ver 2.22
+Meshtooth: NET device and connection manager initialized
+Methtooth: NET socket layer initialized
 EXT5-fs (sda2): mounting ext4 file system using the ext5 subsystem
 EXT5-fs (sda2): mounted filesystem with journal.
 Bridge firewalling registered
 nf_conntrack version 0.5.0 (65536 buckets, 262144 max)
-Initializing XFRM netlink socket
-Netfilter messages via NETLINK v0.30.
-random: initializing mersenne twister
+Initializing XFRM meshlink socket
+Meshfilter messages via MESHLINK v0.47.
+random: initializing Mersenne Twister
 MeshConnect initializing interface mesh0
 &K
 ?2000Entering interactive mode...!!
@@ -1298,8 +1292,6 @@ function Mesh({
 
   /////////
 
-  seed = seed || parseInt(meshId.replace(/[^a-f\d]/g, ''), 16);
-
   self.width = width || 20;
   self.height = height || 20;
 
@@ -1349,16 +1341,17 @@ function Mesh({
   function createSvgNode(name, attributes) {
     const element = document.createElementNS('http://www.w3.org/2000/svg', name);
     for (const key in attributes) {
-      element.setAttributeNS(null, key.toLowerCase(), attributes[key]);
+      element.setAttribute(key.toLowerCase(), attributes[key]);
     }
     return element;
   }
 
   function initSvg() {
     const svg = $('mesh');
+    const svgWidth = (self.width * self.scale) + 8;
     const svgHeight = (self.height * self.scale) + 8;
 
-    svg.style.width = ((self.width * self.scale) + 8) + 'px';
+    svg.style.width = svgWidth + 'px';
     svg.style.height = svgHeight + 'px';
     if ((510 - svgHeight) / 2 > 0) {
       svg.style.marginTop = ((510 - svgHeight) / 2) + 'px';
@@ -1395,6 +1388,23 @@ function Mesh({
       return svg.add('line', attributes);
     };
 
+    // IFDEF DEV
+    let zoom = 1;
+    svg.onmousewheel = function(event) {
+      zoom += Math.min(Math.max(event.deltaY * 0.001, 1), 5);
+      const x = event.offsetX;
+      const y = event.offsetY;
+
+      const vw = svgWidth * (1 / zoom);
+      const vh = svgHeight * (1 / zoom);
+
+      const vwc = (vw / 2) - x;
+      const vhc = (vh / 2) - y;
+
+      console.log(zoom, vw, vh, x, y);
+      svg.setAttribute('viewBox', [ 0 + vwc, 0 + vhc, vw + vwc, vh + vhc ].join(' '));
+    };
+    // ENDIF
     return svg;
   }
 
@@ -2137,7 +2147,7 @@ function Enmeshed() {
       const mine = options.mine;
 
       challengeMesh = {
-        meshId: '[::1]/try/' + seed.toString(16),
+        meshId: '[::1]/try/' + seed,
         width,
         height,
         seed,
