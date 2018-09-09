@@ -28,6 +28,7 @@ const safeSubstitutions = {
   'description': 'de',
   'destination': 'd',
   'dotColor': 'do',
+  'dropped': 'dr',
   'edge': 'e',
   'empty': 'em',
   'edge-cut': 'ec',
@@ -41,11 +42,13 @@ const safeSubstitutions = {
   'edge-packet-reverse': 'epr',
   'edge-reverse': 'er',
   'edge-slow': 'es',
+  'effect': 'et',
   'element': 'el',
   '\\.forward': '.fo',
   'forward:': 'fo:',
   'goal': 'g',
   'hide': 'h',
+  'hop': 'hp',
   'idealPath': 'ip',
   'interact': 'i',
   'interface': 'f',
@@ -79,7 +82,8 @@ const safeSubstitutions = {
   'speed': 'sp',
   'source': 'so',
   'ticks': 'ts',
-  'toolbar': 'to'
+  'toolbar': 'to',
+  'tools': 't'
 };
 
 const substitutions = Object.keys(safeSubstitutions).sort(function(a, b) {
