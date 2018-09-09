@@ -980,6 +980,9 @@ function Node(mesh) {
     self.outline = mesh.svg.circle(self.pos.x, self.pos.y, radius + 2, 'node-effect');
 
     self.element.onclick = function() {
+      // IFDEF DEV
+      console.log('node id', mesh.nodes.indexOf(self));
+      // ENDIF
       if (!self.effect) {
         if (mesh.effect.type === 'crash' && mesh.tools.crash.decrement()) {
           self.online = false;
@@ -1510,6 +1513,17 @@ function Mesh({
 
   //////////
 
+  let dataNode = -1;
+  if (typeof data === 'number') {
+    console.log('here');
+    dataNode = data;
+    data = true;
+  } else if (data !== true) {
+    data = false;
+  }
+
+  //////////
+
   self.init = function() {
     self.connected = false;
 
@@ -1627,16 +1641,20 @@ function Mesh({
       self.nodes[i].createElement();
     }
 
-    if (data > 0) {
-      let quantity = self.minimum;
-      while (!self.firewall) {
-        for (let i = 0; i < self.count; i++) {
-          if (size(self.nodes[i].connections) <= quantity) {
-            self.firewall = self.nodes[i];
-            break;
+    if (data !== false) {
+      if (dataNode === -1) {
+        let quantity = self.minimum;
+        while (!self.firewall) {
+          for (let i = 0; i < self.count; i++) {
+            if (size(self.nodes[i].connections) <= quantity) {
+              self.firewall = self.nodes[i];
+              break;
+            }
           }
+          quantity++;
         }
-        quantity++;
+      } else {
+        self.firewall = self.nodes[dataNode];
       }
 
       self.firewall.effect = {
@@ -1730,6 +1748,20 @@ function Mesh({
             self.elements.quitText.innerHTML = sure;
           }
         };
+
+        // IFDEF DEV
+        window.onkeydown = function(event) {
+          if (event.keyCode === 27) {
+            window.onkeydown = null;
+
+            self.quit = true;
+            if (self.router) {
+              clearInterval(self.router);
+            }
+            return callback(self);
+          }
+        };
+        // ENDIF
 
         let retryState = 0;
         self.elements.retry.onmouseover = function() {
@@ -1882,25 +1914,62 @@ function Mesh({
 
 function Enmeshed() {
   const stages = [ {
-    //meshId: 'fe42::92ff::57c4',
     meshId: '[::1]/practice/1',
-    width: 10,
-    height: 10,
-    scale: 35,
-    seed: 4839,
-    objective: 'Practice using crashes to take a mesh offline.',
+    width: 5,
+    height: 5,
+    scale: 90,
+    seed: 12,
+    minimum: 2,
+    objective: 'Practice using crashes to take the mesh offline.',
     uses: {
       crash: 4
     }
   }, {
     meshId: '[::1]/practice/2',
+    width: 5,
+    height: 5,
+    scale: 90,
+    seed: 11,
+    minimum: 1,
+    objective: 'Practice using cuts to take the mesh offline.',
+    uses: {
+      cut: 5
+    }
+  }, {
+    meshId: '[::1]/practice/3',
+    width: 5,
+    height: 5,
+    scale: 90,
+    seed: 26,
+    minimum: 2,
+    objective: 'Practice using crashes and cuts to take the mesh offline.',
+    uses: {
+      crash: 2,
+      cut: 2
+    }
+  }, {
+    meshId: '[::1]/practice/4',
+    width: 5,
+    height: 5,
+    scale: 90,
+    seed: 36,
+    minimum: 2,
+    data: 3,
+    objective: 'Practice intercepting data from a protected node before taking the mesh offline.',
+    uses: {
+      crash: -1,
+      cut: -1,
+      intercept: 1
+    }
+  }, {
+    meshId: 'fe42::92ff::47c5',
     width: 10,
     height: 10,
-    scale: 35,
-    factor: 0.05,
-    seed: 42536,
-    objective: 'Practice using cuts to take a mesh offline.',
+    scale: 45,
+    seed: 18,
+    objective: 'Start causing some trouble, take one of the staging meshes offline.',
     uses: {
+      crash: 5,
       cut: 5
     }
   } ];
@@ -2040,8 +2109,6 @@ function Enmeshed() {
     window.mesh = mesh;
   }
 
-  const tryRegExp = /try\s+(\d+)\s+(\d+)\s+(\d+)/;
-
   function parse(cmd, next) {
     if (cmd === '1') {
       const msg = email.split('\n');
@@ -2051,13 +2118,32 @@ function Enmeshed() {
       lines.unshift('&H');
     } else if (cmd === '3' && resume) {
       lines.unshift('&G' + resume);
-    } else if (tryRegExp.test(cmd)) { // testing only
-      const [ , width, height, seed ] = cmd.match(tryRegExp);
+    // IFDEF DEV
+    } else if (cmd.startsWith('try ')) {
+      cmd = cmd.replace(/try\s+/, '');
+
+      const parts = cmd.split(/\s+/);
+      const options = {};
+      for (let i = 0 ; i < parts.length; i += 2) {
+        options[parts[i]] = Number(parts[i + 1]);
+      }
+
+      const seed = options.seed || Date.now();
+      const width = options.width || 10;
+      const height = options.height || 10;
+
+      const minimum = options.minimum || 3;
+      const data = options.data;
+      const mine = options.mine;
+
       challengeMesh = {
         meshId: '[::1]/try/' + seed.toString(16),
-        width: width,
-        height: height,
-        seed: seed,
+        width,
+        height,
+        seed,
+        minimum,
+        data,
+        coins: mine,
         uses: {
           crash: -1,
           cut: -1,
@@ -2069,8 +2155,12 @@ function Enmeshed() {
         }
       };
       meshScale(challengeMesh);
-      challengeMesh.objective = [ 'Mesh - seed:', seed, 'width:', width, 'height:', height, 'scale:', challengeMesh.scale ].join(' ');
+      const mini = Object.assign({}, challengeMesh);
+      delete mini.meshId;
+      delete mini.uses;
+      challengeMesh.objective = JSON.stringify(mini).replace(/[{}"]/g, '').replace(/,/g, ' ');
       lines.unshift('&h');
+    // ENDIF
     } else {
       return false;
     }
@@ -2257,7 +2347,6 @@ function Enmeshed() {
             nocursor();
             print(history[index]);
             if (parse(history[index], next)) {
-              console.log('input done');
               window.onkeydown = null;
             } else {
               if (history[index] && history[index].length) {
@@ -2275,8 +2364,6 @@ function Enmeshed() {
               $('input').innerHTML = history[index];
             }
           } else if (!event.ctrlKey && !event.altKey) { // Any plain key
-            console.log('char', event.key, event.keyCode);
-            console.log(event);
             if (event.key.length === 1) { // Simple character
               history[index] += event.key;
               $('input').innerHTML = history[index];

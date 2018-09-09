@@ -5,8 +5,6 @@ Enmeshed - JavaScript Game
 
 yarn install
 
-yarn build
-
 yarn serve -o
 
 ```

@@ -44,6 +44,8 @@ const safeSubstitutions = {
   'edge-slow': 'es',
   'effect': 'et',
   'element': 'el',
+  'fade-out': 'fa',
+  'fade-in': 'fi',
   '\\.forward': '.fo',
   'forward:': 'fo:',
   'goal': 'g',
@@ -52,6 +54,7 @@ const safeSubstitutions = {
   'idealPath': 'ip',
   'interact': 'i',
   'interface': 'f',
+  'minimum': 'm',
   'node': 'n',
   'node-effect': 'ne',
   'node-effect-animate': 'nea',
@@ -161,6 +164,7 @@ const stringReplacer = function(match, p1) {
   return p1;
 };
 
+substitutedHTML = substitutedHTML.replace(/\s*\/\/ IFDEF DEV[^]+?\/\/ ENDIF\s*/g, '');
 substitutedHTML = substitutedHTML.replace(/(`[^`]*?`)/g, stringReplacer);
 substitutedHTML = substitutedHTML.replace(/('[^']*?')/g, stringReplacer);
 //substitutedHTML = substitutedHTML.replace(/("[^"]*?")/g, stringReplacer);
