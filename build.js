@@ -53,7 +53,7 @@ const safeSubstitutions = {
   'node-effect': 'ne',
   'node-effect-animate': 'nea',
   'node-effect-corrupt': 'nec',
-  'node-effect-immutable': 'neu',
+  'node-effect-firewall': 'nef',
   'node-effect-intercept': 'nei',
   'node-effect-mine': 'neh',
   'node-effect-multiply': 'nem',
