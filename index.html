@@ -822,11 +822,7 @@ function Edge(mesh, edgeId, start, end) {
       } else {
         return;
       }
-      self.effect = Object.assign({
-        timestamp: Date.now()
-      }, mesh.tools[mesh.effect.type]);
-
-      mesh.effects.push(self.effect);
+      self.effect = mesh.tools[mesh.effect.type];
     }
   };
 
@@ -1000,11 +996,7 @@ function Node(mesh) {
           return;
         }
 
-        self.effect = Object.assign({
-          timestamp: Date.now()
-        }, mesh.tools[mesh.effect.type]);
-
-        mesh.effects.push(self.effect);
+        self.effect = mesh.tools[mesh.effect.type];
       }
     };
 
@@ -1531,8 +1523,6 @@ function Mesh({
 
     self.prng = new MersenneTwister(seed);
     self.rand = (min, max) => Math.floor(self.prng.random() * (max - min + 1)) + min;
-
-    self.effects = [];
 
     self.addresses = {};
 
