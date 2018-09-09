@@ -150,7 +150,7 @@
       padding: 8px;
       animation: offline-fade 0.3s;
     }
-    .offline-banner {
+    #offline-banner {
       position: absolute;
       display: inline-block;
       border: 8px solid rgba(255,0,0,0.5);
@@ -164,7 +164,7 @@
       transform: translate(-50%, -50%);
       letter-spacing: 32px;
     }
-    .offline-banner::before {
+    #offline-banner::before {
       content: '';
       position: absolute;
       top: 20px;
@@ -1297,7 +1297,7 @@ function Packet(mesh, source, destination) {
 function Mesh({
   meshId, width, height, factor, scale, range, minimum,
   interval, complexity, maxHops, maxTTL, threshold, seed,
-  objective, uses
+  objective, uses, data, coins
 }, callback) {
   const self = this;
 
@@ -1637,7 +1637,7 @@ function Mesh({
       self.nodes[i].createElement();
     }
 
-    if (self.tools.intercept.uses > 0) {
+    if (data > 0) {
       let quantity = self.minimum;
       while (!self.firewall) {
         for (let i = 0; i < self.count; i++) {
@@ -1791,6 +1791,14 @@ function Mesh({
       return;
     } else {
       self.crashing = true;
+    }
+
+    if ((data && !self.data) ||
+        (coins && self.coins < coins)) {
+      $('offline-banner').innerHTML = 'FAILED';
+      self.failed = true;
+    } else {
+      $('offline-banner').innerHTML = 'OFFLINE';
     }
 
     const crashSymbols = '01012345678901X[]\\/?{}ABCDEFSSSSGGHHIJKL'.split('');
@@ -1950,7 +1958,7 @@ function Enmeshed() {
     removeElement('cursor');
   }
 
-  const lines = (boot + menu + rimraf).split('\n'); //.slice(0, 0); // HACK
+  const lines = (boot + menu + rimraf).split('\n');
 
   let kernel = true;
   const bootTime = Date.now();
@@ -1968,9 +1976,11 @@ function Enmeshed() {
       if (mesh.quit) {
         showMenu();
       } else {
-        coins += mesh.coins;
-        i++;
-        storage.setItem('stage', i);
+        if (!mesh.failed) {
+          i++;
+          coins += mesh.coins;
+          storage.setItem('stage', i);
+        }
         console.log('playing', i);
         if (i < stages.length) {
           lines.unshift('&G' + i);
@@ -1993,7 +2003,6 @@ function Enmeshed() {
       width: rand(10, 60),
       height: rand(10, 35),
       seed: seed,
-      objective: 'Offline the mesh',
       uses: {
         crash: rand(4, 10),
         cut: rand(4, 10),
@@ -2005,6 +2014,19 @@ function Enmeshed() {
       }
     };
     meshScale(challengeMesh);
+    challengeMesh.data = !!challengeMesh.uses.intercept;
+    challengeMesh.coins = challengeMesh.uses.mine ? rand(25, 250) : 0;
+
+    const tasks = [ 'Offline the mesh' ];
+
+    if (challengeMesh.data) {
+      tasks.unshift('Intercept data from the firewalled Node');
+    }
+    if (challengeMesh.coins) {
+      tasks.unshift('Mine $ ' + (challengeMesh.coins / 1000).toFixed(3) + ' meshcoins');
+    }
+
+    challengeMesh.objective = tasks.join(', ') + '.';
   }
 
   function challenge(next) {
@@ -2013,7 +2035,7 @@ function Enmeshed() {
     const mesh = new Mesh(challengeMesh, function() {
       show(terminal);
       hide(screen);
-      if (!mesh.quit) {
+      if (!mesh.quit && !mesh.failed) {
         coins += mesh.coins;
       }
 
@@ -2324,7 +2346,7 @@ window.addEventListener('load', function() {
       <pre id="terminal"></pre>
       <pre id="crash" class="hide"></pre>
       <div id="offline" class="hide">
-        <div class="offline-banner">OFFLINE</div>
+        <div id="offline-banner">OFFLINE</div>
         <div id="continue">Disconnect &#x21CE</div>
       </div>
       <div class="brand">MarkBook Pro</div>
