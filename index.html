@@ -1977,8 +1977,7 @@ function Enmeshed() {
   const storage = window.localStorage;
   const resume = parseInt(storage.getItem('stage') || 0);
 
-  const history = [];
-  let index = 0;
+  let last = '';
 
   const log = [];
 
@@ -2181,6 +2180,8 @@ function Enmeshed() {
 
       let balance = '';
 
+      let cmd;
+
       if (coins) {
         balance = ('$ ' + (coins / 1000).toFixed(3) + ' meshcoins').padStart(58, ' ');
       }
@@ -2318,55 +2319,41 @@ function Enmeshed() {
           next(25);
         });
       } else if (inputMode) {
-        if (!history.length || (history.length && history[0].length)) {
-          history.unshift('');
-        }
+        cmd = '';
+
         print(ps2 + input + cursor, true);
 
         window.onkeydown = function(event) {
           if (event.key === 'l' && event.ctrlKey) { // CTRL-C
             terminal.innerHTML = '';
             print(ps2 + input + cursor, true);
-          } else if (event.keyCode === 38) { // Up Arrow
-            if (history.length) {
-              index++;
-              if (index >= history.length) {
-                index = 0;
-              }
-              $('input').innerHTML = history[index];
-            }
-          } else if (event.keyCode === 40) { // Down Arrow
-            if (history.length) {
-              index--;
-              if (index < 0) {
-                index = history.length - 1;
-              }
-              $('input').innerHTML = history[index];
-            }
+          } else if (event.keyCode === 38 || event.keyCode === 40) { // Up or Down Arrow
+            cmd = last;
+            $('input').innerHTML = cmd;
           } else if (event.keyCode === 13) { // Enter
+            last = cmd;
             nocursor();
-            print(history[index]);
-            if (parse(history[index], next)) {
+            print(cmd);
+            if (parse(cmd, next)) {
               window.onkeydown = null;
             } else {
-              if (history[index] && history[index].length) {
-                print(history[index] + ': command not found');
+              if (cmd.length) {
+                print(cmd + ': command not found');
               }
               print(ps2 + input + cursor, true);
             }
-            if (history.length && history[0].length) {
-              history.unshift('');
+            if (cmd.length) {
+              last = cmd;
             }
-            index = 0;
           } else if (event.keyCode === 8 || event.keyCode === 127) { // Backspace / Delete
-            if (history[index].length) {
-              history[index] = history[index].substring(0, history[index].length - 1);
-              $('input').innerHTML = history[index];
+            if (cmd.length) {
+              cmd = cmd.substring(0, cmd.length - 1);
+              $('input').innerHTML = cmd;
             }
           } else if (!event.ctrlKey && !event.altKey) { // Any plain key
             if (event.key.length === 1) { // Simple character
-              history[index] += event.key;
-              $('input').innerHTML = history[index];
+              cmd += event.key;
+              $('input').innerHTML = cmd;
             }
           }
         };
