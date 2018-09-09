@@ -253,6 +253,6 @@ if (zipStat.size <= TARGET_SIZE) {
   console.log('Build succeeded! %s to spare!', bytes(TARGET_SIZE - zipStat.size));
   process.exit(0);
 } else {
-  console.log('Build failed! Zip file too big!!');
+  console.log('Build failed! Zip files is %s over %s!', bytes(zipStat.size - TARGET_SIZE), bytes(TARGET_SIZE));
   process.exit(0);
 }
