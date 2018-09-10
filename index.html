@@ -585,6 +585,8 @@ const remove = (element, className) => element.classList.remove(className);
 const hide = element => add(element, 'hide');
 const show = element => remove(element, 'hide');
 
+const scroll = element => element.scrollTop = element.scrollHeight + element.clientHeight;
+
 let IPs = {};
 function generateIP() {
   let address = null;
@@ -628,7 +630,7 @@ function sequence(worker, done) {
 const boot = `<div class="banner">Gilgamesh OS version 4.15.0-33-generic (build 2436)</div>
 Command line: BOOT_IMAGE=/gilgamesh-4.15.0-33-generic root=/dev/sda2:ro
 KERNEL supported cpus:
-  MaasNeotek M47/2
+  MaasNeotek M47_64
 m47/fpu: Supporting XSAVE feature 0x001: 'm87 floating point registers'
 m47/fpu: Supporting XSAVE feature 0x002: 'SSE registers'
 m47/fpu: xstate_offset[2]:  576, xstate_sizes[2]:  256
@@ -699,7 +701,7 @@ Gilgamesh 47.04.3 LTS terminus tty0
 terminus login: &Tmark
 Password: &T&R15*
 ?800!!
-Welcome to Gilgamesh 47.04.3 LTS (Gilgamesh OS 4.73.0-22 m47_64)
+Welcome to Gilgamesh 47.04.3 LTS (Gilgamesh OS 4.15.0-33 m47_64)
 
  System information as of &DT
 
@@ -1390,20 +1392,42 @@ function Mesh({
 
     // IFDEF DEV
     let zoom = 1;
+    let origin = [ 0, 0 ];
     svg.onmousewheel = function(event) {
-      zoom += Math.min(Math.max(event.deltaY * 0.001, 1), 5);
-      const x = event.offsetX;
-      const y = event.offsetY;
+      zoom += event.deltaY * 0.001;
+      zoom = Math.min(Math.max(zoom, 1), 5);
 
-      const vw = svgWidth * (1 / zoom);
-      const vh = svgHeight * (1 / zoom);
+      if (zoom === 1) {
+        origin = [ 0, 0 ];
+        svg.setAttribute('viewBox', [ ...origin, svgWidth, svgHeight ].join(' '));
+      } else {
+        const x = event.offsetX;
+        const y = event.offsetY;
 
-      const vwc = (vw / 2) - x;
-      const vhc = (vh / 2) - y;
+        const vw = svgWidth * (1 / zoom);
+        const vh = svgHeight * (1 / zoom);
 
-      console.log(zoom, vw, vh, x, y);
-      svg.setAttribute('viewBox', [ 0 + vwc, 0 + vhc, vw + vwc, vh + vhc ].join(' '));
+        const x0 = x - (vw / 2);
+        const y0 = y - (vh / 2);
+
+        let xIncrement = 3;
+        let yIncrement = 3;
+        if (x0 < origin[0]) {
+          xIncrement *= -1;
+        }
+        if (y0 < origin[1]) {
+          yIncrement *= -1;
+        }
+        origin[0] += xIncrement;
+        origin[1] += yIncrement;
+
+        console.log(zoom, vw, vh, x, y);
+        svg.setAttribute('viewBox', [ ...origin, vw, vh ].join(' '));
+      }
     };
+
+    svg.setAttribute('viewBox', [ ...origin, svgWidth, svgHeight ].join(' '));
+
     // ENDIF
     return svg;
   }
@@ -1433,7 +1457,7 @@ function Mesh({
     log: function(string) {
       this.buffer += string;
       this.element.innerHTML = this.buffer;
-      this.element.scrollTop = this.element.scrollHeight + this.element.clientHeight;
+      scroll(this.element);
     },
     clear: function() {
       this.element.innerHTML = this.buffer = '';
@@ -1828,7 +1852,7 @@ function Mesh({
 
     if ((data && !self.data) ||
         (coins && self.coins < coins)) {
-      $('offline-banner').innerHTML = 'FAILED';
+      $('offline-banner').innerHTML = 'FAILED!';
       self.failed = true;
     } else {
       $('offline-banner').innerHTML = 'OFFLINE';
@@ -1978,7 +2002,18 @@ function Enmeshed() {
     height: 10,
     scale: 45,
     seed: 18,
-    objective: 'Start causing some trouble, take one of the staging meshes offline.',
+    objective: 'Try your skills against a Gilgamesh test mesh.',
+    uses: {
+      crash: 5,
+      cut: 5
+    }
+  }, {
+    meshId: 'a72e::ee13::bca6',
+    width: 15,
+    height: 15,
+    scale: 30,
+    seed: 12,
+    objective: 'Cause a distraction, take one of the small demo meshes offline.',
     uses: {
       crash: 5,
       cut: 5
@@ -1987,12 +2022,8 @@ function Enmeshed() {
 
   const storage = window.localStorage;
   const resume = parseInt(storage.getItem('stage') || 0);
-
+  let coins = parseInt(storage.getItem('coins') || 0);
   let last = '';
-
-  const log = [];
-
-  let coins = 0;
 
   const span = (hex) => '<span style="color:#' + hex + '">';
   const green = span('7fDB6A');
@@ -2012,9 +2043,8 @@ function Enmeshed() {
   function print(string, cont) {
     string = string || '';
     string += !cont ? '\n' : '';
-    log.push(string);
     terminal.innerHTML += string;
-    terminal.scrollTop = terminal.scrollHeight + terminal.clientHeight;
+    scroll(terminal);
   }
 
   function removeElement(id) {
@@ -2049,6 +2079,7 @@ function Enmeshed() {
           i++;
           coins += mesh.coins;
           storage.setItem('stage', i);
+          storage.setItem('coins', coins);
         }
         console.log('playing', i);
         if (i < stages.length) {
@@ -2106,6 +2137,7 @@ function Enmeshed() {
       hide(screen);
       if (!mesh.quit && !mesh.failed) {
         coins += mesh.coins;
+        storage.setItem('coins', coins);
       }
 
       if (challengeMesh.meshId.includes('try')) {
