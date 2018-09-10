@@ -1743,7 +1743,7 @@ function Mesh({
       if (!self.connected) {
         self.connected = true;
         self.console.clear().log('&#x21B9; Connected!');
-        self.console.log('\n&#x2605; Objective: ' + objective);
+        self.console.log('\nObjective: ' + objective);
 
         show(self.elements.retry);
         show(self.elements.quit);
@@ -2254,7 +2254,7 @@ function Enmeshed() {
           game = parseInt(game);
           print();
           print(ps1, true);
-          typing = 'gilgamesh --connect mesh://' + stages[game].meshId;
+          typing = 'gilgamesh mesh://' + stages[game].meshId;
           lines.unshift('&CMesh Visualizer Initialized, press &BENTER&b to connect.', '&g' + game);
           return '';
         }).
