@@ -2088,7 +2088,9 @@ function Enmeshed() {
       }
       next();
     });
+    // IFDEF DEV
     window.mesh = mesh;
+    // ENDIF
   }
 
   function meshScale(mesh) {
@@ -2148,7 +2150,9 @@ function Enmeshed() {
 
       next();
     });
+    // IFDEF DEV
     window.mesh = mesh;
+    // ENDIF
   }
 
   function parse(cmd, next) {
