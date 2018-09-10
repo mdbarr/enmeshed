@@ -1393,6 +1393,11 @@ function Mesh({
     // IFDEF DEV
     let zoom = 1;
     let origin = [ 0, 0 ];
+
+    function incrementZoom(mouse, corner) {
+      return (mouse - corner) * 0.5;
+    }
+
     svg.onmousewheel = function(event) {
       zoom += event.deltaY * 0.001;
       zoom = Math.min(Math.max(zoom, 1), 5);
@@ -1401,27 +1406,14 @@ function Mesh({
         origin = [ 0, 0 ];
         svg.setAttribute('viewBox', [ ...origin, svgWidth, svgHeight ].join(' '));
       } else {
-        const x = event.offsetX;
-        const y = event.offsetY;
-
         const vw = svgWidth * (1 / zoom);
         const vh = svgHeight * (1 / zoom);
 
-        const x0 = x - (vw / 2);
-        const y0 = y - (vh / 2);
+        const x0 = event.offsetX - (vw / 2);
+        const y0 = event.offsetY - (vh / 2);
 
-        let xIncrement = 3;
-        let yIncrement = 3;
-        if (x0 < origin[0]) {
-          xIncrement *= -1;
-        }
-        if (y0 < origin[1]) {
-          yIncrement *= -1;
-        }
-        origin[0] += xIncrement;
-        origin[1] += yIncrement;
+        origin = [ incrementZoom(x0, origin[0]), incrementZoom(y0, origin[1]) ];
 
-        console.log(zoom, vw, vh, x, y);
         svg.setAttribute('viewBox', [ ...origin, vw, vh ].join(' '));
       }
     };
