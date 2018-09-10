@@ -765,8 +765,11 @@ const email = `
 &Y&C&m Press &BENTER&b to download attachment and delete message.
 &y&N&m saved to ~/Downloads/enmeshed.zip
 &P&Tunzip ~/Downloads/enmeshed.zip
-  inflating: index.html
-&P&Tcat index.html
+ inflating: meshes.txt
+ extracting: gilgamesh-plugin-MemCorrupt.bin
+ extracting: gilgamesh-plugin-DoS.RST.bin
+ extracting: gilgamesh-plugin-MiTM.Proxy.bin
+&P&Tcat meshes.txt
 &F
 &G0
 `;
@@ -836,8 +839,8 @@ function Edge(mesh, edgeId, start, end) {
     }
 
     if (self.effect) {
-      info += '\n\n<span style="color:red">' + 'Anomaly detected:'.padEnd(25, ' ') +
-        '</span>\n' + self.effect.name + '/' + self.effect.cve;
+      info += '\n\n<span style="color:red">Anomaly detected: </span>\n' +
+        self.effect.name + '/' + self.effect.cve;
     }
     mesh.elements.info.innerHTML = info;
   };
