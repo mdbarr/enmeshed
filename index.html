@@ -627,7 +627,7 @@ function sequence(worker, done) {
 
 //////////
 
-const boot = `<div class="banner">Gilgamesh OS version 4.15.0-33-generic (build 2436)</div>
+const boot = `<div class="banner">Gilgamesh OS version 4.15.0-33-generic (build 13312)</div>
 Command line: BOOT_IMAGE=/gilgamesh-4.15.0-33-generic root=/dev/sda2:ro
 KERNEL supported cpus:
   MaasNeotek m47_64
@@ -2365,7 +2365,6 @@ function Enmeshed() {
           return '';
         }).
         replace(/&H/, function() {
-          print();
           print(ps1, true);
           typing = 'gilgamesh --challenge';
           lines.unshift('&h');
@@ -2473,6 +2472,7 @@ function Enmeshed() {
             // IFDEF DEV
             last = cmd;
             // ENDIF
+            $('input').innerHTML = '';
             nocursor();
             print(cmd);
             if (parse(cmd, next)) {
