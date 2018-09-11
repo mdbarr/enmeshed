@@ -630,13 +630,12 @@ function sequence(worker, done) {
 const boot = `<div class="banner">Gilgamesh OS version 4.15.0-33-generic (build 2436)</div>
 Command line: BOOT_IMAGE=/gilgamesh-4.15.0-33-generic root=/dev/sda2:ro
 KERNEL supported cpus:
-  MaasNeotek M47_64
+  MaasNeotek m47_64
 m47/fpu: Supporting XSAVE feature 0x001: 'm87 floating point registers'
 m47/fpu: Supporting XSAVE feature 0x002: 'SSE registers'
 m47/fpu: xstate_offset[2]:  576, xstate_sizes[2]:  256
-m47/fpu: Enabled xstate features 0x7, context size is 832 bytes, using 'standard' format.
-e820: BIOS-provided physical RAM map:
-DMI: NUC5i7RYB, BIOS RYBDWi35.86A.0305.2018.0128.7122 08/13/2018
+m47/fpu: Enabled xstate features 0x7, context size is 832 bytes
+e820: BIOS-provided physical RAM map
 e820: update [mem 0x00000000-0x00000fff] usable ==> reserved
 e820: remove [mem 0x000a0000-0x000fffff] usable
 total RAM covered: 16288M
@@ -649,7 +648,6 @@ On node 0 totalpages: 4164976
 Reserved but unavailable: 98 pages
 ACPI: PM-Timer IO Port: 0x1808
 ACPI: Local APIC address 0xfee00000
-ACPI: LAPIC_NMI (acpi_id[0x01] dfl dfl lint[0x0])
 Using ACPI (MADT) for SMP configuration information
 ACPI: HPET id: 0x8086a701 base: 0xfed00000
 smpboot: Allowing 4 CPUs, 0 hotplug CPUs
@@ -669,7 +667,6 @@ smp: Bringing up secondary CPUs ...
 m47: Booting SMP configuration:
     node  #0, CPUs:      #1 #2 #3
 smp: Brought up 1 node, 4 CPUs
-NET: Registered protocol family 16
 PCI host bridge to bus 0000:00
 pci_bus 0000:00: root bus resource [io  0x0000-0x0cf7]
 pci_bus 0000:00: root bus resource [mem 0xfe000000-0xfe113fff]
@@ -736,17 +733,15 @@ Kernel Panic
 OFFLINE`;
 
 const message = `Mark,
-    No one can believe you were forced out of the company that
-you founded because you tried to block the sale of Gilgamesh as
-a framework for surveillance and censorship.
+  I can't believe you were forced out of the company that YOU founded
+because you tried stop Gilgamesh technology from being deployed as a
+tool for surveillance and censorship.
 
-    The Board is moving forward with a large scale, multi-mesh
-pre-sale demo today. It would be a shame if, somehow, those
-meshes went offline and the demo was a disaster... Hypothetically
-speaking, I bet the entire deal would fall through! Anyway,
-attached is a list of completely unrelated mesh addresses which
-you can totally just ignore...
-
+  The first phase of meshes are being rolled out today. Hypothetically
+speaking, it would be a disasterous if somehow all those meshes went
+offline... A failure of that scale would likely doom the company and
+the technology. Anywho, I've attached some unrelated data that can
+just delete...
 Good luck,
   -Deborah`.replace(/\n/g, '&');
 
@@ -1298,7 +1293,7 @@ function Mesh({
   /////////
 
   self.width = width || 20;
-  self.height = height || 20;
+  self.height = height || self.width;
 
   self.factor = factor || 0.25;
   self.scale = scale || Math.max(10, Math.ceil(Math.min(700 / self.width, 450 / self.height)));
@@ -1944,9 +1939,8 @@ function Mesh({
 
 function Enmeshed() {
   const stages = [ {
-    meshId: '[::1]/practice/1',
+    meshId: '[::1]/practice/0',
     width: 5,
-    height: 5,
     seed: 12,
     minimum: 2,
     objective: 'Practice using crashes to take the mesh offline.',
@@ -1954,9 +1948,8 @@ function Enmeshed() {
       crash: 4
     }
   }, {
-    meshId: '[::1]/practice/2',
+    meshId: '[::1]/practice/1',
     width: 5,
-    height: 5,
     seed: 11,
     minimum: 1,
     objective: 'Practice using cuts to take the mesh offline.',
@@ -1964,9 +1957,8 @@ function Enmeshed() {
       cut: 5
     }
   }, {
-    meshId: '[::1]/practice/3',
+    meshId: '[::1]/practice/2',
     width: 5,
-    height: 5,
     seed: 26,
     minimum: 2,
     objective: 'Practice using crashes and cuts to take the mesh offline.',
@@ -1975,9 +1967,8 @@ function Enmeshed() {
       cut: 2
     }
   }, {
-    meshId: '[::1]/practice/4',
+    meshId: '[::1]/practice/3',
     width: 5,
-    height: 5,
     seed: 36,
     minimum: 2,
     data: 3,
@@ -1988,9 +1979,8 @@ function Enmeshed() {
       intercept: 1
     }
   }, {
-    meshId: 'fe42::92ff::47c5',
+    meshId: 'fe42::92ff::4704',
     width: 10,
-    height: 10,
     seed: 22,
     minimum: 2,
     objective: 'Try your skills against a Gilgamesh test mesh.',
@@ -1999,9 +1989,8 @@ function Enmeshed() {
       cut: 5
     }
   }, {
-    meshId: 'a72e::ee13::bca6',
+    meshId: 'a72e::ee13::bc05',
     width: 15,
-    height: 15,
     seed: 12,
     minumum: 2,
     objective: 'Cause some trouble, offline one of the beta meshes.',
@@ -2010,9 +1999,8 @@ function Enmeshed() {
       cut: 5
     }
   }, {
-    meshId: 'b5d1::11e8::96a7',
+    meshId: 'b5d1::11e8::9606',
     width: 15,
-    height: 15,
     seed: 22,
     objective: 'Create a distraction, offline a small demo meshes.',
     uses: {
@@ -2020,9 +2008,8 @@ function Enmeshed() {
       cut: 5
     }
   }, {
-    meshId: '2be9::462b::9048',
+    meshId: '2be9::462b::9407',
     width: 20,
-    height: 20,
     seed: 30,
     data: 4,
     objective: 'While the Gilgamesh Security Team is distracted, recover additional tools then offline the mesh.',
@@ -2040,9 +2027,8 @@ function Enmeshed() {
       ' extracting: gilgamesh-plugin-Mine.bin'
     ]
   }, {
-    meshId: '[::1]/practice/9',
+    meshId: '[::1]/practice/8',
     width: 5,
-    height: 5,
     seed: 63,
     minimum: 1,
     maxTTL: 1,
@@ -2051,32 +2037,82 @@ function Enmeshed() {
       slow: 5
     }
   }, {
-    meshId: '[::1]/practice/10',
+    meshId: '[::1]/practice/9',
     width: 10,
-    height: 10,
-    seed: 62,
-    minimum: 1,
-    maxTTL: 1,
-    objective: 'Practice using corrupts to offline a mesh.',
-    uses: {
-      corrupt: 2
-    }
-  }, {
-    meshId: '[::1]/practice/11',
-    width: 10,
-    height: 10,
     seed: 62,
     objective: 'Practice using corrupts to offline a mesh.',
     uses: {
       corrupt: 2
     }
   }, {
-    meshId: '[::1]/practice/12',
+    meshId: '[::1]/practice/a',
     width: 10,
-    height: 10,
     seed: 72,
     objective: 'Practice using reroutes to offline a mesh.',
     uses: {
+      reroute: 5
+    }
+  }, {
+    meshId: 'backup.gilgamesh.network',
+    width: 25,
+    seed: 2,
+    objective: 'It begins. Offline the backup mesh.',
+    uses: {
+      crash: 5,
+      cut: 5,
+      slow: 5,
+      corrupt: 5,
+      reroute: 5
+    }
+  }, {
+    meshId: 'compute.gilgamesh.network',
+    width: 25,
+    seed: 6,
+    objective: 'Exploit the compute mesh to earn 1 MeshCoin for retirement, then offline it',
+    mine: 1000,
+    uses: {
+      crash: 5,
+      cut: 5,
+      slow: 5,
+      corrupt: 5,
+      reroute: 5,
+      mine: 5
+    }
+  }, {
+    meshId: 'daemon.gilgamesh.network',
+    width: 30,
+    seed: 2,
+    objective: 'Offline the daemon / services mesh.',
+    uses: {
+      crash: 5,
+      cut: 5,
+      slow: 5,
+      corrupt: 5,
+      reroute: 5
+    }
+  }, {
+    meshId: 'edge.gilgamesh.network',
+    width: 40,
+    seed: 2,
+    objective: 'Offline the edge / periphery mesh.',
+    uses: {
+      crash: 5,
+      cut: 5,
+      slow: 5,
+      corrupt: 5,
+      reroute: 5
+    }
+  }, {
+    meshId: 'final.gilgamesh.network',
+    width: 55,
+    height: 35,
+    seed: 1,
+    objective: 'Offline the final mesh.',
+    uses: {
+      crash: 5,
+      cut: 5,
+      slow: 5,
+      corrupt: 5,
       reroute: 5
     }
   } ];
