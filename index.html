@@ -757,7 +757,7 @@ const email = `
   &BDate:&b &DE
   &BFrom:&b Unverified Sender &lt;unverified@gilgamesh.network&gt;
   &BTo:&b Mark Barr &lt;mark@enmeshed.net&gt;
-  &BSubject:&b Programmers Hate This Mesh Network, Find Out Why!
+  &BSubject:&b Hackers Hate This Mesh Network, Find Out Why!
   &BAttachments:&b <span id="attachment">mesh.pdf.exe</span>
   <div id="email">${ rot13(message) }</div>
 &V&#x2514;&R67&#x2500;
@@ -765,11 +765,11 @@ const email = `
 &Y&C&m Press &BENTER&b to download attachment and delete message.
 &y&N&m saved to ~/Downloads/enmeshed.zip
 &P&Tunzip ~/Downloads/enmeshed.zip
- inflating: meshes.txt
+ inflating: readme.txt
  extracting: gilgamesh-plugin-MemCorrupt.bin
  extracting: gilgamesh-plugin-DoS.RST.bin
  extracting: gilgamesh-plugin-MiTM.Proxy.bin
-&P&Tcat meshes.txt
+<&P&Tcat readme.txt
 &F
 &G0
 `;
@@ -1301,7 +1301,7 @@ function Mesh({
   self.height = height || 20;
 
   self.factor = factor || 0.25;
-  self.scale = scale || 10;
+  self.scale = scale || Math.max(10, Math.ceil(Math.min(700 / self.width, 450 / self.height)));
   self.range = range || 3;
   self.minimum = minimum || 3;
 
@@ -1487,7 +1487,7 @@ function Mesh({
     info: {
       name: 'Information',
       color: 'white',
-      description: 'Display information about nodes and connections.',
+      description: 'View information about nodes and connections.',
       uses: -1
     },
     crash: {
@@ -1500,42 +1500,42 @@ function Mesh({
     cut: {
       name: 'Cut',
       color: '#666',
-      description: 'Bring the <u>connection</u> between nodes offline by sending spoofed reset packets.',
+      description: 'Bring the <u>connection</u> between nodes offline by flooding it with spoofed reset packets.',
       cve: 'DoS.RST',
       uses: 0
     },
     slow: {
       name: 'Slow',
       color: '#D9AF3C',
-      description: 'Slow all traffic through a <u>connection</u> by reducing its bandwidth to ' + self.speeds[0].name + '.',
+      description: 'Trigger a rate limiter causing all traffice through a <u>connection</u> to be slowed due to reduce bandwidth.',
       cve: 'Rate.Limit',
       uses: 0
     },
     corrupt: {
       name: 'Corrupt',
       color: '#535C8E',
-      description: 'Rewrite the checksum of every packet passing through <u>node</u> so that it is dropped at its destination.',
+      description: 'Exploit a buffer overlow in packet inspection in a <u>node</u>, corrupting all packets passing throught it.',
       cve: 'Buf.Overflow',
       uses: 0
     },
     reroute: {
       name: 'Reroute',
       color: '#9E379F',
-      description: 'Corrupt the route table of a <u>node</u> so that packets are randomly routed to different nodes.',
-      cve: 'Config.Corrupt',
+      description: 'Rewrite the route table of a <u>node</u> so that packets are randomly routed to different nodes.',
+      cve: 'Conf.Rewrite',
       uses: 0
     },
     intercept: {
       name: 'Intercept',
       color: '#94C5CC',
-      description: 'Intercept the packets passing through the given <u>node</u>, extracting any useful data.',
+      description: 'Using a man-in-the-middle attack, intercept all data passing through a <u>node</u>.',
       cve: 'MiTM.Proxy',
       uses: 0
     },
     mine: {
       name: 'Mine',
       color: '#060',
-      description: 'Mine MeshCoins using a portion of a <u>node</u>&apos;s CPU as packets pass through.',
+      description: 'Inject code into a <u>node</u> to mine MeshCoins as it processes packets.',
       cve: 'Code.Inject',
       uses: 0
     }
@@ -1947,7 +1947,6 @@ function Enmeshed() {
     meshId: '[::1]/practice/1',
     width: 5,
     height: 5,
-    scale: 90,
     seed: 12,
     minimum: 2,
     objective: 'Practice using crashes to take the mesh offline.',
@@ -1958,7 +1957,6 @@ function Enmeshed() {
     meshId: '[::1]/practice/2',
     width: 5,
     height: 5,
-    scale: 90,
     seed: 11,
     minimum: 1,
     objective: 'Practice using cuts to take the mesh offline.',
@@ -1969,7 +1967,6 @@ function Enmeshed() {
     meshId: '[::1]/practice/3',
     width: 5,
     height: 5,
-    scale: 90,
     seed: 26,
     minimum: 2,
     objective: 'Practice using crashes and cuts to take the mesh offline.',
@@ -1981,7 +1978,6 @@ function Enmeshed() {
     meshId: '[::1]/practice/4',
     width: 5,
     height: 5,
-    scale: 90,
     seed: 36,
     minimum: 2,
     data: 3,
@@ -1995,8 +1991,8 @@ function Enmeshed() {
     meshId: 'fe42::92ff::47c5',
     width: 10,
     height: 10,
-    scale: 45,
-    seed: 18,
+    seed: 22,
+    minimum: 2,
     objective: 'Try your skills against a Gilgamesh test mesh.',
     uses: {
       crash: 5,
@@ -2006,21 +2002,91 @@ function Enmeshed() {
     meshId: 'a72e::ee13::bca6',
     width: 15,
     height: 15,
-    scale: 30,
     seed: 12,
-    objective: 'Cause a distraction, take one of the small demo meshes offline.',
+    minumum: 2,
+    objective: 'Cause some trouble, offline one of the beta meshes.',
     uses: {
       crash: 5,
       cut: 5
     }
+  }, {
+    meshId: 'b5d1::11e8::96a7',
+    width: 15,
+    height: 15,
+    seed: 22,
+    objective: 'Create a distraction, offline a small demo meshes.',
+    uses: {
+      crash: 5,
+      cut: 5
+    }
+  }, {
+    meshId: '2be9::462b::9048',
+    width: 20,
+    height: 20,
+    seed: 30,
+    data: 4,
+    objective: 'While the Gilgamesh Security Team is distracted, recover additional tools then offline the mesh.',
+    uses: {
+      crash: 5,
+      cut: 5,
+      intercept: 1
+    },
+    lines: [
+      'enmeshed-v2.zip saved to ~/Downloads',
+      '&P&Tunzip ~/Downloads/enmeshed-v2.zip',
+      ' extracting: gilgamesh-plugin-Rate.Limit.bin',
+      ' extracting: gilgamesh-plugin-Buf.Overflow.bin',
+      ' extracting: gilgamesh-plugin-Conf.Rewrite.bin',
+      ' extracting: gilgamesh-plugin-Mine.bin'
+    ]
+  }, {
+    meshId: '[::1]/practice/9',
+    width: 5,
+    height: 5,
+    seed: 63,
+    minimum: 1,
+    maxTTL: 1,
+    objective: 'Practice using slows to offline a mesh.',
+    uses: {
+      slow: 5
+    }
+  }, {
+    meshId: '[::1]/practice/10',
+    width: 10,
+    height: 10,
+    seed: 62,
+    minimum: 1,
+    maxTTL: 1,
+    objective: 'Practice using corrupts to offline a mesh.',
+    uses: {
+      corrupt: 2
+    }
+  }, {
+    meshId: '[::1]/practice/11',
+    width: 10,
+    height: 10,
+    seed: 62,
+    objective: 'Practice using corrupts to offline a mesh.',
+    uses: {
+      corrupt: 2
+    }
+  }, {
+    meshId: '[::1]/practice/12',
+    width: 10,
+    height: 10,
+    seed: 72,
+    objective: 'Practice using reroutes to offline a mesh.',
+    uses: {
+      reroute: 5
+    }
   } ];
 
-  const storage = window.localStorage;
-  const resume = parseInt(storage.getItem('stage') || 0);
-  let coins = parseInt(storage.getItem('coins') || 0);
   // IFDEF DEV
   let last = '';
   // ENDIF
+  const storage = window.localStorage;
+  const resume = parseInt(storage.getItem('stage') || 0);
+  let coins = parseInt(storage.getItem('coins') || 0);
 
   const span = (hex) => '<span style="color:#' + hex + '">';
   const green = span('7fDB6A');
@@ -2064,22 +2130,27 @@ function Enmeshed() {
   }
 
   function play(i, next) {
+    const stage = stages[i];
     hide(terminal);
     show(screen);
-    const mesh = new Mesh(stages[i], function() {
+    const mesh = new Mesh(stage, function() {
       show(terminal);
       hide(screen);
       if (mesh.quit) {
         showMenu();
       } else {
         if (!mesh.failed) {
-          i++;
           coins += mesh.coins;
+          i++;
           storage.setItem('stage', i);
           storage.setItem('coins', coins);
-        }
-        console.log('playing', i);
-        if (i < stages.length) {
+          if (i < stages.length) {
+            lines.unshift('&G' + i);
+          }
+          if (stage.lines) {
+            lines.unshift(...stage.lines);
+          }
+        } else if (i < stages.length) {
           lines.unshift('&G' + i);
         }
       }
@@ -2088,10 +2159,6 @@ function Enmeshed() {
     // IFDEF DEV
     window.mesh = mesh;
     // ENDIF
-  }
-
-  function meshScale(mesh) {
-    mesh.scale = Math.max(10, Math.ceil(Math.min(700 / mesh.width, 450 / mesh.height)));
   }
 
   let challengeMesh;
@@ -2112,7 +2179,6 @@ function Enmeshed() {
         mine: rand(0, 1)
       }
     };
-    meshScale(challengeMesh);
     challengeMesh.data = !!challengeMesh.uses.intercept;
     challengeMesh.coins = challengeMesh.uses.mine ? rand(25, 250) : 0;
 
@@ -2197,7 +2263,6 @@ function Enmeshed() {
           mine: -1
         }
       };
-      meshScale(challengeMesh);
       const mini = Object.assign({}, challengeMesh);
       delete mini.meshId;
       delete mini.uses;
@@ -2392,11 +2457,6 @@ function Enmeshed() {
               cmd = cmd.substring(0, cmd.length - 1);
               $('input').innerHTML = cmd;
             }
-          } else if (!event.ctrlKey && !event.altKey) { // Any plain key
-            if (event.key.length === 1) { // Simple character
-              cmd += event.key;
-              $('input').innerHTML = cmd;
-            }
             // IFDEF DEV
           } else if (event.key === 'l' && event.ctrlKey) { // CTRL-C
             terminal.innerHTML = '';
@@ -2405,6 +2465,11 @@ function Enmeshed() {
             cmd = last;
             $('input').innerHTML = cmd;
             // ENDIF
+          } else if (!event.ctrlKey && !event.altKey) { // Any plain key
+            if (event.key.length === 1) { // Simple character
+              cmd += event.key;
+              $('input').innerHTML = cmd;
+            }
           }
         };
       } else if (pause) {
