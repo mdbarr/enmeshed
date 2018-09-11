@@ -174,6 +174,15 @@
       height: 125px;
       z-index: -1;
     }
+    .failed {
+      border-color: #F47E1B !important;
+    }
+    .failed:hover {
+      color: #F47E1B !important;
+    }
+    .failed::before {
+      background-color: rgba(244,126,27,0.3) !important;
+    }
     #continue {
       position: absolute;
       top: 410px;
@@ -633,7 +642,6 @@ KERNEL supported cpus:
   MaasNeotek m47_64
 m47/fpu: Supporting XSAVE feature 0x001: 'm87 floating point registers'
 m47/fpu: Supporting XSAVE feature 0x002: 'SSE registers'
-m47/fpu: xstate_offset[2]:  576, xstate_sizes[2]:  256
 m47/fpu: Enabled xstate features 0x7, context size is 832 bytes
 e820: BIOS-provided physical RAM map
 e820: update [mem 0x00000000-0x00000fff] usable ==> reserved
@@ -648,11 +656,9 @@ On node 0 totalpages: 4164976
 Reserved but unavailable: 98 pages
 ACPI: PM-Timer IO Port: 0x1808
 ACPI: Local APIC address 0xfee00000
-Using ACPI (MADT) for SMP configuration information
 ACPI: HPET id: 0x8086a701 base: 0xfed00000
 smpboot: Allowing 4 CPUs, 0 hotplug CPUs
 Kernel/User page tables isolation: enabled
-ftrace: allocating 39121 entries in 153 pages
 Hierarchical RCU implementation.
 	RCU restricting CPUs from NR_CPUS=8192 to nr_cpu_ids=4.
 	Tasks RCU enabled.
@@ -662,7 +668,6 @@ console color smart device [tty0] enabled
 ACPI: Core revision 20180813
 Security Framework initialized
 mce: CPU supports 7 MCE banks
-CPU0: Thermal monitoring enabled (TM1)
 smp: Bringing up secondary CPUs ...
 m47: Booting SMP configuration:
     node  #0, CPUs:      #1 #2 #3
@@ -676,7 +681,6 @@ NET: Registered protocol family 2
 TCP established hash table entries: 131072 (order: 8, 1048576 bytes)
 TCP bind hash table entries: 65536 (order: 8, 1048576 bytes)
 TCP: Hash tables configured (established 131072 bind 65536)
-MDP hash table entries: 8192 (order: 6, 262144 bytes)
 NET: Registered protocol family 1
 NET: Registered protocol family 47
 Meshtooth: Core ver 2.22
@@ -724,13 +728,12 @@ const menu = `&P&T./enmeshed
 &I`;
 
 const rimraf = `
-?2000&Prm -rf /
+?1000&Prm -rf /
 &KKernel Panic
 Kernel Panic
 Kernel Panic
-Kernel Panic
-Kernel Panic
-OFFLINE`;
+OFFLINE
+?2000Rebooting...`;
 
 const message = `Mark,
   I can't believe you were forced out of the company that YOU founded
@@ -1557,6 +1560,7 @@ function Mesh({
 
     self.data = false;
     self.clear(self.elements.data);
+    remove(self.element.data, 'decrypt');
 
     IPs = {};
 
@@ -1729,6 +1733,7 @@ function Mesh({
 
       if (self.data) {
         self.elements.data.innerHTML = '&#x25C6; Data Intercepted!';
+        add(self.element.data, 'decrypt');
       }
 
       if (health < self.threshold && !self.crashed) {
@@ -1840,12 +1845,20 @@ function Mesh({
       self.crashing = true;
     }
 
+    const banner = $('offline-banner');
+
     if ((data && !self.data) ||
         (coins && self.coins < coins)) {
-      $('offline-banner').innerHTML = 'FAILED!';
+      add(banner, 'failed');
+      add(self.elements.cont, 'failed');
+      self.elements.cont.innerHTML = 'Retry &#x21BB';
+      banner.innerHTML = 'FAILED!';
       self.failed = true;
     } else {
-      $('offline-banner').innerHTML = 'OFFLINE';
+      remove(banner, 'failed');
+      remove(self.elements.cont, 'failed');
+      self.elements.cont.innerHTML = 'Disconnect &#x21CE';
+      banner.innerHTML = 'OFFLINE';
     }
 
     const crashSymbols = '01012345678901X[]\\/?{}ABCDEFSSSSGGHHIJKL'.split('');
@@ -1972,10 +1985,10 @@ function Enmeshed() {
     seed: 36,
     minimum: 2,
     data: 3,
-    objective: 'Practice intercepting data from a protected node before taking the mesh offline.',
+    objective: 'Practice intercepting data from the firewalled node using an adjacent node, before taking the mesh offline.',
     uses: {
-      crash: -1,
-      cut: -1,
+      crash: 2,
+      cut: 2,
       intercept: 1
     }
   }, {
@@ -2012,7 +2025,7 @@ function Enmeshed() {
     width: 20,
     seed: 30,
     data: 4,
-    objective: 'While the Gilgamesh Security Team is distracted, recover additional tools then offline the mesh.',
+    objective: 'With the Gilgamesh security team distracted, intercept the stashed data then offline the mesh.',
     uses: {
       crash: 5,
       cut: 5,
@@ -2068,7 +2081,7 @@ function Enmeshed() {
     meshId: 'compute.gilgamesh.network',
     width: 25,
     seed: 6,
-    objective: 'Exploit the compute mesh to earn 1 MeshCoin for retirement, then offline it',
+    objective: 'Exploit the compute mesh to mine 1.000 MeshCoin before offlining it',
     mine: 1000,
     uses: {
       crash: 5,
@@ -2156,7 +2169,7 @@ function Enmeshed() {
     removeElement('cursor');
   }
 
-  const lines = (boot + menu + rimraf).split('\n');
+  let lines = [];
 
   let kernel = true;
   const bootTime = Date.now();
@@ -2255,13 +2268,13 @@ function Enmeshed() {
   }
 
   function parse(cmd, next) {
-    if (cmd === '1') {
+    if (cmd === '1' || cmd === 'story') {
       const msg = email.split('\n');
       lines.unshift(...msg);
-    } else if (cmd === '2') {
+    } else if (cmd === '2' || cmd === 'challenge') {
       generateChallenge();
       lines.unshift('&H');
-    } else if (cmd === '3' && resume) {
+    } else if ((cmd === '3' || cmd === 'continue') && resume) {
       lines.unshift('&G' + resume);
     // IFDEF DEV
     } else if (cmd.startsWith('try ')) {
@@ -2520,7 +2533,9 @@ function Enmeshed() {
         next(timeout);
       }
     } else {
-      next(false);
+      terminal.innerHTML = '';
+      lines = (boot + menu + rimraf).split('\n');
+      next();
     }
   }, function() {
     print();
@@ -2541,7 +2556,7 @@ window.addEventListener('load', function() {
         <div class="title">GILGAMESH NETWORK VISUALIZER</div>
         <div class="mesh-id"><div id="spinner" class="spinner">&#x169b</div> mesh://<span id="mesh-id"></span></div>
         <div class="health">Network Health: <span id="health">100%</span></div>
-        <div id="coins"></div><div id="data"></div>
+        <div id="coins"></div><div id="data" class="decrypt"></div>
         <div id="toolbar">
           <div data-tool="info">&#x24D8<div id="info-use"></div></div>
           <div data-tool="crash">&#x2349<div id="crash-use"></div></div>
@@ -2562,7 +2577,7 @@ window.addEventListener('load', function() {
       <pre id="crash" class="hide"></pre>
       <div id="offline" class="hide">
         <div id="offline-banner">OFFLINE</div>
-        <div id="continue">Disconnect &#x21CE</div>
+        <div id="continue"></div>
       </div>
       <div class="brand">MarkBook Pro</div>
     </div>
