@@ -1352,6 +1352,9 @@ function Mesh({
   function initSvg() {
     const svg = $('mesh');
 
+    let zoom = 1;
+    let viewbox;
+
     const svgWidth = 900;
     const svgHeight = 510;
 
@@ -1367,29 +1370,23 @@ function Mesh({
     };
 
     svg.circle = function(x, y, radius, className) {
-      const attributes = {
+      return svg.add('circle', {
         cx: x + offsetX,
         cy: y + offsetY,
         r: radius,
         class: className || 'node'
-      };
-      return svg.add('circle', attributes);
+      });
     };
 
     svg.line = function(x1, y1, x2, y2, className) {
-      const attributes = {
+      return svg.add('line', {
         x1: x1 + offsetX,
         y1: y1 + offsetY,
         x2: x2 + offsetX,
         y2: y2 + offsetY,
         class: className || 'edge'
-      };
-      return svg.add('line', attributes);
+      });
     };
-
-    // IFDEF DEV
-    let zoom = 1;
-    let viewbox;
 
     const setViewBox = (newbox) => {
       viewbox = newbox;
@@ -1413,7 +1410,6 @@ function Mesh({
       setViewBox([ cornerX, cornerY, zoomWidth, zoomHeight ]);
     };
 
-    // ENDIF
     return svg;
   }
 
@@ -2563,8 +2559,8 @@ window.addEventListener('load', function() {
         <svg id="mesh"></svg>
         <pre id="info"></pre>
         <pre id="console"></pre>
-        <div id="retry" title="Restart"><span id="retry-text"></span>&#x21BB</div>
-        <div id="quit" title="Quit"><span id="quit-text"></span>&#x21CF</div>
+        <div id="retry"><span id="retry-text"></span>&#x21BB</div>
+        <div id="quit"><span id="quit-text"></span>&#x21CF</div>
       </div>
       <pre id="terminal"></pre>
       <pre id="crash" class="hide"></pre>
