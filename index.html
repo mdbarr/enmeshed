@@ -646,7 +646,7 @@ m47/fpu: Supporting XSAVE feature 0x001: m87 floating point registers
 m47/fpu: Supporting XSAVE feature 0x002: SSE registers
 m47/fpu: Enabled xstate features 0x7, context size is 832 bytes
 e820: BIOS-provided physical RAM map
-e820: update [mem 0x00000000-0x00000fff] usable ==> reserved
+e820: update [mem 0x00000000-0x00000fff] usable => reserved
 total RAM covered: 16288M
 On node 0 totalpages: 4164976
   DMA zone: 64 pages used for memmap
@@ -659,17 +659,17 @@ ACPI: Local APIC address 0xfee00000
 smpboot: Allowing 4 CPUs, 0 hotplug CPUs
 Kernel/User page tables isolation: enabled
 Hierarchical RCU implementation.
-  RCU restricting CPUs from NR_CPUS=8192 to nr_cpu_ids=4.
-  Tasks RCU enabled.
+  RCU restricting CPUs from NR_CPUS=8192 to nr_cpu_ids=4
+  Tasks RCU enabled
 RCU: Adjusting geometry for nr_cpu_ids=4
-NR_IRQS: 524544, nr_irqs: 728, preallocated irqs: 16
+NR_IRQS 524544, nr_irqs 728, preallocated irqs 16
 console: color smart device [tty0] enabled
 ACPI: Core revision 20180813
 Security Framework initialized
 mce: CPU supports 7 MCE banks
 smp: Bringing up secondary CPUs...
 m47: Booting SMP configuration:
-  node #0, CPUs: #1 #2 #3
+  node 0, CPUs: 1 2 3
 smp: Brought up 1 node, 4 CPUs
 PCI host bridge to bus 0000:00
 pci_bus 0000:00: root bus resource [io  0x0000-0x0cf7]
@@ -677,8 +677,8 @@ pci_bus 0000:00: root bus resource [mem 0xfe000000-0xfe113fff]
 pci_bus 0000:00: root bus resource [bus 00-3e]
 usbcore: registered new interface drivers: usbfs, hub, usb, mesh
 NET: Registered protocol family 2
-TCP established hash table entries: 131072 (order: 8, 1048576 bytes)
-TCP bind hash table entries: 65536 (order: 8, 1048576 bytes)
+TCP established hash table entries: 131072 (1048576 bytes)
+TCP bind hash table entries: 65536 (1048576 bytes)
 TCP: Hash tables configured (established 131072 bind 65536)
 NET: Registered protocol family 1
 NET: Registered protocol family 47
@@ -1486,7 +1486,7 @@ function Mesh({
     info: {
       name: 'Information',
       color: 'white',
-      description: 'View information about nodes and connections.',
+      description: 'View information about nodes and connections.\nUse the mouse wheel to Zoom and the arrow keys to Pan.',
       uses: -1
     },
     crash: {
@@ -2095,7 +2095,7 @@ function Enmeshed() {
     meshId: 'daemon.gilgamesh.network',
     width: 30,
     seed: 2,
-    objective: 'Offline the daemon / services mesh.',
+    objective: 'Offline the services mesh.',
     uses: {
       crash: 5,
       cut: 5,
@@ -2107,7 +2107,7 @@ function Enmeshed() {
     meshId: 'edge.gilgamesh.network',
     width: 40,
     seed: 2,
-    objective: 'Offline the edge / periphery mesh.',
+    objective: 'Offline the periphery mesh.',
     uses: {
       crash: 5,
       cut: 5,
@@ -2142,6 +2142,7 @@ function Enmeshed() {
   const cyan = span('4B86B4');
   const blue = span('4f9ED8');
   const grey = span('AAA');
+
   const cursor = '<u id="cursor"></u>';
   const input = '<span id="input"></span>';
   const enter = 'Press &BENTER&b to continue...';
@@ -2254,8 +2255,12 @@ function Enmeshed() {
         storage.setItem('coins', coins);
       }
 
-      if (challengeMesh.meshId.includes('try')) {
+      if (mesh.failed) {
+        lines.unshift('&H --retry');
+      // IFDEF DEV
+      } else if (challengeMesh.meshId.includes('try')) {
         lines.unshift('&I');
+      // ENDIF
       } else {
         showMenu();
       }
@@ -2378,9 +2383,9 @@ function Enmeshed() {
           play(game, next);
           return '';
         }).
-        replace(/&H/, function() {
+        replace(/&H(.*)/, function(match, extra) {
           print(ps1, true);
-          typing = 'gilgamesh --challenge';
+          typing = 'gilgamesh --challenge' + (extra || '');
           lines.unshift('&h');
           return '';
         }).

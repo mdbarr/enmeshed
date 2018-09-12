@@ -49,6 +49,7 @@ const safeSubstitutions = {
   '([^-])end\\b': '$1en',
   'fade-out': 'fa',
   'fade-in': 'fi',
+  'firewalled': 'fd',
   'firewall': 'fw',
   '\\.forward': '.fo',
   'forward:': 'fo:',
@@ -228,7 +229,8 @@ let minScript = fs.readFileSync(BUILD_DIR + '/index.min.js').toString();
 // Very specific substitutions (cheating a bit)
 minScript = minScript.replace(/\bconst\b/g, 'let').
   replace(/\.width\b/g, '.w').replace(/\.height\b/g, '.h').
-  replace(/\bprng\b/g, 'R').replace(/\.console/g, '.C').
+  replace(/\bprng\b/g, 'P').replace(/\brand\b/g, 'R').
+  replace(/\.console/g, '.C').
   replace(/\.spinner/g, '.S').replace(/\bspinner:/g, 'S:').
   replace(/\.circle/g, '.I').replace(/\.line/g, '.L').
   replace(/\.count/g, '.U').
@@ -237,7 +239,8 @@ minScript = minScript.replace(/\bconst\b/g, 'let').
   replace(/\.coins/g, '.N').replace(/\bcoins:/g, 'N:').
   replace(/\.uses/g, '.E').replace(/\buses:/g, 'E:').
   replace(/\.crashing/g, '.A').
-  replace(/\.payload/g, '.Y');
+  replace(/\.payload/g, '.Y').
+  replace(/\.object\b/g, '.B');
 
 console.log('  index.js (%s) -> index.min.js (%s)\n', bytes(script.length), bytes(minScript.length));
 
