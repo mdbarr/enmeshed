@@ -11,7 +11,7 @@ const INDEX_HTML = path.join(process.cwd(), 'index.html');
 const BUILD_DIR = path.join(process.cwd(), 'build');
 const DIST_DIR = path.join(process.cwd(), 'dist');
 
-const TARGET_SIZE = 13312;
+const TARGET_SIZE = 1024 * 13;
 
 const safeSubstitutions = {
   'LOWER_MASK': 'LM',
@@ -226,7 +226,6 @@ try {
 let minScript = fs.readFileSync(BUILD_DIR + '/index.min.js').toString();
 
 // Very specific substitutions (cheating a bit)
-
 minScript = minScript.replace(/\bconst\b/g, 'let').
   replace(/\.width\b/g, '.w').replace(/\.height\b/g, '.h').
   replace(/\bprng\b/g, 'R').replace(/\.console/g, '.C').
@@ -237,7 +236,8 @@ minScript = minScript.replace(/\bconst\b/g, 'let').
   replace(/\.type/g, '.T').replace(/type:/g, 'T:').
   replace(/\.coins/g, '.N').replace(/\bcoins:/g, 'N:').
   replace(/\.uses/g, '.E').replace(/\buses:/g, 'E:').
-  replace(/\.crashing/g, '.A');
+  replace(/\.crashing/g, '.A').
+  replace(/\.payload/g, '.Y');
 
 console.log('  index.js (%s) -> index.min.js (%s)\n', bytes(script.length), bytes(minScript.length));
 

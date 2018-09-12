@@ -1410,6 +1410,22 @@ function Mesh({
       setViewBox([ cornerX, cornerY, zoomWidth, zoomHeight ]);
     };
 
+    window.onkeydown = function(event) {
+      const key = event.keyCode;
+      if (key === 37) { // Left Arrow
+        viewbox[0] += 5;
+      } else if (key === 38) { // Up Arrow
+        viewbox[1] += 5;
+      } else if (key === 39) { // Right Arrow
+        viewbox[0] -= 5;
+      } else if (key === 40) { // Down Arrow
+        viewbox[1] -= 5;
+      } else {
+        return;
+      }
+      setViewBox(viewbox);
+    };
+
     return svg;
   }
 
