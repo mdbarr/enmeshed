@@ -644,7 +644,7 @@ KERNEL supported cpus:
   MaasNeotek m47_64
 m47/fpu: Supporting XSAVE feature 0x001: m87 floating point registers
 m47/fpu: Supporting XSAVE feature 0x002: SSE registers
-m47/fpu: Enabled xstate features 0x7, context size is 832 bytes
+m47/fpu: Enabled xstate features 0x7, context size 832 bytes
 e820: BIOS-provided physical RAM map
 e820: update [mem 0x00000000-0x00000fff] usable => reserved
 total RAM covered: 16288M
@@ -655,10 +655,10 @@ On node 0 totalpages: 4164976
   Normal zone: 3502080 pages, LIFO batch:31
 Reserved but unavailable: 98 pages
 ACPI: PM-Timer IO Port: 0x1808
-ACPI: Local APIC address 0xfee00000
+ACPI: Local APIC address 0xfee0000
 smpboot: Allowing 4 CPUs
-Kernel/User page tables isolation: enabled
-Hierarchical RCU implementation.
+Kernel/User page tables isolation enabled
+Hierarchical RCU implementation
   RCU restricting CPUs from nr_cpu=8192 to nr_cpu_ids=4
   Tasks RCU enabled
 RCU: Adjusting geometry for nr_cpu_ids=4
@@ -676,13 +676,13 @@ pci_bus 0000:00: root bus resource [io  0x0000-0x0cf7]
 pci_bus 0000:00: root bus resource [mem 0xfe000000-0xfe113fff]
 pci_bus 0000:00: root bus resource [bus 00-3e]
 usbcore: registered new interface drivers: usbfs, hub, usb, mesh
+NET: Registered protocol family 1
 NET: Registered protocol family 2
-TCP established hash table entries: 131072 (1048576 bytes)
+TCP established hash table entries: 1310722 (1048576 bytes)
 TCP bind hash table entries: 65536 (1048576 bytes)
 TCP: Hash tables configured (established 131072 bind 65536)
-NET: Registered protocol family 1
 NET: Registered protocol family 47
-Meshtooth: Core ver 2.22
+Meshtooth: Core ver 0.47
 Meshtooth: NET device and connection manager initialized
 EXT5-fs (sda2): mounting ext4 file system using the ext5 subsystem
 EXT5-fs (sda2): mounted filesystem with journal.
@@ -2136,7 +2136,7 @@ function Enmeshed() {
   let last = '';
   // ENDIF
   const storage = window.localStorage;
-  const resume = parseInt(storage.getItem('stage') || 0);
+  let resume = parseInt(storage.getItem('stage') || 0);
   let coins = parseInt(storage.getItem('coins') || 0);
 
   const span = (hex) => '<span style="color:#' + hex + '">';
@@ -2189,6 +2189,7 @@ function Enmeshed() {
       show(terminal);
       hide(screen);
       if (mesh.quit) {
+
         showMenu();
       } else {
         if (!mesh.failed) {
@@ -2196,6 +2197,7 @@ function Enmeshed() {
           i++;
           storage.setItem('stage', i);
           storage.setItem('coins', coins);
+          resume = i;
           if (i < stages.length) {
             lines.unshift('&G' + i);
           }
