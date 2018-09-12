@@ -31,7 +31,7 @@
       content:'';
       position: absolute;
       top: -11px;
-      left: 497px;
+      left: 494px;
       border: 6px solid #333;
       border-radius: 10px;
     }
@@ -39,7 +39,7 @@
       content:'';
       position: absolute;
       top: -9px;
-      left: 499px;
+      left: 496px;
       border: 4px solid #2C2C2C;
       border-radius: 10px;
     }
@@ -295,8 +295,8 @@
     #mesh {
       position: absolute;
       top: 30px;
-      left: 30px;
-      width: 900px;
+      left: 34px;
+      width: 926px;
       height: 510px;
     }
     #mesh circle, #mesh line {
@@ -659,7 +659,7 @@ ACPI: Local APIC address 0xfee00000
 smpboot: Allowing 4 CPUs, 0 hotplug CPUs
 Kernel/User page tables isolation: enabled
 Hierarchical RCU implementation.
-  RCU restricting CPUs from NR_CPUS=8192 to nr_cpu_ids=4
+  RCU restricting CPUs from nr_cpu=8192 to nr_cpu_ids=4
   Tasks RCU enabled
 RCU: Adjusting geometry for nr_cpu_ids=4
 NR_IRQS 524544, nr_irqs 728, preallocated irqs 16
@@ -1352,7 +1352,7 @@ function Mesh({
     let zoom = 1;
     let viewbox;
 
-    const svgWidth = 900;
+    const svgWidth = 926;
     const svgHeight = 510;
 
     const offsetX = ((svgWidth - (self.width * self.scale)) / 2) + 4;
