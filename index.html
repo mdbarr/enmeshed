@@ -341,7 +341,7 @@
     }
     #toolbar {
       position: absolute;
-      top: 30px;
+      top: 34px;
       left: 0px;
       width: 32px;
       height: 400px;
@@ -2491,6 +2491,7 @@ function Enmeshed() {
             } else {
               if (cmd.length) {
                 print(cmd + ': command not found');
+                cmd = '';
               }
               print(ps2 + input + cursor, true);
             }
