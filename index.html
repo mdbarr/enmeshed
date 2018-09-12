@@ -303,8 +303,8 @@
     .mesh-id {
       position: absolute;
       top: 12px;
-      left: 375px;
-      width: 220px;
+      left: 370px;
+      width: 230px;
       text-align: center;
     }
     .spinner {
@@ -337,7 +337,7 @@
     #data {
       position: absolute;
       top: 11px;
-      right: 170px;
+      right: 175px;
     }
     #toolbar {
       position: absolute;
@@ -1727,7 +1727,7 @@ function Mesh({
       }
 
       if (self.data) {
-        self.elements.data.innerHTML = '&#x25C6; Data Intercepted!';
+        self.elements.data.innerHTML = '&#x291E; Data Intercepted!';
         add(self.elements.data, 'decrypt');
       }
 
@@ -1745,8 +1745,8 @@ function Mesh({
         show(self.elements.retry);
         show(self.elements.quit);
 
-        const quit = 'Quit?';
-        const retry = 'Restart?';
+        const quit = 'Quit';
+        const retry = 'Restart';
         const sure = 'You sure?';
 
         let quitState = 0;
@@ -2136,9 +2136,9 @@ function Enmeshed() {
 
   const span = (hex) => '<span style="color:#' + hex + '">';
   const green = span('7fDB6A');
-  const cyan = span('4b86B4');
-  const blue = span('4f9ed8');
-  const grey = span('aaa');
+  const cyan = span('4B86B4');
+  const blue = span('4f9ED8');
+  const grey = span('AAA');
   const cursor = '<u id="cursor"></u>';
   const input = '<span id="input"></span>';
   const enter = 'Press &BENTER&b to continue...';
@@ -2438,7 +2438,7 @@ function Enmeshed() {
           return '';
         }).
         replace(/&m/, span('d896ff') + '[mail]</span>').
-        replace(/&B(.*?)&b/, '<span style="font-weight:700;color:#aaa">$1</span>').
+        replace(/&B(.*?)&b/, '<span style="font-weight:700;color:#4B86B4">$1</span>').
         replace(/^&V(.*)$/, grey + '$1</span>').
         replace(/^&C(.*)$/, function(match, string) {
           pause = true;
@@ -2554,7 +2554,7 @@ window.addEventListener('load', function() {
         <div class="title">GILGAMESH NETWORK VISUALIZER</div>
         <div class="mesh-id"><div id="spinner" class="spinner">&#x169b</div> mesh://<span id="mesh-id"></span></div>
         <div class="health">Network Health: <span id="health">100%</span></div>
-        <div id="coins"></div><div id="data" class="decrypt"></div>
+        <div id="coins"></div><div id="data"></div>
         <div id="toolbar">
           <div data-tool="info">&#x24D8<div id="info-use"></div></div>
           <div data-tool="crash">&#x2349<div id="crash-use"></div></div>
