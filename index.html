@@ -292,13 +292,14 @@
       padding: 4px 0 4px 8px;
       font-weight: 700;
     }
-    .mesh {
-      position: relative;
-      left: 50%;
-      transform: translateX(-50%);
-      margin: 8px 8px 0px 8px;
+    #mesh {
+      position: absolute;
+      top: 30px;
+      left: 30px;
+      width: 900px;
+      height: 510px;
     }
-    .mesh circle, .mesh line {
+    #mesh circle, #mesh line {
       cursor: pointer;
     }
     .mesh-id {
@@ -1350,16 +1351,12 @@ function Mesh({
 
   function initSvg() {
     const svg = $('mesh');
-    const svgWidth = (self.width * self.scale) + 8;
-    const svgHeight = (self.height * self.scale) + 8;
 
-    svg.style.width = svgWidth + 'px';
-    svg.style.height = svgHeight + 'px';
-    if ((510 - svgHeight) / 2 > 0) {
-      svg.style.marginTop = ((510 - svgHeight) / 2) + 'px';
-    } else {
-      svg.style.marginTop = null;
-    }
+    const svgWidth = 900;
+    const svgHeight = 510;
+
+    const offsetX = ((svgWidth - (self.width * self.scale)) / 2) + 4;
+    const offsetY = ((svgHeight - (self.height * self.scale)) / 2) + 4;
 
     self.clear(svg);
 
@@ -1371,8 +1368,8 @@ function Mesh({
 
     svg.circle = function(x, y, radius, className) {
       const attributes = {
-        cx: x + 4,
-        cy: y + 4,
+        cx: x + offsetX,
+        cy: y + offsetY,
         r: radius,
         class: className || 'node'
       };
@@ -1381,10 +1378,10 @@ function Mesh({
 
     svg.line = function(x1, y1, x2, y2, className) {
       const attributes = {
-        x1: x1 + 4,
-        y1: y1 + 4,
-        x2: x2 + 4,
-        y2: y2 + 4,
+        x1: x1 + offsetX,
+        y1: y1 + offsetY,
+        x2: x2 + offsetX,
+        y2: y2 + offsetY,
         class: className || 'edge'
       };
       return svg.add('line', attributes);
@@ -2563,7 +2560,7 @@ window.addEventListener('load', function() {
           <div data-tool="intercept">&#x291E<div id="intercept-use"></div></div>
           <div data-tool="mine">&#x22C7<div id="mine-use"></div></div>
         </div>
-        <svg id="mesh" class="mesh"></svg>
+        <svg id="mesh"></svg>
         <pre id="info"></pre>
         <pre id="console"></pre>
         <div id="retry" title="Restart"><span id="retry-text"></span>&#x21BB</div>

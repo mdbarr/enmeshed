@@ -223,7 +223,8 @@ try {
   console.log('UglifyJS failed');
   process.exit(0);
 }
-const minScript = fs.readFileSync(BUILD_DIR + '/index.min.js').toString();
+let minScript = fs.readFileSync(BUILD_DIR + '/index.min.js').toString();
+minScript = minScript.replace(/\bconst\b/g, 'let'); // this is wrong
 console.log('  index.js (%s) -> index.min.js (%s)\n', bytes(script.length), bytes(minScript.length));
 
 //////////
