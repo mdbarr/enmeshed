@@ -51,19 +51,19 @@
       width: 960px;
       height: 600px;
       padding: 8px;
-      font-size: 8px;
+      font-size: 11px;
       color: white;
     }
     #terminal {
       position: absolute;
-      top: 0px;
+      top: 2px;
       left: 10px;
       background-color: #181818;
       width: 960px;
-      height: 600px;
+      height: 595px;
       padding: 8px;
-      font-size: 8px;
-      line-height: 11px;
+      font-size: 11px;
+      line-height: 15px;
       color: white;
       overflow: hidden;
     }
@@ -84,10 +84,10 @@
     #info {
       position: absolute;
       width: 150px;
-      top: 20px;
+      top: 34px;
       right: 8px;
       text-align: right;
-      font-size: 10px;
+      font-size: 11px;
     }
     .decrypt {
       animation: decrypt 2s forwards;
@@ -286,7 +286,7 @@
       padding: 4px 0 4px 8px;
     }
     .banner {
-      background-image: -webkit-linear-gradient(left, #094781 0%, #181818 40%);
+      background-image: -webkit-linear-gradient(left, #094781 0%, #181818 60%);
       border-radius: 5px;
       padding: 4px 0 4px 8px;
       font-weight: 700;
@@ -303,8 +303,8 @@
     .mesh-id {
       position: absolute;
       top: 12px;
-      left: 385px;
-      width: 200px;
+      left: 375px;
+      width: 220px;
       text-align: center;
     }
     .spinner {
@@ -331,13 +331,13 @@
     }
     #coins {
       position: absolute;
-      top: 12px;
-      right: 250px;
+      top: 30px;
+      right: 12px;
     }
     #data {
       position: absolute;
-      top: 12px;
-      right: 135px;
+      top: 11px;
+      right: 170px;
     }
     #toolbar {
       position: absolute;
@@ -350,16 +350,16 @@
       text-align: center;
     }
     [data-tool] {
-      padding-top: 6px;
       border-left: 2px solid transparent;
       cursor: pointer;
     }
     [data-tool] > div {
-      font-size: 8px;
-      line-height: 8px;
-      padding-bottom: 6px;
+      font-size: 10px;
+      line-height: 10px;
+      padding-bottom: 10px;
     }
     [data-tool="info"] {
+      padding-top: 10px;
       font-size: 20px;
       font-weight: 700;
       padding-left: 6px;
@@ -636,18 +636,17 @@ function sequence(worker, done) {
 
 //////////
 
-const boot = `<div class="banner">Gilgamesh OS version 4.15.0-33-generic (build 13312)</div>
+const boot = `<div class="banner">Gilgamesh OS version 4.15.0-33-generic (build 13,312)</div>
 Command line: BOOT_IMAGE=/gilgamesh-4.15.0-33-generic root=/dev/sda2:ro
 KERNEL supported cpus:
   MaasNeotek m47_64
-m47/fpu: Supporting XSAVE feature 0x001: 'm87 floating point registers'
-m47/fpu: Supporting XSAVE feature 0x002: 'SSE registers'
+m47/fpu: Supporting XSAVE feature 0x001: m87 floating point registers
+m47/fpu: Supporting XSAVE feature 0x002: SSE registers
 m47/fpu: Enabled xstate features 0x7, context size is 832 bytes
 e820: BIOS-provided physical RAM map
 e820: update [mem 0x00000000-0x00000fff] usable ==> reserved
 e820: remove [mem 0x000a0000-0x000fffff] usable
 total RAM covered: 16288M
-Initmem setup node 0 [mem 0x0000000000001000-0x0000000456ffffff]
 On node 0 totalpages: 4164976
   DMA zone: 64 pages used for memmap
   DMA zone: 3997 pages, LIFO batch:0
@@ -660,17 +659,17 @@ ACPI: HPET id: 0x8086a701 base: 0xfed00000
 smpboot: Allowing 4 CPUs, 0 hotplug CPUs
 Kernel/User page tables isolation: enabled
 Hierarchical RCU implementation.
-	RCU restricting CPUs from NR_CPUS=8192 to nr_cpu_ids=4.
-	Tasks RCU enabled.
+  RCU restricting CPUs from NR_CPUS=8192 to nr_cpu_ids=4.
+  Tasks RCU enabled.
 RCU: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=4
 NR_IRQS: 524544, nr_irqs: 728, preallocated irqs: 16
-console color smart device [tty0] enabled
+console: color smart device [tty0] enabled
 ACPI: Core revision 20180813
 Security Framework initialized
 mce: CPU supports 7 MCE banks
-smp: Bringing up secondary CPUs ...
+smp: Bringing up secondary CPUs...
 m47: Booting SMP configuration:
-    node  #0, CPUs:      #1 #2 #3
+  node #0, CPUs: #1 #2 #3
 smp: Brought up 1 node, 4 CPUs
 PCI host bridge to bus 0000:00
 pci_bus 0000:00: root bus resource [io  0x0000-0x0cf7]
@@ -689,9 +688,8 @@ Methtooth: NET socket layer initialized
 EXT5-fs (sda2): mounting ext4 file system using the ext5 subsystem
 EXT5-fs (sda2): mounted filesystem with journal.
 Bridge firewalling registered
-nf_conntrack version 0.5.0 (65536 buckets, 262144 max)
 Initializing XFRM meshlink socket
-Meshfilter messages via MESHLINK v0.47.
+Meshfilter messages via MESHLINK v0.47
 random: initializing Mersenne Twister
 MeshConnect initializing interface mesh0
 &K
@@ -719,7 +717,7 @@ You have new mail.
 
 const menu = `&P&T./enmeshed
 
-<div style="color:#005b96;line-height:6px;letter-spacing:-1px">  ███████╗███╗   ██╗███╗   ███╗███████╗███████╗██╗  ██╗███████╗██████╗<br>  ██╔════╝████╗  ██║████╗ ████║██╔════╝██╔════╝██║  ██║██╔════╝██╔══██╗<br>  █████╗  ██╔██╗ ██║██╔████╔██║█████╗  ███████╗███████║█████╗  ██║  ██║<br>  ██╔══╝  ██║╚██╗██║██║╚██╔╝██║██╔══╝  ╚════██║██╔══██║██╔══╝  ██║  ██║<br>  ███████╗██║ ╚████║██║ ╚═╝ ██║███████╗███████║██║  ██║███████╗██████╔╝<br>  ╚══════╝╚═╝  ╚═══╝╚═╝     ╚═╝╚══════╝╚══════╝╚═╝  ╚═╝╚══════╝╚═════╝<br><br>&R73&#x2500;
+<div style="color:#005b96;line-height:8px;letter-spacing:-1px">  ███████╗███╗   ██╗███╗   ███╗███████╗███████╗██╗  ██╗███████╗██████╗<br>  ██╔════╝████╗  ██║████╗ ████║██╔════╝██╔════╝██║  ██║██╔════╝██╔══██╗<br>  █████╗  ██╔██╗ ██║██╔████╔██║█████╗  ███████╗███████║█████╗  ██║  ██║<br>  ██╔══╝  ██║╚██╗██║██║╚██╔╝██║██╔══╝  ╚════██║██╔══██║██╔══╝  ██║  ██║<br>  ███████╗██║ ╚████║██║ ╚═╝ ██║███████╗███████║██║  ██║███████╗██████╔╝<br>  ╚══════╝╚═╝  ╚═══╝╚═╝     ╚═╝╚══════╝╚══════╝╚═╝  ╚═╝╚══════╝╚═════╝<br><br>&R73&#x2500;
 &$
  1) Story
 
@@ -733,7 +731,7 @@ const rimraf = `
 Kernel Panic
 Kernel Panic
 OFFLINE
-?2000Rebooting...`;
+?5000Rebooting...`;
 
 const message = `Mark,
   I can't believe you were forced out of the company that YOU founded
@@ -751,23 +749,23 @@ Good luck,
 const email = `
 &P&Tmail --unread
 &m one unread message:
-&V&#x250C;&R67&#x2500;
+&V&#x250C;&R72&#x2500;
   &BDate:&b &DE
   &BFrom:&b Unverified Sender &lt;unverified@gilgamesh.network&gt;
   &BTo:&b Mark Barr &lt;mark@enmeshed.net&gt;
   &BSubject:&b Hackers Hate This Mesh Network, Find Out Why!
   &BAttachments:&b <span id="attachment">mesh.pdf.exe</span>
   <div id="email">${ rot13(message) }</div>
-&V&#x2514;&R67&#x2500;
+&V&#x2514;&R72&#x2500;
 ?3000&m Encryption detected - decrypting... <span id="decryptor" class="spinner">|</span>
 &Y&C&m Press &BENTER&b to download attachment and delete message.
 &y&N&m saved to ~/Downloads/enmeshed.zip
 &P&Tunzip ~/Downloads/enmeshed.zip
- inflating: readme.txt
+ inflating: enmeshed.txt
  extracting: gilgamesh-plugin-MemCorrupt.bin
  extracting: gilgamesh-plugin-DoS.RST.bin
  extracting: gilgamesh-plugin-MiTM.Proxy.bin
-<&P&Tcat readme.txt
+&P&Tcat enmeshed.txt
 &F
 &G0
 `;
@@ -1543,7 +1541,6 @@ function Mesh({
 
   let dataNode = -1;
   if (typeof data === 'number') {
-    console.log('here');
     dataNode = data;
     data = true;
   } else if (data !== true) {
@@ -1560,7 +1557,7 @@ function Mesh({
 
     self.data = false;
     self.clear(self.elements.data);
-    remove(self.element.data, 'decrypt');
+    remove(self.elements.data, 'decrypt');
 
     IPs = {};
 
@@ -1726,14 +1723,12 @@ function Mesh({
       self.elements.health.innerHTML = health + '%';
 
       if (self.coins) {
-        const amount = '$ ' + (self.coins / 1000).toFixed(3);
-        self.elements.coins.innerHTML = amount;
-        self.elements.coins.title = amount + ' meshcoins';
+        self.elements.coins.innerHTML = '$ ' + (self.coins / 1000).toFixed(3) + ' meshcoins';
       }
 
       if (self.data) {
         self.elements.data.innerHTML = '&#x25C6; Data Intercepted!';
-        add(self.element.data, 'decrypt');
+        add(self.elements.data, 'decrypt');
       }
 
       if (health < self.threshold && !self.crashed) {
@@ -1743,7 +1738,9 @@ function Mesh({
       if (!self.connected) {
         self.connected = true;
         self.console.clear().log('&#x21B9; Connected!');
-        self.console.log('\nObjective: ' + objective);
+        self.console.log('\nObjective: ' +
+                         (objective.length > 80 ? objective.replace(/^(.*), (.*?)$/, '$1,\n           $2') :
+                           objective));
 
         show(self.elements.retry);
         show(self.elements.quit);
@@ -2081,7 +2078,7 @@ function Enmeshed() {
     meshId: 'compute.gilgamesh.network',
     width: 25,
     seed: 6,
-    objective: 'Exploit the compute mesh to mine 1.000 MeshCoin before offlining it',
+    objective: 'Exploit the compute mesh to mine 1.000 MeshCoin before offlining it.',
     mine: 1000,
     uses: {
       crash: 5,
@@ -2120,7 +2117,7 @@ function Enmeshed() {
     width: 55,
     height: 35,
     seed: 1,
-    objective: 'Offline the final mesh.',
+    objective: 'Offline the final mesh, then consider yourself a winner!',
     uses: {
       crash: 5,
       cut: 5,
@@ -2268,17 +2265,18 @@ function Enmeshed() {
   }
 
   function parse(cmd, next) {
-    if (cmd === '1' || cmd === 'story') {
+    const lower = cmd.toLowerCase();
+    if (cmd === '1' || lower === 'story') {
       const msg = email.split('\n');
       lines.unshift(...msg);
-    } else if (cmd === '2' || cmd === 'challenge') {
+    } else if (cmd === '2' || lower === 'challenge') {
       generateChallenge();
       lines.unshift('&H');
-    } else if ((cmd === '3' || cmd === 'continue') && resume) {
+    } else if ((cmd === '3' || lower === 'continue') && resume) {
       lines.unshift('&G' + resume);
     // IFDEF DEV
-    } else if (cmd.startsWith('try ')) {
-      cmd = cmd.replace(/try\s+/, '');
+    } else if (lower.startsWith('try ')) {
+      cmd = lower.replace(/try\s+/, '');
 
       const parts = cmd.split(/\s+/);
       const options = {};
@@ -2341,7 +2339,7 @@ function Enmeshed() {
       let cmd;
 
       if (coins) {
-        balance = ('$ ' + (coins / 1000).toFixed(3) + ' meshcoins').padStart(58, ' ');
+        balance = ('$ ' + (coins / 1000).toFixed(3) + ' meshcoins').padStart(60, ' ');
       }
 
       nocursor();
