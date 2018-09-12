@@ -1392,33 +1392,29 @@ function Mesh({
 
     // IFDEF DEV
     let zoom = 1;
-    let origin = [ 0, 0 ];
+    let viewbox;
 
-    function incrementZoom(mouse, corner) {
-      return (mouse - corner) * 0.5;
-    }
+    const setViewBox = (newbox) => {
+      viewbox = newbox;
+      svg.setAttribute('viewBox', viewbox.join(' '));
+    };
+
+    setViewBox([ 0, 0, svgWidth, svgHeight ]);
 
     svg.onmousewheel = function(event) {
       zoom += event.deltaY * 0.001;
       zoom = Math.min(Math.max(zoom, 1), 5);
 
-      if (zoom === 1) {
-        origin = [ 0, 0 ];
-        svg.setAttribute('viewBox', [ ...origin, svgWidth, svgHeight ].join(' '));
-      } else {
-        const vw = svgWidth * (1 / zoom);
-        const vh = svgHeight * (1 / zoom);
+      const zoomWidth = Math.round(svgWidth / zoom);
+      const zoomHeight = Math.round(svgHeight / zoom);
 
-        const x0 = event.offsetX - (vw / 2);
-        const y0 = event.offsetY - (vh / 2);
+      const cornerX = viewbox[0] - ((event.offsetX / svgWidth) *
+                                    (zoomWidth - viewbox[2]));
+      const cornerY = viewbox[1] - ((event.offsetY / svgHeight) *
+                                    (zoomHeight - viewbox[3]));
 
-        origin = [ incrementZoom(x0, origin[0]), incrementZoom(y0, origin[1]) ];
-
-        svg.setAttribute('viewBox', [ ...origin, vw, vh ].join(' '));
-      }
+      setViewBox([ cornerX, cornerY, zoomWidth, zoomHeight ]);
     };
-
-    svg.setAttribute('viewBox', [ ...origin, svgWidth, svgHeight ].join(' '));
 
     // ENDIF
     return svg;
