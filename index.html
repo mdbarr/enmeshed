@@ -88,6 +88,7 @@
       right: 8px;
       text-align: right;
       font-size: 11px;
+      background-color: rgba(24,24,24,0.8);
     }
     .decrypt {
       animation: decrypt 2s forwards;
@@ -371,10 +372,10 @@
       border-left: 2px solid #D34E53;
     }
     [data-tool="cut"]:hover, [data-tool="cut"].selected {
-      border-left: 2px solid #666;
+      border-left: 2px solid #F89100;
     }
     [data-tool="slow"]:hover, [data-tool="slow"].selected {
-      border-left: 2px solid #D9AF3C;
+      border-left: 2px solid #FCC700;
     }
     [data-tool="corrupt"] {
       font-size: 20px;
@@ -389,13 +390,13 @@
       font-size: 26px;
     }
     [data-tool="intercept"]:hover, [data-tool="intercept"].selected {
-      border-left: 2px solid #94C5CC;
+      border-left: 2px solid #1375F7;
     }
     [data-tool="mine"] {
       font-size: 26px;
     }
     [data-tool="mine"]:hover, [data-tool="mine"].selected {
-      border-left: 2px solid #060;
+      border-left: 2px solid #080;
     }
     .node {
       fill: #5691DC;
@@ -426,13 +427,13 @@
       stroke: #9E379F;
     }
     .node-effect-intercept {
-      stroke: #94C5CC;
+      stroke: #1375F7;
     }
     .node-effect-mine {
-      stroke: #060;
+      stroke: #080;
     }
     .node-effect-firewall {
-      stroke: #FC0;
+      stroke: #FFF;
     }
     .node-packet {
       fill: #8BBF50;
@@ -463,13 +464,13 @@
       stroke: transparent;
     }
     .edge-slow {
-      stroke: #D9AF3C !important;
+      stroke: #FCC700 !important;
     }
     .edge-cut {
       stroke: #D34E53 !important;
     }
     .edge-empty-slow {
-      stroke: rgba(217, 175, 60, 0.3);
+      stroke: rgba(252, 199, 0, 0.3);
     }
     .edge-offline-empty {
       stroke: #D34E53;
@@ -661,7 +662,7 @@ Kernel/User page tables isolation: enabled
 Hierarchical RCU implementation.
   RCU restricting CPUs from NR_CPUS=8192 to nr_cpu_ids=4.
   Tasks RCU enabled.
-RCU: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=4
+RCU: Adjusting geometry for nr_cpu_ids=4
 NR_IRQS: 524544, nr_irqs: 728, preallocated irqs: 16
 console: color smart device [tty0] enabled
 ACPI: Core revision 20180813
@@ -1495,14 +1496,14 @@ function Mesh({
     },
     cut: {
       name: 'Cut',
-      color: '#666',
+      color: '#F89100',
       description: 'Bring the <u>connection</u> between nodes offline by flooding it with spoofed reset packets.',
       cve: 'DoS.RST',
       uses: 0
     },
     slow: {
       name: 'Slow',
-      color: '#D9AF3C',
+      color: '#FCC700',
       description: 'Trigger a rate limiter causing all traffice through a <u>connection</u> to be slowed due to reduce bandwidth.',
       cve: 'Rate.Limit',
       uses: 0
@@ -1523,14 +1524,14 @@ function Mesh({
     },
     intercept: {
       name: 'Intercept',
-      color: '#94C5CC',
+      color: '#1375F7',
       description: 'Using a man-in-the-middle attack, intercept all data passing through a <u>node</u>.',
       cve: 'MiTM.Proxy',
       uses: 0
     },
     mine: {
       name: 'Mine',
-      color: '#060',
+      color: '#080',
       description: 'Inject code into a <u>node</u> to mine MeshCoins as it processes packets.',
       cve: 'Code.Inject',
       uses: 0
