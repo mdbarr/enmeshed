@@ -8,6 +8,7 @@
       font-family: monospace;
       box-sizing: border-box;
       user-select: none;
+      -webkit-user-select: none;
     }
     body {
       background-image: -webkit-radial-gradient(top, circle cover, #094781 0%, #07345E 80%);
@@ -655,19 +656,19 @@ On node 0 totalpages: 4164976
   Normal zone: 3502080 pages, LIFO batch:31
 Reserved but unavailable: 98 pages
 ACPI: PM-Timer IO Port: 0x1808
-ACPI: Local APIC address 0xfee0000
+ACPI: Local APIC address 0xfee00
 smpboot: Allowing 4 CPUs
 Kernel/User page tables isolation enabled
 Hierarchical RCU implementation
   RCU restricting CPUs from nr_cpu=8192 to nr_cpu_ids=4
   Tasks RCU enabled
 RCU: Adjusting geometry for nr_cpu_ids=4
-NR_IRQS 524544, nr_irqs 728, preallocated irqs 16
+NR_IRQS 52454, nr_irqs 728, preallocated irqs 16
 console: color smart device [tty0] enabled
 ACPI: Core revision 20180813
 Security Framework initialized
 mce: CPU supports 7 MCE banks
-smp: Bringing up secondary CPUs...
+smp: Bringing up secondary CPUs
 m47: Booting SMP configuration:
   node 0, CPUs: 1 2 3
 smp: Brought up 1 node, 4 CPUs
@@ -1392,7 +1393,7 @@ function Mesh({
 
     setViewBox([ 0, 0, svgWidth, svgHeight ]);
 
-    svg.onmousewheel = function(event) {
+    svg.onwheel = function(event) {
       zoom += event.deltaY * 0.001;
       zoom = Math.min(Math.max(zoom, 1), 5);
 
@@ -1410,13 +1411,13 @@ function Mesh({
     window.onkeydown = function(event) {
       const key = event.keyCode;
       if (key === 37) { // Left Arrow
-        viewbox[0] += 5;
+        viewbox[0] += 10;
       } else if (key === 38) { // Up Arrow
-        viewbox[1] += 5;
+        viewbox[1] += 10;
       } else if (key === 39) { // Right Arrow
-        viewbox[0] -= 5;
+        viewbox[0] -= 10;
       } else if (key === 40) { // Down Arrow
-        viewbox[1] -= 5;
+        viewbox[1] -= 10;
       } else if (event.key === '0' && event.ctrlKey) { // CTRL-0 reset
         viewbox = [ 0, 0, svgWidth, svgHeight ];
       } else {
@@ -1488,7 +1489,7 @@ function Mesh({
     info: {
       name: 'Information',
       color: 'white',
-      description: 'View information about nodes and connections.\nUse the mouse wheel to Zoom and the arrow keys to Pan.',
+      description: 'View information about nodes and connections.\nScroll to <u>Zoom</u> and use the Arrow Keys to <u>Pan</u>.',
       uses: -1
     },
     crash: {
