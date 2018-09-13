@@ -506,6 +506,8 @@
 //
 //
 
+// Merseene Twister Pseudo-Random Number Generator
+// Used to deterministically generate stages based on a seed
 function MersenneTwister(seed) {
   seed = seed || Date.now();
   this.N = 624;
@@ -562,6 +564,7 @@ MersenneTwister.prototype.random = function() {
   return (y + 0.5) / this.I;
 };
 
+// Rotate-13 "encryption"
 function rot13(text, decrypt) {
   let string = '';
   for (let i = 0; i < text.length; i++) {
@@ -577,10 +580,12 @@ function rot13(text, decrypt) {
   return string;
 }
 
+// Create a separate random number generator for ephemeral details
 const prng = new MersenneTwister();
 const rand = (min, max) => Math.floor(prng.random() * (max - min + 1)) + min;
-const size = (object) => Object.keys(object || {}).length;
 
+// Map that returns Infinity rather than undefined,
+// used for scoring paths in A* path finding
 Map.prototype.value = function(key) {
   const value = this.get(key);
   if (value === undefined) {
@@ -588,6 +593,9 @@ Map.prototype.value = function(key) {
   }
   return value;
 };
+
+// Convenience functions
+const size = (object) => Object.keys(object || {}).length;
 
 const $ = id => document.getElementById(id);
 
@@ -599,6 +607,7 @@ const show = element => remove(element, 'hide');
 
 const scroll = element => element.scrollTop = element.scrollHeight + element.clientHeight;
 
+// Random, fake IP Address generator
 let IPs = {};
 function generateIP() {
   let address = null;
@@ -609,6 +618,8 @@ function generateIP() {
   return address;
 }
 
+// Asynchronous sequencer for managing game state across different async events
+// such as input, game router, press enter to continue...
 function sequence(worker, done) {
   let i = 0;
 
@@ -638,7 +649,8 @@ function sequence(worker, done) {
 }
 
 //////////
-
+// Game Script as large text blobs with "&" triggers, simplistic turing machine
+// for driving the game state.
 const boot = `<div class="banner">Gilgamesh OS version 4.15.0-33-generic (build 13,312)</div>
 Command line: BOOT_IMAGE=/gilgamesh-4.15.0-33-generic root=/dev/sda2:ro
 KERNEL supported cpus:
@@ -771,17 +783,21 @@ const email = `
 `;
 
 //////////
-
+// Mesh Edges, tracks several svg elements for state and animation,
+// manages mouse over and click interactions
 function Edge(mesh, edgeId, start, end) {
   const self = this;
 
+  // Identifiers
   self.object = 'edge';
   self.id = edgeId;
   self.name = mesh.edges.length.toString(16).padStart(4, 0);
 
+  // States
   self.online = true;
   self.speed = mesh.rand(1, mesh.speeds.length - 1);
 
+  // Associated nodes with positions
   self.nodes = [
     start, end
   ];
@@ -793,8 +809,11 @@ function Edge(mesh, edgeId, start, end) {
     x: end.pos.x,
     y: end.pos.y
   };
+
+  // Timing based measure of length
   self.ticks = Math.ceil(mesh.distance(start, end));
 
+  // SVG elements
   self.elements = {
     empty: mesh.svg.line(self.start.x, self.start.y, self.end.x, self.end.y, 'edge-empty'),
     forward: mesh.svg.line(self.start.x, self.start.y, self.end.x, self.end.y, 'edge-forward'),
@@ -802,6 +821,7 @@ function Edge(mesh, edgeId, start, end) {
     interact: mesh.svg.line(self.start.x, self.start.y, self.end.x, self.end.y, 'edge-interact')
   };
 
+  // Click, applies effect when one is selected
   self.elements.interact.onclick = function() {
     if (!self.effect) {
       if (mesh.effect.type === 'cut' && mesh.tools.cut.decrement()) {
@@ -821,6 +841,7 @@ function Edge(mesh, edgeId, start, end) {
     }
   };
 
+  // Mouse over, displays info and any applied effects
   self.elements.interact.onmouseover = function() {
     const len = Math.max(start.address.length, end.address.length);
     let info = 'Connection #' + self.name + mesh.dotColor(self) + '\n\n' +
@@ -841,24 +862,29 @@ function Edge(mesh, edgeId, start, end) {
     mesh.elements.info.innerHTML = info;
   };
 
+  // Mouse out, clears info
   self.elements.interact.onmouseout = function() {
     mesh.elements.info.innerHTML = '';
   };
 
+  // Association with entire mesh
   mesh.edges.push(self);
   mesh.connections[edgeId] = self;
 
+  // Sets itself as a connection on start adn end nodes
   start.connections[end.id] = {
     source: start,
     node: end,
     edge: self
   };
+
   end.connections[start.id] = {
     source: end,
     node: start,
     edge: self
   };
 
+  // Interfaces for tracking statistics
   start.interfaces[edgeId] = {
     name: 'me' + size(start.interfaces),
     rx: 0,
@@ -873,10 +899,12 @@ function Edge(mesh, edgeId, start, end) {
     dropped: 0
   };
 
+  // Any packets currently traversing the edge
   const packets = new Set();
 
   self.packet = {};
 
+  // Scan what packets are present to control animations
   self.packet.scan = function() {
     if (packets.size) {
       let forward = false;
@@ -906,11 +934,13 @@ function Edge(mesh, edgeId, start, end) {
     }
   };
 
+  // Add a packet to the edge and set animations
   self.packet.add = function(packet) {
     packets.add(packet);
     self.packet.scan();
   };
 
+  // Remove a packet from the edge and set animations
   self.packet.delete = function(packet) {
     packets.delete(packet);
     self.packet.scan();
@@ -919,6 +949,8 @@ function Edge(mesh, edgeId, start, end) {
   return self;
 }
 
+// Mesh Nodes, randomly placed, tracks state and animations with
+// a few svg elements, provides interactions
 function Node(mesh) {
   const self = this;
 
@@ -926,6 +958,7 @@ function Node(mesh) {
 
   self.online = true;
 
+  // Generate random, unoccupied position, tracked as an ID
   while (self.id === undefined || mesh.positions[self.id] !== undefined) {
     self.x = mesh.rand(0, mesh.width - 1);
     self.y = mesh.rand(0, mesh.height - 1);
@@ -934,6 +967,7 @@ function Node(mesh) {
   }
   mesh.positions[self.id] = self;
 
+  // Position with random perturbations to avoid too much a grid look
   self.pos = {
     x: (self.x * mesh.scale) + (mesh.scale / 2) + mesh.rand(-mesh.perturb, mesh.perturb),
     y: (self.y * mesh.scale) + (mesh.scale / 2) + mesh.rand(-mesh.perturb, mesh.perturb)
@@ -945,6 +979,7 @@ function Node(mesh) {
   self.connections = {};
   self.interfaces = {};
 
+  // Find neighboring nodes within a specified range
   self.search = function(range) {
     const neighbors = [];
     for (let y = self.y - range; y <= (self.y + range); y++) {
@@ -958,6 +993,8 @@ function Node(mesh) {
     return neighbors;
   };
 
+  // Connect this node to neighbors with an increasing distance until
+  // a minimum number of connections is met
   self.connect = function() {
     for (let range = mesh.range; size(self.connections) < mesh.minimum; range++) {
       self.search(range).forEach(function(neighbor) {
@@ -969,6 +1006,9 @@ function Node(mesh) {
     }
   };
 
+  // Create the associated svg elements, called after edge creation since
+  // svg layering is based on creation order to visually place nodes
+  // above edges
   self.createElement = function() {
     const radius = mesh.scale / 4;
     self.element = mesh.svg.circle(self.pos.x, self.pos.y, radius);
@@ -998,6 +1038,7 @@ function Node(mesh) {
       }
     };
 
+    // Mouse over, display info and any applied effects
     self.element.onmouseover = function() {
       let info = 'Node ' + self.address + mesh.dotColor(self) + '\n\n' +
           'Interfaces:'.padEnd(25, ' ') + '\n';
@@ -1020,14 +1061,18 @@ function Node(mesh) {
       mesh.elements.info.innerHTML = info;
     };
 
+    // Mouse out, clear info
     self.element.onmouseout = function() {
       mesh.elements.info.innerHTML = '';
     };
   };
 
+  // Packets present in the node
   const packets = new Set();
 
   self.packet = {};
+
+  // Add a packet to the node and set animations
   self.packet.add = function(packet) {
     packets.add(packet);
     add(self.element, 'node-packet');
@@ -1047,6 +1092,7 @@ function Node(mesh) {
     }
   };
 
+  // Remove a packet from the node and set animations
   self.packet.delete = function(packet) {
     packets.delete(packet);
     if (!packets.size) {
@@ -1058,30 +1104,38 @@ function Node(mesh) {
   return self;
 }
 
+// Packet, tracks its optimal path through the mesh
 function Packet(mesh, source, destination) {
   const self = this;
 
   self.origin = self.source = source;
 
+  // Generate a random destination that isn't itself
   self.destination = destination;
   while (self.destination === undefined || self.destination === self.source) {
     self.destination = mesh.nodes[mesh.rand(0, mesh.nodes.length - 1)];
   }
 
+  // Payload marker if originating in a "firewalled" node
   if (source.firewalled) {
     self.payload = true;
   }
 
+  // The maximum hops and ticks for the optimal path
   self.maxHops = Infinity;
   self.maxTicks = Infinity;
 
+  // Random size, effects ticks (time) travelling through the mesh
   self.size = mesh.rand(1, mesh.speeds.length - 1);
 
+  // Has the packet been corrupted by an effect
   self.corrupt = false;
 
+  // The current path and time spent
   self.path = [];
   self.ticks = 0;
 
+  // Register and add itself to the source node
   self.current = source;
   source.packet.add(self);
 
@@ -1108,30 +1162,37 @@ function Packet(mesh, source, destination) {
         }
       });
 
+      // Path found
       if (current === goal) {
         let path = [ goal ];
         const edges = [];
         let ticks = 0;
+
+        // Walk back to find the optimal path
         while (cameFrom.has(current)) {
           const prev = current;
           current = cameFrom.get(current);
           path.push(current);
 
+          // Generate time spent using the speed of edges and the packet size
           const edge = current.connections[prev.id].edge;
           edges.push(edge);
           ticks += Math.ceil(edge.ticks * (mesh.speeds[self.size].value / mesh.speeds[edge.speed].value));
         }
 
+        // Save hops and ticks if they haven't been found yet
         if (self.maxHops === Infinity) {
           self.maxHops = Math.ceil(path.length * mesh.maxHops);
           self.maxTicks = Math.ceil(ticks * mesh.maxTTL);
         }
 
+        // Save the ideal path for goal -> start
         mesh.idealPaths[goal.address + start.address] = {
           path,
           edges
         };
 
+        // Generate the reverse path and save it
         path = path.slice().reverse();
 
         mesh.idealPaths[start.address + goal.address] = {
@@ -1139,8 +1200,10 @@ function Packet(mesh, source, destination) {
           edges
         };
 
+        // Save this as the ideal path
         self.idealPath = path;
 
+        // Find the next edge for the next step in traversal
         for (const id in path[0].connections) {
           const connection = path[0].connections[id];
           if (connection.node === path[1]) {
@@ -1160,6 +1223,7 @@ function Packet(mesh, source, destination) {
           continue;
         }
 
+        // score connections using simple geometric distance
         const tgScore = gScore.value(current) + mesh.distance(current.pos, neighbor.pos);
         if (!openSet.has(neighbor)) {
           openSet.add(neighbor);
@@ -1175,10 +1239,12 @@ function Packet(mesh, source, destination) {
     return false;
   };
 
+  // Process a single tick in traversal
   self.route = function() {
+    // Currently in an edge
     if (self.current.object === 'edge' && self.hop) {
-      if (self.count) {
-        if (self.ticks > self.maxTicks) {
+      if (self.count) { // Count down time remain
+        if (self.ticks > self.maxTicks) { // Drop packet if max ticks (TTL) exceeded
           console.log('dropped - TTL exceeded', self.ticks, self.maxTicks);
           self.dropped = true;
           self.current.packet.delete(self);
@@ -1187,7 +1253,7 @@ function Packet(mesh, source, destination) {
         }
         self.count--;
         self.ticks++;
-      } else {
+      } else { // Done traversing edge, add to next node
         self.hop.node.interfaces[self.hop.edge.id].rx++;
         self.hop.edge.packet.delete(self);
         self.current = self.hop.node;
@@ -1198,6 +1264,7 @@ function Packet(mesh, source, destination) {
       return;
     }
 
+    // Drop packet it the current path length is greater than maximum
     if (self.path.length > self.maxHops) {
       console.log('dropped - max hops exceeded', self.path.length, self.maxHops);
       self.dropped = true;
@@ -1208,8 +1275,9 @@ function Packet(mesh, source, destination) {
       return;
     }
 
+    // Packet arrived at destination
     if (self.current === self.destination) {
-      if (self.corrupt) {
+      if (self.corrupt) { // Drop corrupted packets
         console.log('dropped - corrupt packet');
         self.dropped = true;
         self.current.packet.delete(self);
@@ -1218,6 +1286,7 @@ function Packet(mesh, source, destination) {
         }
       }
 
+      // Reverse direction to return to source
       self.destination = self.source;
       self.source = self.current;
       self.path = [];
@@ -1229,6 +1298,9 @@ function Packet(mesh, source, destination) {
       return;
     }
 
+    // Determine next step in path
+
+    // Reroute effect, randomly pick a connection
     if (self.current.effect && self.current.effect.type === 'reroute') {
       const routes = [];
       for (const id in self.current.connections) {
@@ -1242,7 +1314,7 @@ function Packet(mesh, source, destination) {
         self.hop = routes[mesh.rand(0, routes.length)];
         console.log('rerouted');
       }
-    } else if (self.idealPath) {
+    } else if (self.idealPath) { // Ideal path cached, use it
       const index = self.idealPath.indexOf(self.current);
       if (index !== -1 && index < self.idealPath.length && self.idealPath[index + 1]) {
         const next = self.idealPath[index + 1];
@@ -1250,28 +1322,31 @@ function Packet(mesh, source, destination) {
 
         if (hop.node.online && hop.edge.online) {
           self.hop = hop;
-        } else {
+        } else { // Node or Edge offline, invalidate ideal path
           self.idealPath = null;
         }
-      } else {
+      } else { // No ideal path
         self.idealPath = null;
       }
     }
 
+    // Hop not provided by ideal path, so find it
     if (!self.hop) {
       self.hop = self.pathfinder(self.current, self.destination);
     }
 
+    // Next hop found, begin traversal
     if (self.hop) {
       self.current.packet.delete(self);
       self.current.interfaces[self.hop.edge.id].tx++;
+      // Calculate time in edge based on size and speed
       self.count = Math.ceil(self.hop.edge.ticks * (mesh.speeds[self.size].value /
                                                     mesh.speeds[self.hop.edge.speed].value));
 
       self.current = self.hop.edge;
       self.hop.edge.packet.add(self);
       self.path.push(self.hop.node.address);
-    } else {
+    } else { // No way to get to destination, drop packet
       self.dropped = true;
       self.current.packet.delete(self);
       console.log('dropped - no route to host');
@@ -1284,6 +1359,7 @@ function Packet(mesh, source, destination) {
   return self;
 }
 
+// The Mesh, tracks all packets, node and edges, generates based on options
 function Mesh({
   meshId, width, height, factor, scale, range, minimum,
   interval, complexity, maxHops, maxTTL, threshold, seed,
@@ -1293,44 +1369,56 @@ function Mesh({
 
   /////////
 
+  // Size in grid units
   self.width = width || 20;
   self.height = height || self.width;
 
+  // How many nodes in the grid
   self.factor = factor || 0.25;
+  // Graphic scaling
   self.scale = scale || Math.max(10, Math.ceil(Math.min(700 / self.width, 450 / self.height)));
+  // Search range
   self.range = range || 3;
+  // Minimum number of connection
   self.minimum = minimum || 3;
-
+  // Interval for packet routing
   self.interval = interval || 500;
-
+  // Packets per node
   self.complexity = complexity || 2;
-
+  // Max hop multiplier
   self.maxHops = maxHops || 1.2;
+  // Max ticks / TTL multiplier
   self.maxTTL = maxTTL || 2;
-
+  // Threshold for crashing
   self.threshold = threshold || 50;
 
   //////////
+  // Convenience functions
 
+  // Generate unique IDs
   self.id = function(x, y) {
     return x.toString().padStart(self.scope, '0') + '.' + y.toString().padStart(self.scope, '0');
   };
 
+  // Find coordinates from position
   self.coords = function(x, y) {
     const id = self.id(x, y);
     return self.positions[id];
   };
 
+  // Linear distance
   self.distance = function(a, b) {
     return Math.sqrt(Math.pow(b.x - a.x, 2) + Math.pow(b.y - a.y, 2));
   };
 
+  // Clear all children of an HTML element
   self.clear = function(element) {
     while (element.firstChild) {
       element.removeChild(element.firstChild);
     }
   };
 
+  // Dot in info display color based on state / effect
   self.dotColor = function(object) {
     const color = object.online ? (object.effect ? object.effect.color : '#5691DC') : '#D34E53';
     const symbol = object.online ? '25C9' : '25CE';
@@ -1338,7 +1426,7 @@ function Mesh({
   };
 
   //////////
-
+  // Simple SVG utility
   function createSvgNode(name, attributes) {
     const element = document.createElementNS('http://www.w3.org/2000/svg', name);
     for (const key in attributes) {
@@ -1347,26 +1435,31 @@ function Mesh({
     return element;
   }
 
+  // Initialize the SVG
   function initSvg() {
     const svg = $('mesh');
 
-    let zoom = 1;
+    let zoom = 1; // Initial zoom
     let viewbox;
 
+    // Maximum element size
     const svgWidth = 926;
     const svgHeight = 510;
 
+    // Graphical offset for centering based on size
     const offsetX = ((svgWidth - (self.width * self.scale)) / 2) + 4;
     const offsetY = ((svgHeight - (self.height * self.scale)) / 2) + 4;
 
     self.clear(svg);
 
+    // Element creator
     svg.add = function(name, attributes) {
       const node = createSvgNode(name, attributes);
       svg.appendChild(node);
       return node;
     };
 
+    // Circle element creator
     svg.circle = function(x, y, radius, className) {
       return svg.add('circle', {
         cx: x + offsetX,
@@ -1376,6 +1469,7 @@ function Mesh({
       });
     };
 
+    // Line element creator
     svg.line = function(x1, y1, x2, y2, className) {
       return svg.add('line', {
         x1: x1 + offsetX,
@@ -1386,6 +1480,7 @@ function Mesh({
       });
     };
 
+    // Viewbox based zooming
     const setViewBox = (newbox) => {
       viewbox = newbox;
       svg.setAttribute('viewBox', viewbox.join(' '));
@@ -1393,6 +1488,7 @@ function Mesh({
 
     setViewBox([ 0, 0, svgWidth, svgHeight ]);
 
+    // Handle wheel events with stay-on-cursor zoom
     svg.onwheel = function(event) {
       zoom += event.deltaY * 0.001;
       zoom = Math.min(Math.max(zoom, 1), 5);
@@ -1408,6 +1504,7 @@ function Mesh({
       setViewBox([ cornerX, cornerY, zoomWidth, zoomHeight ]);
     };
 
+    // Handle key down for arrow key panning
     window.onkeydown = function(event) {
       const key = event.keyCode;
       if (key === 37) { // Left Arrow
@@ -1430,7 +1527,7 @@ function Mesh({
   }
 
   //////////
-
+  // Major HTML elements
   self.elements = {
     coins: $('coins'),
     cont: $('continue'),
@@ -1448,6 +1545,7 @@ function Mesh({
     toolbar: $('toolbar')
   };
 
+  // Console for the bottom of the screen for mouse over details on effects
   self.console = {
     element: $('console'),
     buffer: '',
@@ -1468,6 +1566,7 @@ function Mesh({
     }
   };
 
+  // Speed names and multipliers
   self.speeds = [ {
     name: '512Mbps',
     value: 0.5
@@ -1485,6 +1584,7 @@ function Mesh({
     value: 4
   } ];
 
+  // Availble tools with color codes, descriptions and default use count (-1 = Infinity)
   self.tools = {
     info: {
       name: 'Information',
@@ -1544,6 +1644,7 @@ function Mesh({
   };
 
   //////////
+  // A node for data intercept objectives, can be a numbered node or randomly generated
 
   let dataNode = -1;
   if (typeof data === 'number') {
@@ -1554,7 +1655,7 @@ function Mesh({
   }
 
   //////////
-
+  // Reset and initialize all elements and state
   self.init = function() {
     self.connected = false;
 
@@ -1567,9 +1668,11 @@ function Mesh({
 
     IPs = {};
 
+    // Private pseudo random number generator with seed for determinism
     self.prng = new MersenneTwister(seed);
     self.rand = (min, max) => Math.floor(self.prng.random() * (max - min + 1)) + min;
 
+    // All tracked elements
     self.addresses = {};
 
     self.positions = {};
@@ -1581,6 +1684,7 @@ function Mesh({
     self.idealPaths = {};
 
     //////////
+    // Set initial state, contents and animation of all elements
 
     self.svg = initSvg();
 
@@ -1594,14 +1698,16 @@ function Mesh({
 
     self.console.clear().log('<div class="spinner">&#x21C6;</div> Connecting...');
 
+    // Configure which tools / effects can be used
     if (uses) {
       for (const key in uses) {
         self.tools[key].uses = uses[key];
       }
     }
 
-    self.effect = self.tools.info;
+    self.effect = self.tools.info; // Default tool is Info, i.e. none
 
+    // Find the tool elements, set initial state,  and configure interactions
     document.querySelectorAll('[data-tool]').forEach(function(element) {
       const type = element.dataset.tool;
       const tool = self.tools[type];
@@ -1610,6 +1716,8 @@ function Mesh({
       tool.use = $(type + '-use');
 
       remove(tool.element, 'selected');
+
+      // Decrement the number of uses
       tool.decrement = function() {
         if (tool.uses === Infinity) {
           return true;
@@ -1622,6 +1730,7 @@ function Mesh({
         }
       };
 
+      // Configure initial uses and visibility state
       if (tool.uses < 0 || tool.uses === Infinity) {
         tool.uses = Infinity;
         tool.use.innerHTML = '';
@@ -1633,6 +1742,7 @@ function Mesh({
       }
       show(tool.element);
 
+      // Click interaction, select tool
       element.onclick = function() {
         for (const item in self.tools) {
           if (item === type) {
@@ -1644,12 +1754,14 @@ function Mesh({
         }
       };
 
+      // Mouse over, display tool description
       element.onmouseover = function() {
         const item = self.tools[type];
         const info = '<span style="text-decoration:underline;color:' + item.color + '">' + item.name + '</span>\n' + item.description;
         self.console.display(info);
       };
 
+      // Mouse out, reset console to objective diplay
       element.onmouseout = function() {
         self.console.reset();
       };
@@ -1657,22 +1769,29 @@ function Mesh({
 
     add(self.tools.info.element, 'selected');
 
+    // Set packet count and scopes based on size
     self.count = Math.floor(self.width * self.height * self.factor);
     self.scope = Math.ceil(self.count % 10);
+
+    // Set visual perturbation based on scale
     self.perturb = Math.ceil(self.scale / 5);
 
+    // Create all nodes
     for (let i = 0; i < self.count; i++) {
       self.nodes.push(new Node(self));
     }
 
+    // COnnect nodes to neighbors, generating edges
     self.nodes.forEach(function(node) {
       node.connect();
     });
 
+    // Create node svg elements
     for (let i = 0; i < self.count; i++) {
       self.nodes[i].createElement();
     }
 
+    // Create a firewalled node when configured
     if (data !== false) {
       if (dataNode === -1) {
         let quantity = self.minimum;
@@ -1698,7 +1817,7 @@ function Mesh({
     }
 
     /////////
-
+    // Create all packets
     self.packets = [];
     for (let c = 0; c < self.complexity; c++) {
       for (let i = 0; i < self.count; i++) {
@@ -1706,41 +1825,51 @@ function Mesh({
       }
     }
 
+    // Overall state of the mesh
     self.crashed = false;
 
+    // Create the router if present from retry
     if (self.router) {
       clearInterval(self.router);
     }
 
+    // Looping router, routes traffic, determines state
     self.router = setInterval(function() {
       if (self.crashed) {
         return;
       }
-      //const start = Date.now();
+
+      // Route individual packets
       for (let i = 0; i < self.packets.length; i++) {
         self.packets[i].route();
       }
+
+      // Filter out dropped packets
       self.packets = self.packets.filter(function(packet) {
         return !packet.dropped;
       });
-      //console.log('Routing time', Date.now() - start);
 
+      // Calculate and display network health
       const health = Math.round(self.packets.length / (self.count * self.complexity) * 100);
       self.elements.health.innerHTML = health + '%';
 
+      // Update meshcoin display
       if (self.coins) {
         self.elements.coins.innerHTML = '$ ' + (self.coins / 1000).toFixed(3) + ' meshcoins';
       }
 
+      // Update data intercepted display
       if (self.data) {
         self.elements.data.innerHTML = '&#x291E; Data Intercepted!';
         add(self.elements.data, 'decrypt');
       }
 
+      // Trigger a crash when health falls below threshold
       if (health < self.threshold && !self.crashed) {
         return self.crash();
       }
 
+      // Initial state after creation, ready to start routing
       if (!self.connected) {
         self.connected = true;
         self.console.clear().log('&#x21B9; Connected!');
@@ -1751,6 +1880,7 @@ function Mesh({
         show(self.elements.retry);
         show(self.elements.quit);
 
+        // Set up stateful Restart and Quit double-click buttons
         const quit = 'Quit';
         const retry = 'Restart';
         const sure = 'You sure?';
@@ -1817,6 +1947,7 @@ function Mesh({
             if (self.router) {
               clearInterval(self.router);
             }
+            // Reinitialize / Reset the mesh
             self.init();
           } else {
             retryState = 1;
@@ -1828,7 +1959,7 @@ function Mesh({
   };
 
   //////////
-
+  // Crash a node, sets animations on node and all connected edges
   function crashNode(node) {
     remove(node.element, 'node-packet');
     add(node.element, 'node-offline');
@@ -1841,6 +1972,7 @@ function Mesh({
     }
   }
 
+  // Crash animation
   self.crash = function() {
     if (self.crashing) {
       return;
@@ -1848,8 +1980,8 @@ function Mesh({
       self.crashing = true;
     }
 
+    // Detect if won (offline) or failed
     const banner = $('offline-banner');
-
     if ((data && !self.data) ||
         (coins && self.coins < coins)) {
       add(banner, 'failed');
@@ -1864,6 +1996,7 @@ function Mesh({
       banner.innerHTML = 'OFFLINE';
     }
 
+    // Randomly generate crash text based on character patterns
     const crashSymbols = '01012345678901X[]\\/?{}ABCDEFSSSSGGHHIJKL'.split('');
     const crashTable = {
       S: [ 1, 14, ' ' ],
@@ -1893,6 +2026,8 @@ function Mesh({
       crashText += crashLookup(crashSymbols[self.rand(0, crashSymbols.length - 1)]);
     }
 
+    // Crash the mesh in several steps, a third of the nodes at a time followed
+    // by offline / fail banner and continue buttons
     let state = 0;
 
     const step1 = Math.floor(self.nodes.length / 3);
@@ -1945,6 +2080,7 @@ function Mesh({
   };
 
   /////////
+  // Iniitialize and get going
 
   self.init();
 
@@ -1954,6 +2090,7 @@ function Mesh({
 }
 
 function Enmeshed() {
+  // Story stages with minimum, known-good configuration options and random seeds
   const stages = [ {
     meshId: '[::1]/practice/0',
     width: 5,
@@ -2034,6 +2171,7 @@ function Enmeshed() {
       cut: 5,
       intercept: 1
     },
+    // Additional text to inject on stage win
     lines: [
       'enmeshed-v2.zip saved to ~/Downloads',
       '&P&Tunzip ~/Downloads/enmeshed-v2.zip',
@@ -2136,26 +2274,33 @@ function Enmeshed() {
   // IFDEF DEV
   let last = '';
   // ENDIF
+
+  // Local storage for stage Continue and earned meshcoins
   const storage = window.localStorage;
   let resume = parseInt(storage.getItem('stage') || 0);
   let coins = parseInt(storage.getItem('coins') || 0);
 
+  // Convenience coloring functions
   const span = (hex) => '<span style="color:#' + hex + '">';
   const green = span('7fDB6A');
   const cyan = span('4B86B4');
   const blue = span('4f9ED8');
   const grey = span('AAA');
 
+  // Unique, insertable cursor and input elements for interactions
   const cursor = '<u id="cursor"></u>';
   const input = '<span id="input"></span>';
   const enter = 'Press &BENTER&b to continue...';
 
+  // Terminal prompts
   const ps1 = green + 'mark@terminus</span>:' + blue + '~</span>$ ';
   const ps2 = '<span style="font-weight:700">' + cyan + 'enmeshed</span>#</span> ';
 
+  // HTML elements
   const terminal = $('terminal');
   const screen = $('screen');
 
+  // Print a string with optional line break
   function print(string, cont) {
     string = string || '';
     string += !cont ? '\n' : '';
@@ -2163,25 +2308,31 @@ function Enmeshed() {
     scroll(terminal);
   }
 
+  // Entirely remove an element from the DOM if present
   function removeElement(id) {
     const element = $(id);
     return (element) ? element.parentNode.removeChild(element) : true;
   }
 
+  // Remove the cursor and input element if present
   function nocursor() {
     removeElement('input');
     removeElement('cursor');
   }
 
+  // Lines to display, turing machine like state / sequence management
   let lines = [];
 
+  // Kernel timestamp mode and time tracking
   let kernel = true;
   const bootTime = Date.now();
 
+  // Display the Enmeshed menu
   function showMenu() {
     lines.unshift( ...menu.split('\n'));
   }
 
+  // Play a story stage
   function play(i, next) {
     const stage = stages[i];
     hide(terminal);
@@ -2189,17 +2340,16 @@ function Enmeshed() {
     const mesh = new Mesh(stage, function() {
       show(terminal);
       hide(screen);
-      if (mesh.quit) {
-
+      if (mesh.quit) { // Quit, show the mennu
         showMenu();
-      } else {
-        if (!mesh.failed) {
+      } else { // Finished
+        if (!mesh.failed) { // Won
           coins += mesh.coins;
           i++;
           storage.setItem('stage', i);
           storage.setItem('coins', coins);
           resume = i;
-          if (i < stages.length) {
+          if (i < stages.length) { // Invoke the next stage
             lines.unshift('&G' + i);
           }
           if (stage.lines) {
@@ -2216,10 +2366,11 @@ function Enmeshed() {
     // ENDIF
   }
 
+  // Generate a random Challenge mesh
   let challengeMesh;
   function generateChallenge() {
     const seed = rand(234, 35746);
-    challengeMesh = {
+    challengeMesh = { // Randomly set all options
       meshId: '[::1]/challenge/' + seed.toString(16),
       width: rand(10, 60),
       height: rand(10, 35),
@@ -2237,6 +2388,7 @@ function Enmeshed() {
     challengeMesh.data = !!challengeMesh.uses.intercept;
     challengeMesh.coins = challengeMesh.uses.mine ? rand(25, 250) : 0;
 
+    // Create objective string
     const tasks = [ 'Offline the mesh' ];
 
     if (challengeMesh.data) {
@@ -2249,24 +2401,25 @@ function Enmeshed() {
     challengeMesh.objective = tasks.join(', ') + '.';
   }
 
+  // Play a challenge
   function challenge(next) {
     hide(terminal);
     show(screen);
     const mesh = new Mesh(challengeMesh, function() {
       show(terminal);
       hide(screen);
-      if (!mesh.quit && !mesh.failed) {
-        coins += mesh.coins;
+      if (!mesh.quit && !mesh.failed) { // Won
+        coins += mesh.coins; // Save coins earned
         storage.setItem('coins', coins);
       }
 
-      if (mesh.failed) {
+      if (mesh.failed) { // Failed, automatically retry
         lines.unshift('&H --retry');
       // IFDEF DEV
       } else if (challengeMesh.meshId.includes('try')) {
         lines.unshift('&I');
       // ENDIF
-      } else {
+      } else { // Show the menu on win and quit
         showMenu();
       }
 
@@ -2277,6 +2430,7 @@ function Enmeshed() {
     // ENDIF
   }
 
+  // Parse simple commands to launch the story or challenges
   function parse(cmd, next) {
     const lower = cmd.toLowerCase();
     if (cmd === '1' || lower === 'story') {
@@ -2287,7 +2441,7 @@ function Enmeshed() {
       lines.unshift('&H');
     } else if ((cmd === '3' || lower === 'continue') && resume) {
       lines.unshift('&G' + resume);
-    // IFDEF DEV
+    // IFDEF DEV - Interface for testing sizes and seeds
     } else if (lower.startsWith('try ')) {
       cmd = lower.replace(/try\s+/, '');
 
@@ -2336,6 +2490,7 @@ function Enmeshed() {
     return true;
   }
 
+  // Main game sequence
   sequence(function(next) {
     if (lines.length) {
       let line = lines.shift();
@@ -2357,6 +2512,8 @@ function Enmeshed() {
 
       nocursor();
 
+      // Parse triggers for text subtitutions or launching Story or Challenges
+      // Emuletes a simple turing machine tape
       line = line.replace(/&DT/, new Date()).
         replace(/&DP/, new Date(Date.now() - 101823000)).
         replace(/&DE/, new Date(Date.now() - 6120000).toUTCString()).
@@ -2417,7 +2574,7 @@ function Enmeshed() {
           }
           return '';
         }).
-        replace(/&Y/, function() {
+        replace(/&Y/, function() { // Email decryption effect
           const decryptElement = $('decryptor');
           const emailElement = $('email');
           const attachmentElement = $('attachment');
@@ -2438,7 +2595,7 @@ function Enmeshed() {
           remove($('attachment'), 'decrypt');
           return '';
         }).
-        replace(/&F/, function() {
+        replace(/&F/, function() { // Stage listing from enmeshed.txt
           const descriptions = stages.map(function(stage) {
             return '  mesh://' + stage.meshId + ' - ' + stage.objective;
           });
@@ -2458,7 +2615,7 @@ function Enmeshed() {
           return string || enter;
         });
 
-      if (kernel && line[0] !== '<') {
+      if (kernel && line[0] !== '<') { // Kernel time stamps
         line = line.replace(/^([^ :]+):/, cyan + '$1</span>:');
         line = green + '[ ' + (((Date.now() - bootTime) / 1000) + (rand(0, 1000) / 100000)).
           toFixed(6).padStart(10, ' ') + '] </span>' + line;
@@ -2466,7 +2623,7 @@ function Enmeshed() {
 
       print(line, inputMode || typing || pause);
 
-      if (typing) {
+      if (typing) { // Typing sequencer
         print(cursor, true);
         typing = typing.split('');
         sequence(function(tick, i) {
@@ -2486,7 +2643,7 @@ function Enmeshed() {
           print();
           next(25);
         });
-      } else if (inputMode) {
+      } else if (inputMode) { // Input delay with cursor and small key handling
         cmd = '';
 
         print(ps2 + input + cursor, true);
@@ -2499,9 +2656,9 @@ function Enmeshed() {
             $('input').innerHTML = '';
             nocursor();
             print(cmd);
-            if (parse(cmd, next)) {
+            if (parse(cmd, next)) { // Command exists
               window.onkeydown = null;
-            } else {
+            } else { // Command not found
               if (cmd.length) {
                 print(cmd + ': command not found');
                 cmd = '';
@@ -2533,10 +2690,10 @@ function Enmeshed() {
             }
           }
         };
-      } else if (pause) {
+      } else if (pause) { // Press ENTER pause
         print(cursor, true);
         window.onkeydown = function(event) {
-          if (event.keyCode === 13) {
+          if (event.keyCode === 13) { // Enter pressed
             window.onkeydown = null;
             next();
           }
@@ -2544,19 +2701,19 @@ function Enmeshed() {
       } else if (!playing) {
         next(timeout);
       }
-    } else {
+    } else { // Reboot
       terminal.innerHTML = '';
       lines = (boot + menu + rimraf).split('\n');
       next();
     }
   }, function() {
-    print();
+    print(); // Sequence terminator
     console.log('done!');
   });
 }
 
 //////////
-
+// Start the game on load
 window.addEventListener('load', function() {
   window.enmeshed = new Enmeshed();
 }, false);

@@ -181,7 +181,11 @@ const stringReplacer = function(match, p1) {
   return p1;
 };
 
+// Strip development code and comments
 substitutedHTML = substitutedHTML.replace(/\s*\/\/ IFDEF DEV[^]+?\/\/ ENDIF\s*/g, '');
+substitutedHTML = substitutedHTML.replace(/\s+\/\/.*?\n/g, '\n');
+
+// Replace strings
 substitutedHTML = substitutedHTML.replace(/(`[^`]*?`)/g, stringReplacer);
 substitutedHTML = substitutedHTML.replace(/('[^']*?')/g, stringReplacer);
 //substitutedHTML = substitutedHTML.replace(/("[^"]*?")/g, stringReplacer);
